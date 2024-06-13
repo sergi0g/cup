@@ -121,7 +121,7 @@ fn get_all_updates(socket: String) {
     .progress_chars("##-"));
     for image in images {
         if image.repo_tags.len() != 0 {
-            bar.set_message(String::from("Checking") + &image.repo_tags[0].clone());
+            bar.set_message(String::from("Checking ") + &image.repo_tags[0].clone());
         };
         let update_available = has_update(image.clone());
         for tag in image.repo_tags {
@@ -218,12 +218,16 @@ fn get_metadata(mut image: String, socket: String) -> ImageSummary {
     if image.starts_with("library/") {
         image = image.split("library/").collect::<Vec<&str>>()[1].to_string()
     }
-    images
+    let filtered_images = images
         .iter()
         .filter(|img| img.repo_tags.contains(&image.to_string()))
         .cloned()
-        .collect::<Vec<ImageSummary>>()[0]
-        .to_owned()
+        .collect::<Vec<ImageSummary>>();
+    if filtered_images.len() == 0 {
+        error!("Couldn't find image {}", image)
+    } else {
+        filtered_images[0].to_owned()
+    }
 }
 
 fn get_digest(repo: &str, tag: &str, token: &str) -> String {
