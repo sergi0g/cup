@@ -1,0 +1,16 @@
+[package]
+name = "cup"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bollard = "0.16.1"
+clap = { version = "4.5.7", features = ["derive"] }
+indicatif = "0.17.8"
+tokio = "1.38.0"
+ureq = "2.9.7"
+json = "0.12.4"
+console = "0.15.8"
+lazy_static = "1.4.0"
