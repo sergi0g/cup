@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use bollard::{secret::ImageSummary, ClientVersion, Docker};
 use clap::{Parser, Subcommand};
 use console::Term;
-use indicatif::{ProgressBar, ProgressState, ProgressStyle};
+use indicatif::{ProgressBar, ProgressStyle};
 use tokio::runtime::Runtime;
 use lazy_static::lazy_static;
 
