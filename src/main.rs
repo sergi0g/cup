@@ -1,10 +1,14 @@
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 
 use bollard::{secret::ImageSummary, ClientVersion, Docker};
 use clap::{Parser, Subcommand};
 use console::Term;
 use indicatif::{ProgressBar, ProgressStyle};
 use lazy_static::lazy_static;
+use rayon::prelude::*;
 use tokio::runtime::Runtime;
 
 macro_rules! error {
@@ -15,7 +19,7 @@ macro_rules! error {
 }
 
 lazy_static! {
-    static ref CONSOLE: Term = Term::stdout();
+    static ref CONSOLE: Term = Term::stdout(); // Just adding this so we get colored output in the future
 }
 
 #[derive(Parser)]
@@ -102,7 +106,8 @@ fn list_images(socket: Option<String>) -> Vec<ImageSummary> {
 }
 
 fn get_updates(image: String, socket: Option<String>) {
-    match has_update(get_metadata(image.clone(), socket)) {
+    let metadata = get_metadata(image.clone(), socket);
+    match has_update(&get_token(&vec![metadata.clone()]), metadata) {
         Some(value) => {
             if value {
                 CONSOLE
@@ -121,9 +126,12 @@ fn get_updates(image: String, socket: Option<String>) {
 }
 
 fn get_all_updates(socket: Option<String>) {
-    let mut list: HashMap<String, Option<bool>> = HashMap::new();
-    let images = list_images(socket);
-    let bar = ProgressBar::new(images.len() as u64);
+    let list: HashMap<String, Option<bool>> = HashMap::new();
+    let list_mutex = Arc::new(Mutex::new(list));
+    let all_images = list_images(socket);
+    let valid_images = filter_images(&all_images);
+    let token = get_token(&valid_images);
+    let bar = ProgressBar::new(valid_images.len() as u64);
     bar.set_style(
         ProgressStyle::with_template(
             "{bar:50.cyan/blue} {wide_msg}   Overall progress: {pos:>4}/{len:4}",
@@ -131,19 +139,32 @@ fn get_all_updates(socket: Option<String>) {
         .unwrap()
         .progress_chars("##-"),
     );
-    for image in images {
+    // for image in valid_images.clone() {
+    //     if image.repo_tags.len() != 0 {
+    //         bar.set_message(String::from("Checking ") + &image.repo_tags[0].clone());
+    //     };
+    //     let update_available = has_update(&token, image.clone());
+    //     for tag in image.repo_tags {
+    //         list.insert(tag, update_available);
+    //     }
+    //     bar.inc(1);
+    // }
+    valid_images.par_iter().for_each(|image| {
         if image.repo_tags.len() != 0 {
             bar.set_message(String::from("Checking ") + &image.repo_tags[0].clone());
         };
-        let update_available = has_update(image.clone());
-        for tag in image.repo_tags {
-            list.insert(tag, update_available);
-        }
+        let update_available = has_update(&token, image.clone());
+        image.repo_tags.par_iter().for_each(|tag| {
+            let mut list = list_mutex.lock().unwrap();
+            list.insert(tag.clone(), update_available);
+        });
         bar.inc(1);
-    }
+    });
     bar.finish_with_message("Done!\n");
-    let outdated_images = list
-        .iter()
+    let outdated_images = list_mutex
+        .lock()
+        .unwrap()
+        .par_iter()
         .filter(|&(_, &image)| match image {
             Some(value) => {
                 if value {
@@ -161,35 +182,29 @@ fn get_all_updates(socket: Option<String>) {
             .write_line("The following images have updates:")
             .unwrap();
         outdated_images
-            .iter()
+            .par_iter()
             .for_each(|image| CONSOLE.write_line(&format!("{}", image)).unwrap());
         CONSOLE.write_line("").unwrap();
     }
-    let unprocessable_images = list
-        .iter()
-        .filter(|&(_, &image)| match image {
-            Some(value) => {
-                if value {
-                    return false;
-                } else {
-                    return false;
-                }
-            }
-            None => return true,
-        })
-        .map(|(key, _)| key.to_string())
-        .collect::<Vec<String>>();
+    let unprocessable_images = all_images
+        .par_iter()
+        .filter(|x| !valid_images.contains(x))
+        .cloned()
+        .collect::<Vec<ImageSummary>>();
     if unprocessable_images.len() > 0 {
         CONSOLE
             .write_line("The following images couldn't be processed:")
             .unwrap();
         unprocessable_images
-            .iter()
-            .for_each(|image| CONSOLE.write_line(&format!("{}", image)).unwrap());
+            .par_iter()
+            .for_each(|image| match image.repo_tags.first() {
+                Some(t) => CONSOLE.write_line(&format!("{}", t)).unwrap(),
+                None => {}
+            });
     }
 }
 
-fn has_update(metadata: ImageSummary) -> Option<bool> {
+fn has_update(token: &str, metadata: ImageSummary) -> Option<bool> {
     if metadata.repo_tags.len() == 0 || metadata.repo_digests.len() == 0 {
         return None;
     };
@@ -197,10 +212,10 @@ fn has_update(metadata: ImageSummary) -> Option<bool> {
     if repo == "" {
         return None;
     };
-    let latest_digest = get_digest(&repo, &tag, &get_token(&repo));
+    let latest_digest = get_digest(&repo, &tag, token);
     if metadata
         .repo_digests
-        .iter()
+        .par_iter()
         .any(|digest| digest == &format!("{}@{}", uncleaned_repo, latest_digest))
     {
         return Some(false);
@@ -208,14 +223,14 @@ fn has_update(metadata: ImageSummary) -> Option<bool> {
     Some(true)
 }
 
-fn split_image(mut image: &str) -> (String, String, String) {
+fn split_image(image: &str) -> (String, String, String) {
     let slash_count = image.chars().filter(|&c| c == '/').count();
     if slash_count > 1 {
         return (String::new(), String::new(), String::new());
     };
-    if image.starts_with("library/") {
-        image = image.split("library/").collect::<Vec<&str>>()[1]
-    }
+    // if image.starts_with("library/") {
+    //     image = image.split("library/").collect::<Vec<&str>>()[1]
+    // }
     let split = image.split(":").collect::<Vec<&str>>();
     let repo = if image.contains("/") {
         split[0].to_string()
@@ -235,7 +250,7 @@ fn get_metadata(mut image: String, socket: Option<String>) -> ImageSummary {
         image = image.split("library/").collect::<Vec<&str>>()[1].to_string()
     }
     let filtered_images = images
-        .iter()
+        .par_iter()
         .filter(|img| img.repo_tags.contains(&image.to_string()))
         .cloned()
         .collect::<Vec<ImageSummary>>();
@@ -271,10 +286,37 @@ fn get_digest(repo: &str, tag: &str, token: &str) -> String {
     }
 }
 
-fn get_token(scope: &str) -> String {
+fn get_name(image: &ImageSummary) -> String {
+    if image.repo_tags.len() == 0 {
+        return String::new();
+    } else {
+        let input = &image.repo_tags[0];
+        let mut result = if input.contains(":") {
+            input.split(":").collect::<Vec<&str>>()[0].to_string()
+        } else {
+            input.to_string()
+        };
+        result = if !input.contains("/") {
+            format!("library/{}", result)
+        } else {
+            result
+        };
+        return result;
+    }
+}
+
+fn get_token(images: &Vec<ImageSummary>) -> String {
+    let mut scope_string = String::new();
+    for image in images {
+        scope_string = format!(
+            "{}&scope=repository:{}:pull",
+            scope_string,
+            get_name(&image)
+        )
+    }
     let raw_response = match ureq::get(&format!(
-        "https://auth.docker.io/token?service=registry.docker.io&scope=repository:{}:pull",
-        scope
+        "https://auth.docker.io/token?service=registry.docker.io{}",
+        scope_string
     ))
     .set(
         "Accept",
@@ -299,4 +341,16 @@ fn get_token(scope: &str) -> String {
         }
     };
     parsed_token_response["token"].to_string()
+}
+
+fn filter_images(images: &Vec<ImageSummary>) -> Vec<ImageSummary> {
+    images
+        .par_iter()
+        .filter(|img| {
+            img.repo_tags
+                .par_iter()
+                .all(|i| i.chars().filter(|&c| c == '/').count() < 2)
+        } && img.repo_tags.len() > 0 && img.repo_digests.len() > 0)
+        .cloned()
+        .collect::<Vec<ImageSummary>>()
 }
