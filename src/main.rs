@@ -4,8 +4,8 @@ use bollard::{secret::ImageSummary, ClientVersion, Docker};
 use clap::{Parser, Subcommand};
 use console::Term;
 use indicatif::{ProgressBar, ProgressStyle};
-use tokio::runtime::Runtime;
 use lazy_static::lazy_static;
+use tokio::runtime::Runtime;
 
 macro_rules! error {
     ($($arg:tt)*) => ({
@@ -21,8 +21,8 @@ lazy_static! {
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
 struct CLI {
-    #[arg(short, long, default_value = "unix:///var/run/docker.sock")]
-    socket: String,
+    #[arg(short, long, default_value = None)]
+    socket: Option<String>,
 
     #[command(subcommand)]
     command: Option<Commands>,
@@ -42,18 +42,22 @@ struct SyncDockerClient {
 }
 
 impl SyncDockerClient {
-    pub fn create(socket: String) -> Result<SyncDockerClient, bollard::errors::Error> {
+    pub fn create(socket: Option<String>) -> Result<SyncDockerClient, bollard::errors::Error> {
         let rt = tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()?;
-        let inner = match Docker::connect_with_local(
-            &socket,
-            120,
-            &ClientVersion {
-                major_version: 1,
-                minor_version: 44,
-            },
-        ) {
+        let client = match socket {
+            Some(sock) => Docker::connect_with_local(
+                &sock,
+                120,
+                &ClientVersion {
+                    major_version: 1,
+                    minor_version: 44,
+                },
+            ),
+            None => Docker::connect_with_local_defaults(),
+        };
+        let inner = match client {
             Ok(docker) => docker,
             Err(e) => {
                 error!("Failed to connect to the docker socket!\n{}", e)
@@ -82,7 +86,7 @@ fn main() {
     }
 }
 
-fn list_images(socket: String) -> Vec<ImageSummary> {
+fn list_images(socket: Option<String>) -> Vec<ImageSummary> {
     let client = match SyncDockerClient::create(socket) {
         Ok(client) => client,
         Err(e) => {
@@ -97,28 +101,36 @@ fn list_images(socket: String) -> Vec<ImageSummary> {
     }
 }
 
-fn get_updates(image: String, socket: String) {
+fn get_updates(image: String, socket: Option<String>) {
     match has_update(get_metadata(image.clone(), socket)) {
         Some(value) => {
             if value {
-                CONSOLE.write_line(&format!("Image {} has an update", image)).unwrap();
+                CONSOLE
+                    .write_line(&format!("Image {} has an update", image))
+                    .unwrap();
             } else {
-                CONSOLE.write_line(&format!("No updates available for image {}", image)).unwrap();
+                CONSOLE
+                    .write_line(&format!("No updates available for image {}", image))
+                    .unwrap();
             }
         }
-        None => {
-            CONSOLE.write_line(&format!("Can't check for updates to {}", image)).unwrap()
-        }
+        None => CONSOLE
+            .write_line(&format!("Can't check for updates to {}", image))
+            .unwrap(),
     }
 }
 
-fn get_all_updates(socket: String) {
+fn get_all_updates(socket: Option<String>) {
     let mut list: HashMap<String, Option<bool>> = HashMap::new();
     let images = list_images(socket);
     let bar = ProgressBar::new(images.len() as u64);
-    bar.set_style(ProgressStyle::with_template("{bar:50.cyan/blue} {wide_msg}   Overall progress: {pos:>4}/{len:4}")
-    .unwrap()
-    .progress_chars("##-"));
+    bar.set_style(
+        ProgressStyle::with_template(
+            "{bar:50.cyan/blue} {wide_msg}   Overall progress: {pos:>4}/{len:4}",
+        )
+        .unwrap()
+        .progress_chars("##-"),
+    );
     for image in images {
         if image.repo_tags.len() != 0 {
             bar.set_message(String::from("Checking ") + &image.repo_tags[0].clone());
@@ -145,7 +157,9 @@ fn get_all_updates(socket: String) {
         .map(|(key, _)| key.to_string())
         .collect::<Vec<String>>();
     if outdated_images.len() > 0 {
-        CONSOLE.write_line("The following images have updates:").unwrap();
+        CONSOLE
+            .write_line("The following images have updates:")
+            .unwrap();
         outdated_images
             .iter()
             .for_each(|image| CONSOLE.write_line(&format!("{}", image)).unwrap());
@@ -166,7 +180,9 @@ fn get_all_updates(socket: String) {
         .map(|(key, _)| key.to_string())
         .collect::<Vec<String>>();
     if unprocessable_images.len() > 0 {
-        CONSOLE.write_line("The following images couldn't be processed:").unwrap();
+        CONSOLE
+            .write_line("The following images couldn't be processed:")
+            .unwrap();
         unprocessable_images
             .iter()
             .for_each(|image| CONSOLE.write_line(&format!("{}", image)).unwrap());
@@ -210,7 +226,7 @@ fn split_image(mut image: &str) -> (String, String, String) {
     (repo, tag, split[0].to_string())
 }
 
-fn get_metadata(mut image: String, socket: String) -> ImageSummary {
+fn get_metadata(mut image: String, socket: Option<String>) -> ImageSummary {
     let images = list_images(socket);
     if !image.contains(":") {
         image = format!("{}{}", image, ":latest")
