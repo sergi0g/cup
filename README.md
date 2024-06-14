@@ -61,6 +61,10 @@ Currently Cup can only check for updates to images from Docker Hub. More registr
 
 When checking for all container updates you might notice that the first checks are very fast, but after about 30 images Cup slows down. This is because the Docker Hub API isn't very happy with us sending it requests so frequently so it slows them down. I don't think there is currently any workaround to this. At least we can still pull all the images we want!
 
+## Troubleshooting
+
+If you encounter any issues during installation or usage, please check the [issues](https://github.com/sergi0g/cup/issues) page or open a new issue.
+
 ## Contributing
 
 If you think you can make Cup better, you can help out!
