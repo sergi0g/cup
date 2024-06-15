@@ -17,7 +17,7 @@ Go to the Usage section and replace `cup` with `docker run -t -v /var/run/docker
 
 1. Clone the repo
 ```bash
-git clone https://github.com/sergi0g/cup.git`
+git clone https://github.com/sergi0g/cup.git
 ```
 2. Change your working directory
 ```bash
