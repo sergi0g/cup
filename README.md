@@ -6,6 +6,12 @@ Inspired by [What's up docker?](https://github.com/fmartinou/whats-up-docker) wh
 
 ## Installation
 
+### Method 1 (recommended):
+
+If you have [Docker](https://docker.com) installed, you can use the docker image we provide.
+Go to the Usage section and replace `cup` with `docker run -t -v /var/run/docker.sock:/var/run/docker.sock ghcr.io/sergi0g/cup`
+
+### Method 2 (from source):
 > [!IMPORTANT]
 > You will need to have Rust installed on your computer. Go to [https://rustup.rs/](https://rustup.rs/) and follow the instructions.
 
@@ -59,7 +65,7 @@ Image node:latest has an update
 
 Currently Cup can only check for updates to images from Docker Hub. More registries will be added in the future!
 
-When checking for all container updates you might notice that the first checks are very fast, but after about 30 images Cup slows down. This is because the Docker Hub API isn't very happy with us sending it requests so frequently so it slows them down. I don't think there is currently any workaround to this. At least we can still pull all the images we want!
+Output is uncolored (mostly) and has no structure. Will be fixed...
 
 ## Troubleshooting
 

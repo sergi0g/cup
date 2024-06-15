@@ -4,7 +4,7 @@ use std::{
 };
 
 use bollard::{secret::ImageSummary, ClientVersion, Docker};
-use clap::{Parser, Subcommand};
+use clap::Parser;
 use console::Term;
 use indicatif::{ProgressBar, ProgressStyle};
 use lazy_static::lazy_static;
@@ -27,17 +27,8 @@ lazy_static! {
 struct CLI {
     #[arg(short, long, default_value = None)]
     socket: Option<String>,
-
-    #[command(subcommand)]
-    command: Option<Commands>,
-}
-
-#[derive(Subcommand)]
-enum Commands {
-    Check {
-        #[arg(default_value = None)]
-        image: Option<String>,
-    },
+    #[arg(default_value = None)]
+    image: Option<String>,
 }
 
 struct SyncDockerClient {
@@ -77,16 +68,13 @@ impl SyncDockerClient {
 fn main() {
     let cli = CLI::parse();
 
-    match &cli.command {
-        Some(Commands::Check { image }) => match image {
-            Some(name) => {
-                get_updates(name.clone(), cli.socket);
-            }
-            None => {
-                get_all_updates(cli.socket);
-            }
-        },
-        None => {}
+    match &cli.image {
+        Some(name) => {
+            get_updates(name.clone(), cli.socket);
+        }
+        None => {
+            get_all_updates(cli.socket);
+        }
     }
 }
 
