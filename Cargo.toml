@@ -1,0 +1,31 @@
+[package]
+name = "cup"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4.5.7", features = ["derive"] }
+indicatif = { version = "0.17.8", optional = true }
+tokio = {version = "1.38.0", features = ["rt", "rt-multi-thread", "macros"]}
+ureq = { version = "2.9.7", features = ["tls"] }
+json = "0.12.4"
+rayon = "1.10.0"
+xitca-web = { version = "0.5.0", optional = true }
+liquid = { version = "0.26.6", optional = true }
+bollard = "0.16.1"
+once_cell = "1.19.0"
+fancy-regex = "0.13.0"
+http-auth = { version = "0.1.9", features = [] }
+termsize = { version = "0.1.8", optional = true }
+
+[features]
+default = ["server", "cli"]
+server = ["dep:xitca-web", "dep:liquid"]
+cli = ["dep:indicatif", "dep:termsize"]
+
+[profile.release]
+opt-level = "z"
+strip = "symbols"
+panic = "abort"
+lto = "fat"
+codegen-units = 1
