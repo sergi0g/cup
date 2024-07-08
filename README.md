@@ -2,6 +2,13 @@
 
 Cup is the easiest way to check for container image updates.
 
+![Demo](screenshots/cup.gif)
+
+## Screenshots
+
+![Cup web in light mode](screenshots/web_light.png)
+![Cup web in dark mode](screenshots/web_dark.png)
+
 ## Features
 
 - Extremely fast. Cup takes full advantage of your CPU and is hightly optimized, resulting in lightning fast speed. On my test machine, it took ~6 seconds for 70 images.
