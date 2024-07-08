@@ -20,7 +20,7 @@ Cup is the easiest way to check for container image updates.
 
 ## Installation
 
-You can install Cup in 2 ways: as a docker container (recommended), or as a binary.
+You can install Cup in 2 ways: as a docker container (recommended) or as a binary.
 
 ### With docker
 
@@ -85,7 +85,7 @@ rabbitmq:3.11.9-management                              Up to date
 some/deleted:image                                         Unknown
 ```
 
-If you have a Nerd Font installed, you can also add icons with the `-i` flag: `cup check -i`
+If you have a [Nerd Font](https://nerdfonts.com) installed, you can also add icons with the `-i` flag: `cup check -i`
 
 If you want the output to be JSON, use the `-r` flag:
 
