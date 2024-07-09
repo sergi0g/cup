@@ -1,15 +1,15 @@
 FROM rust:alpine AS build
 
-WORKDIR /cup
-
 RUN apk add musl-dev
 
-COPY src src
-COPY Cargo.toml .
-COPY Cargo.lock .
-
+RUN cargo new cup
+WORKDIR /cup
+COPY Cargo.toml Cargo.lock .
 RUN cargo build --release
 
+COPY src ./src
+RUN cargo install --path .
+
 FROM scratch
-COPY --from=build /cup/target/release/cup /cup
+COPY --from=build /usr/local/cargo/bin/cup /cup
 ENTRYPOINT ["/cup"]

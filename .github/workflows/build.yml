@@ -34,3 +34,5 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: ghcr.io/sergi0g/cup:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
