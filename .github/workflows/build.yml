@@ -13,7 +13,7 @@ jobs:
       matrix:
         arch:
           - x86_64-unknown-linux-musl
-          - aarch64-unkown-linux-musl
+          - aarch64-unknown-linux-musl
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
