@@ -12,5 +12,4 @@ RUN cargo build --release
 
 FROM scratch
 COPY --from=build /cup/target/release/cup /cup
-COPY --from=build /cup/target/release/cup.d /cup.d
 ENTRYPOINT ["/cup"]
