@@ -1,7 +1,6 @@
 FROM rust:alpine AS build
 WORKDIR /
 
-RUN rustup target add x86_64-unknown-linux-musl
 RUN apk add musl-dev
 
 RUN USER=root cargo new cup
