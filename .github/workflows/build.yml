@@ -1,0 +1,32 @@
+name: Build binaries
+
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        arch:
+          - x86_64-unknown-linux-musl
+          - aarch64-unkown-linux-musl
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Set up cache
+      uses: Mozilla-Actions/sccache-action@v0.0.5
+    - name: Build
+      run: cross build --release --target ${{ matrix.arch }}
+      env:
+        SCCACHE_GHA_ENABLED: "true"
+        RUSTC_WRAPPER: "sccache"
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: cup-${{ matrix.arch }}
+        path: ./target/${{ matrix.arch }}/release/cup
