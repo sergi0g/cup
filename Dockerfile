@@ -1,15 +1,17 @@
 FROM rust:alpine AS build
+WORKDIR /
 
+RUN rustup target add x86_64-unknown-linux-musl
 RUN apk add musl-dev
 
-RUN cargo new cup
+RUN USER=root cargo new cup
 WORKDIR /cup
-COPY Cargo.toml Cargo.lock .
+COPY Cargo.toml Cargo.lock ./
 RUN cargo build --release
 
 COPY src ./src
-RUN cargo install --path .
+RUN cargo build --release
 
 FROM scratch
-COPY --from=build /usr/local/cargo/bin/cup /cup
+COPY --from=build /cup/target/release/cup /cup
 ENTRYPOINT ["/cup"]
