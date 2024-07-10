@@ -54,8 +54,8 @@ pub fn split_image(image: &str) -> (String, String, String) {
 
 pub fn unsplit_image(registry: &str, repository: &str, tag: &str) -> String {
     let reg = match registry {
-        "registry-1.docker.io" => "",
-        r => &format!("{}/", r),
+        "registry-1.docker.io" => String::new(),
+        r => format!("{}/", r),
     };
     let repo = match repository.split('/').collect::<Vec<&str>>()[0] {
         "library" => repository.strip_prefix("library/").unwrap(),
