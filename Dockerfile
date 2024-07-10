@@ -5,8 +5,6 @@ RUN apk add musl-dev
 
 WORKDIR /cup
 COPY Cargo.toml Cargo.lock ./
-RUN cargo build --release
-
 COPY src ./src
 RUN cargo build --release
 
