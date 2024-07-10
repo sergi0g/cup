@@ -1,27 +1,60 @@
-name: Build docker image
-
+name: Release
 on:
-  release:
-    types:
-      - published
-
-env:
-  CARGO_TERM_COLOR: always
+  push:
+    tags: ["v*.*.*"]
 
 jobs:
-  build:
+  get-tag:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Get current tag
+        run: |
+          TAG=$(echo "$GITHUB_REF" | sed 's/^refs\/tags\///')
+          echo "Current tag: $TAG"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+  build-binary:
+    strategy:
+      matrix:
+        platform:
+          - release_for: linux-aarch64
+            os: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+            bin: cup
+            name: cup-linux-aarch64
+            command: build
 
-      - name: Get latest release tag
-        id: release
-        uses: pozetroninc/github-action-get-latest-release@master
+          - release_for: linux-x86_64
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            bin: cup
+            name: cup-linux-x86_64
+            command: build
+    runs-on: ${{ matrix.platform.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Install cross
+        run: cargo install cross --git https://github.com/cross-rs/cross
+
+      - name: Build binary
+        run: cross ${{ matrix.platform.command }} --target ${{ matrix.platform.target }} --release
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
         with:
-          owner: sergi0g
-          repo: cup
-          excludes: prerelease, draft
+          name: ${{ matrix.platform.name }}
+          path: target/${{ matrix.platform.target }}/release/${{ matrix.platform.bin }}
+
+  build-image:
+    needs: get-tag
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -33,17 +66,41 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
+          username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push
-        uses: docker/build-push-action@v5
+      - name: Build and push image
+        uses: docker/build-push-action@v6
         with:
           context: .
+          platforms: linux/amd64, linux/arm64
           push: true
-          platforms: linux/amd64,linux/arm64
-          tags: |
-            ghcr.io/sergi0g/cup:latest
-            ghcr.io/sergi0g/cup:${{ steps.release.outputs.release }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: ghcr.io/sergi0g/cup:${{ needs.get-tag.outputs.tag }}
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [get-tag, build-image, build-binary]
+    steps:
+      - name: Download arm64 binary
+        uses: actions/download-artifact@v4
+        with:
+          name: cup-linux-aarch64
+          path: cup-linux-aarch64
+
+      - name: Download x86 binary
+        uses: actions/download-artifact@v4
+        with:
+          name: cup-linux-x86_64
+          path: cup-linux-x86_64
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          prerelease: true
+          tag_name: ${{ needs.get-tag.outputs.tag }}
+          name: ${{ needs.get-tag.outputs.tag }}
+          files: |
+            cup-linux-aarch64/cup-linux-aarch64
+            cup-linux-x86_64/cup-linux-x86_64
