@@ -19,7 +19,7 @@ jobs:
         id: get_tag
         run: |
           VERSION=$(cargo metadata --format-version=1 --no-deps | jq '.packages[0].version')
-          echo "tagname=v${VERSION}-nightly.${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          echo "tagname=v$VERSION-nightly.${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
 
       - uses: rickstaa/action-create-tag@v1
         with:
