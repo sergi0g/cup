@@ -1,8 +1,9 @@
-name: Build binaries
+name: Build docker image
 
 on:
-  push:
-    branches: ["main"]
+  release:
+    types:
+      - published
 
 env:
   CARGO_TERM_COLOR: always
@@ -13,6 +14,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Get latest release tag
+        id: release
+        uses: pozetroninc/github-action-get-latest-release@master
+        with:
+          owner: sergi0g
+          repo: cup
+          excludes: prerelease, draft
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -33,6 +42,8 @@ jobs:
           context: .
           push: true
           platforms: linux/amd64,linux/arm64
-          tags: ghcr.io/sergi0g/cup:latest
+          tags: |
+            ghcr.io/sergi0g/cup:latest
+            ghcr.io/sergi0g/cup:${{ steps.release.outputs.release }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
