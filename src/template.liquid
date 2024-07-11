@@ -21,8 +21,9 @@
       }
 
       @media (prefers-color-scheme: dark) {
-        .gi::before, .gi::after {
-            background-color: #1f2937;
+        .gi::before,
+        .gi::after {
+          background-color: #1f2937;
         }
       }
 
@@ -37,6 +38,31 @@
         block-size: 1px;
         inset-inline-start: 0;
         inset-block-start: -0.12rem;
+      }
+
+      @supports (scrollbar-color: auto) {
+        html {
+          scrollbar-color: #707070 #343840;
+        }
+      }
+
+      @supports selector(::-webkit-scrollbar) {
+        html::-webkit-scrollbar {
+          width: 10px;
+        }
+
+        html::-webkit-scrollbar-track {
+          background: #343840;
+        }
+
+        html::-webkit-scrollbar-thumb {
+          background: #707070;
+          border-radius: 0.375rem;
+        }
+
+        html::-webkit-scrollbar-thumb:hover {
+          background: #b5b5b5;
+        }
       }
     </style>
   </head>
