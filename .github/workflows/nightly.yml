@@ -62,7 +62,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.platform.name }}
-          path: target/${{ matrix.platform.target }}/release/${{ matrix.platform.bin }}
+          path: target/${{ matrix.platform.target }}/debug/${{ matrix.platform.bin }}
 
   build-image:
     needs: create-tag
