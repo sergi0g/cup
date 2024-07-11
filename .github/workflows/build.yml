@@ -6,8 +6,11 @@ on:
 jobs:
   get-tag:
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
     steps:
       - name: Get current tag
+        id: tag
         run: |
           TAG=$(echo "$GITHUB_REF" | sed 's/^refs\/tags\///')
           echo "Current tag: $TAG"
@@ -75,7 +78,7 @@ jobs:
           context: .
           platforms: linux/amd64, linux/arm64
           push: true
-          tags: ghcr.io/sergi0g/cup:${{ needs.get-tag.outputs.tag }}
+          tags: ghcr.io/sergi0g/cup:${{ needs.get-tag.outputs.tag }},ghcr.io/sergi0g/cup:latest
 
   release:
     runs-on: ubuntu-latest
