@@ -79,6 +79,8 @@ jobs:
           platforms: linux/amd64, linux/arm64
           push: true
           tags: ghcr.io/sergi0g/cup:${{ needs.get-tag.outputs.tag }},ghcr.io/sergi0g/cup:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   release:
     runs-on: ubuntu-latest
