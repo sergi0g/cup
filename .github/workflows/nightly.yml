@@ -1,32 +1,10 @@
 name: Nightly Release
 on:
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "Nightly version tag"
-        required: true
+  push:
+    branches: main
 
 jobs:
-  create-tag:
-    runs-on: ubuntu-latest
-    outputs:
-      tagname: ${{ steps.get_tag.outputs.tagname }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Get tag from Cargo.toml
-        id: get_tag
-        run: |
-          VERSION=$(cargo metadata --format-version=1 --no-deps | jq -r '.packages[0].version')
-          echo "tagname=v$VERSION-nightly.${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
-
-      - uses: rickstaa/action-create-tag@v1
-        with:
-          tag: ${{ steps.get_tag.outputs.tagname }}
-
   build-binary:
-    needs: create-tag
     strategy:
       matrix:
         platform:
@@ -65,7 +43,6 @@ jobs:
           path: target/${{ matrix.platform.target }}/debug/${{ matrix.platform.bin }}
 
   build-image:
-    needs: create-tag
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -90,34 +67,6 @@ jobs:
           context: .
           platforms: linux/amd64, linux/arm64
           push: true
-          tags: ghcr.io/sergi0g/cup:${{ needs.create-tag.outputs.tagname }}
+          tags: ghcr.io/sergi0g/cup:nightly
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-  nightly-release:
-    runs-on: ubuntu-latest
-    needs: [create-tag, build-image, build-binary]
-    steps:
-      - name: Download arm64 binary
-        uses: actions/download-artifact@v4
-        with:
-          name: cup-linux-aarch64
-          path: cup-linux-aarch64
-
-      - name: Download x86 binary
-        uses: actions/download-artifact@v4
-        with:
-          name: cup-linux-x86_64
-          path: cup-linux-x86_64
-
-      - name: Create nightly release
-        uses: softprops/action-gh-release@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          prerelease: true
-          tag_name: ${{ needs.create-tag.outputs.tagname }}
-          name: ${{ needs.create-tag.outputs.tagname }}
-          files: |
-            cup-linux-aarch64/cup-linux-aarch64
-            cup-linux-x86_64/cup-linux-x86_64
