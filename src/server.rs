@@ -18,7 +18,6 @@ const FAVICON_SVG: &[u8] = include_bytes!("static/favicon.svg");
 const APPLE_TOUCH_ICON: &[u8] = include_bytes!("static/apple-touch-icon.png");
 
 pub async fn serve(port: &u16, updates: &[(String, Option<bool>)]) -> std::io::Result<()> {
-    println!("Serving on http://0.0.0.0:{}", port);
     App::new()
         .with_state(updates.to_owned())
         .at("/", get(handler_service(home)))
