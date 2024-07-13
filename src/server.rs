@@ -1,15 +1,18 @@
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
+use chrono::Local;
 use liquid::{object, Object};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use xitca_web::{
     body::ResponseBody,
-    handler::{handler_service, state::StateOwn},
+    handler::{handler_service, state::StateRef},
     http::WebResponse,
+    middleware::Logger,
     route::get,
     App,
-    middleware::Logger
 };
+
+use crate::{get_all_updates, utils::sort_update_vec};
 
 const RAW_TEMPLATE: &str = include_str!("static/template.liquid");
 const STYLE: &str = include_str!("static/index.css");
@@ -17,11 +20,14 @@ const FAVICON_ICO: &[u8] = include_bytes!("static/favicon.ico");
 const FAVICON_SVG: &[u8] = include_bytes!("static/favicon.svg");
 const APPLE_TOUCH_ICON: &[u8] = include_bytes!("static/apple-touch-icon.png");
 
-pub async fn serve(port: &u16, updates: &[(String, Option<bool>)]) -> std::io::Result<()> {
+pub async fn serve(port: &u16, socket: Option<String>) -> std::io::Result<()> {
+    let mut data = UpdateData::new(socket).await;
+    data.refresh().await;
     App::new()
-        .with_state(updates.to_owned())
+        .with_state(Arc::new(Mutex::new(data)))
         .at("/", get(handler_service(home)))
         .at("/json", get(handler_service(json)))
+        .at("/refresh", get(handler_service(refresh)))
         .at("/favicon.ico", handler_service(favicon_ico)) // These aren't pretty but this is xitca-web...
         .at("/favicon.svg", handler_service(favicon_svg))
         .at("/apple-touch-icon.png", handler_service(apple_touch_icon))
@@ -32,62 +38,17 @@ pub async fn serve(port: &u16, updates: &[(String, Option<bool>)]) -> std::io::R
         .wait()
 }
 
-async fn home(
-    updates: StateOwn<Vec<(String, Option<bool>)>>,
-) -> WebResponse {
-    let template = liquid::ParserBuilder::with_stdlib()
-        .build()
-        .unwrap()
-        .parse(RAW_TEMPLATE)
-        .unwrap();
-    let images = updates
-        .0
-        .par_iter()
-        .map(|(name, image)| match image {
-            Some(value) => {
-                if *value {
-                    object!({"name": name, "status": "update-available"})
-                } else {
-                    object!({"name": name, "status": "up-to-date"})
-                }
-            }
-            None => object!({"name": name, "status": "unknown"}),
-        })
-        .collect::<Vec<Object>>();
-    let uptodate = images
-        .par_iter()
-        .filter(|&o| o["status"] == "up-to-date")
-        .collect::<Vec<&Object>>()
-        .len();
-    let updatable = images
-        .par_iter()
-        .filter(|&o| o["status"] == "update-available")
-        .collect::<Vec<&Object>>()
-        .len();
-    let unknown = images
-        .par_iter()
-        .filter(|&o| o["status"] == "unknown")
-        .collect::<Vec<&Object>>()
-        .len();
-    let globals = object!({
-        "metrics": [{"name": "Monitored images", "value": images.len()}, {"name": "Up to date", "value": uptodate}, {"name": "Updates available", "value": updatable}, {"name": "Unknown", "value": unknown}],
-        "images": images,
-        "style": STYLE
-    });
-    let result = template.render(&globals).unwrap();
-    WebResponse::new(ResponseBody::from(result))
+async fn home(data: StateRef<'_, Arc<Mutex<UpdateData>>>) -> WebResponse {
+    WebResponse::new(ResponseBody::from(data.lock().unwrap().template.clone()))
 }
 
-async fn json(
-    updates: StateOwn<Vec<(String, Option<bool>)>>
-) -> WebResponse {
-    let result_mutex: Mutex<json::object::Object> = Mutex::new(json::object::Object::new());
-    updates.par_iter().for_each(|image| match image.1 {
-        Some(b) => result_mutex.lock().unwrap().insert(&image.0, json::from(b)),
-        None => result_mutex.lock().unwrap().insert(&image.0, json::Null),
-    });
-    let result = json::stringify(result_mutex.lock().unwrap().clone());
-    WebResponse::new(ResponseBody::from(result))
+async fn json(data: StateRef<'_, Arc<Mutex<UpdateData>>>) -> WebResponse {
+    WebResponse::new(ResponseBody::from(data.lock().unwrap().json.clone()))
+}
+
+async fn refresh(data: StateRef<'_, Arc<Mutex<UpdateData>>>) -> WebResponse {
+    data.lock().unwrap().refresh().await;
+    return WebResponse::new(ResponseBody::from("OK"));
 }
 
 async fn favicon_ico() -> WebResponse {
@@ -100,4 +61,74 @@ async fn favicon_svg() -> WebResponse {
 
 async fn apple_touch_icon() -> WebResponse {
     WebResponse::new(ResponseBody::from(APPLE_TOUCH_ICON))
+}
+
+struct UpdateData {
+    template: String,
+    raw: Vec<(String, Option<bool>)>,
+    json: String,
+    socket: Option<String>,
+}
+
+impl UpdateData {
+    async fn new(socket: Option<String>) -> Self {
+        return Self {
+            socket,
+            template: String::new(),
+            json: String::new(),
+            raw: Vec::new(),
+        };
+    }
+    async fn refresh(self: &mut Self) {
+        let updates = sort_update_vec(&get_all_updates(self.socket.clone()).await);
+        self.raw = updates;
+        let template = liquid::ParserBuilder::with_stdlib()
+            .build()
+            .unwrap()
+            .parse(RAW_TEMPLATE)
+            .unwrap();
+        let images = self
+            .raw
+            .iter()
+            .map(|(name, image)| match image {
+                Some(value) => {
+                    if *value {
+                        object!({"name": name, "status": "update-available"})
+                    } else {
+                        object!({"name": name, "status": "up-to-date"})
+                    }
+                }
+                None => object!({"name": name, "status": "unknown"}),
+            })
+            .collect::<Vec<Object>>();
+        let uptodate = images
+            .par_iter()
+            .filter(|&o| o["status"] == "up-to-date")
+            .collect::<Vec<&Object>>()
+            .len();
+        let updatable = images
+            .par_iter()
+            .filter(|&o| o["status"] == "update-available")
+            .collect::<Vec<&Object>>()
+            .len();
+        let unknown = images
+            .par_iter()
+            .filter(|&o| o["status"] == "unknown")
+            .collect::<Vec<&Object>>()
+            .len();
+        let last_updated = Local::now().format("%Y-%m-%d %H:%M:%S");
+        let globals = object!({
+            "metrics": [{"name": "Monitored images", "value": images.len()}, {"name": "Up to date", "value": uptodate}, {"name": "Updates available", "value": updatable}, {"name": "Unknown", "value": unknown}],
+            "images": images,
+            "style": STYLE,
+            "last_updated": last_updated.to_string()
+        });
+        self.template = template.render(&globals).unwrap();
+        let json_data: Mutex<json::object::Object> = Mutex::new(json::object::Object::new());
+        self.raw.par_iter().for_each(|image| match image.1 {
+            Some(b) => json_data.lock().unwrap().insert(&image.0, json::from(b)),
+            None => json_data.lock().unwrap().insert(&image.0, json::Null),
+        });
+        self.json = json::stringify(json_data.lock().unwrap().clone());
+    }
 }

@@ -95,8 +95,7 @@ async fn main() {
         },
         #[cfg(feature = "server")]
         Some(Commands::Serve { port }) => {
-            let updates = get_all_updates(cli.socket).await;
-            let _ = serve(port, &updates).await;
+            let _ = serve(port, cli.socket).await;
         }
         None => (),
     }
