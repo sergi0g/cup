@@ -147,6 +147,9 @@ Cup is a work in progress. It might not have as many features as What's up Docke
 - Cup doesn't support private images. This is on the roadmap. Currently, it just returns unknown for those images.
 - Cup cannot trigger your integrations. If you want that to happen automatically, please use What's up docker instead. Cup was created to be simple. The data is there, and it's up to you to retrieve it (e.g. by running `cup check -r` with a cronjob or periodically requesting the `/json` url from the server)
 
+## Roadmap
+Take a sneak peek at what's coming up in future releases on the [roadmap](https://github.com/users/sergi0g/projects/2)!
+
 ## Contributing
 
 All contributions are welcome!
