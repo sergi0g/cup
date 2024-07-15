@@ -18,6 +18,7 @@ http-auth = { version = "0.1.9", features = [] }
 termsize = { version = "0.1.8", optional = true }
 regex = "1.10.5"
 chrono = { version = "0.4.38", default-features = false, features = ["std", "alloc", "clock"] }
+home = "0.5.9"
 
 [features]
 default = ["server", "cli"]

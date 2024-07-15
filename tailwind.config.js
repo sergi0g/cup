@@ -7,5 +7,11 @@ module.exports = {
     extend: {},
   },
   plugins: [],
+  safelist: [
+    {
+      pattern: /(bg|text|divide)-(gray|neutral)-.+/,
+      variants: ["dark"]
+    }
+  ]
 }
 

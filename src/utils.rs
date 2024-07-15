@@ -1,3 +1,6 @@
+use std::{collections::HashMap, path::PathBuf};
+
+use json::JsonValue;
 use once_cell::sync::Lazy;
 use regex::Regex;
 
@@ -81,4 +84,57 @@ pub fn sort_update_vec(updates: &[(String, Option<bool>)]) -> Vec<(String, Optio
         (None, None) => a.0.cmp(&b.0),
     });
     sorted_updates.to_vec()
+}
+
+/// Tries to load the config from the path provided and perform basic validation
+pub fn load_config(config_path: Option<PathBuf>) -> Config {
+    let raw_config = match &config_path {
+        Some(path) => std::fs::read_to_string(path),
+        None => Ok(String::from("{\"theme\":\"default\"}")),
+    };
+    if raw_config.is_err() {
+        panic!(
+            "Failed to read config file from {}. Are you sure the file exists?",
+            &config_path.unwrap().to_str().unwrap()
+        )
+    };
+    let config = match json::parse(&raw_config.unwrap()) {
+        Ok(v) => v,
+        Err(e) => panic!("Failed to parse config!\n{}", e),
+    };
+    // Very basic validation
+    const TOP_LEVEL_KEYS: [&str; 2] = ["authentication", "theme"];
+    let themes: JsonValue = json::object! {default: "neutral", blue: "gray"};
+    for (key, _) in config.entries() {
+        if !TOP_LEVEL_KEYS.contains(&key) {
+            error!("Config contains invalid key {}", key)
+        }
+    }
+    if config.has_key("authentication") && !config["authentication"].is_object() {
+        error!("\"{}\" must be an object", "authentication")
+    }
+    for (registry, token) in config["authentication"].entries() {
+        if !token.is_string() {
+            error!(
+                "Invalid token {} for registry {}. Must be a string",
+                token, registry
+            )
+        }
+    }
+    if !themes.has_key(&config["theme"].to_string()) {
+        error!(
+            "Invalid theme {}. Available themes are {:#?}",
+            config["theme"],
+            themes.entries().map(|(k, _)| k).collect::<Vec<&str>>()
+        )
+    }
+    return Config {
+        authentication: HashMap::new(),
+        theme: themes[config["theme"].to_string()].to_string(),
+    };
+}
+
+pub struct Config {
+    pub authentication: HashMap<String, String>,
+    pub theme: String,
 }

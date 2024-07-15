@@ -12,7 +12,7 @@ use xitca_web::{
     App,
 };
 
-use crate::{get_all_updates, utils::sort_update_vec};
+use crate::{check::get_all_updates, utils::{sort_update_vec, Config}};
 
 const RAW_TEMPLATE: &str = include_str!("static/template.liquid");
 const STYLE: &str = include_str!("static/index.css");
@@ -20,8 +20,8 @@ const FAVICON_ICO: &[u8] = include_bytes!("static/favicon.ico");
 const FAVICON_SVG: &[u8] = include_bytes!("static/favicon.svg");
 const APPLE_TOUCH_ICON: &[u8] = include_bytes!("static/apple-touch-icon.png");
 
-pub async fn serve(port: &u16, socket: Option<String>) -> std::io::Result<()> {
-    let mut data = UpdateData::new(socket).await;
+pub async fn serve(port: &u16, socket: Option<String>, config: Config) -> std::io::Result<()> {
+    let mut data = ServerData::new(socket, config).await;
     data.refresh().await;
     App::new()
         .with_state(Arc::new(Mutex::new(data)))
@@ -38,15 +38,15 @@ pub async fn serve(port: &u16, socket: Option<String>) -> std::io::Result<()> {
         .wait()
 }
 
-async fn home(data: StateRef<'_, Arc<Mutex<UpdateData>>>) -> WebResponse {
+async fn home(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
     WebResponse::new(ResponseBody::from(data.lock().unwrap().template.clone()))
 }
 
-async fn json(data: StateRef<'_, Arc<Mutex<UpdateData>>>) -> WebResponse {
+async fn json(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
     WebResponse::new(ResponseBody::from(data.lock().unwrap().json.clone()))
 }
 
-async fn refresh(data: StateRef<'_, Arc<Mutex<UpdateData>>>) -> WebResponse {
+async fn refresh(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
     data.lock().unwrap().refresh().await;
     return WebResponse::new(ResponseBody::from("OK"));
 }
@@ -63,32 +63,34 @@ async fn apple_touch_icon() -> WebResponse {
     WebResponse::new(ResponseBody::from(APPLE_TOUCH_ICON))
 }
 
-struct UpdateData {
+struct ServerData {
     template: String,
-    raw: Vec<(String, Option<bool>)>,
+    raw_updates: Vec<(String, Option<bool>)>,
     json: String,
     socket: Option<String>,
+    config: Config,
 }
 
-impl UpdateData {
-    async fn new(socket: Option<String>) -> Self {
+impl ServerData {
+    async fn new(socket: Option<String>, config: Config) -> Self {
         return Self {
             socket,
             template: String::new(),
             json: String::new(),
-            raw: Vec::new(),
+            raw_updates: Vec::new(),
+            config,
         };
     }
     async fn refresh(self: &mut Self) {
         let updates = sort_update_vec(&get_all_updates(self.socket.clone()).await);
-        self.raw = updates;
+        self.raw_updates = updates;
         let template = liquid::ParserBuilder::with_stdlib()
             .build()
             .unwrap()
             .parse(RAW_TEMPLATE)
             .unwrap();
         let images = self
-            .raw
+            .raw_updates
             .iter()
             .map(|(name, image)| match image {
                 Some(value) => {
@@ -121,11 +123,12 @@ impl UpdateData {
             "metrics": [{"name": "Monitored images", "value": images.len()}, {"name": "Up to date", "value": uptodate}, {"name": "Updates available", "value": updatable}, {"name": "Unknown", "value": unknown}],
             "images": images,
             "style": STYLE,
-            "last_updated": last_updated.to_string()
+            "last_updated": last_updated.to_string(),
+            "theme": self.config.theme
         });
         self.template = template.render(&globals).unwrap();
         let json_data: Mutex<json::object::Object> = Mutex::new(json::object::Object::new());
-        self.raw.par_iter().for_each(|image| match image.1 {
+        self.raw_updates.par_iter().for_each(|image| match image.1 {
             Some(b) => json_data.lock().unwrap().insert(&image.0, json::from(b)),
             None => json_data.lock().unwrap().insert(&image.0, json::Null),
         });

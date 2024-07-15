@@ -21,14 +21,22 @@
       .gi::after {
         content: '';
         position: absolute;
-        background-color: #e5e7eb;
         z-index: 1;
+        {% if theme == "neutral" %}
+        background-color: #e5e5e5;
+        {% elsif theme == "gray" %}
+        background-color: #e5e7eb
+        {% endif %}
       }
 
       @media (prefers-color-scheme: dark) {
         .gi::before,
         .gi::after {
-          background-color: #1f2937;
+          {% if theme == "neutral" %}
+          background-color: #262626;
+          {% elsif theme == "gray" %}
+          background-color: #1f2937
+          {% endif %}
         }
       }
 
@@ -75,19 +83,19 @@
         var button = event.currentTarget;
         button.disabled = true;
 
-        let request = new XMLHttpRequest()
+        let request = new XMLHttpRequest();
         request.onload = function () {
           if (request.status === 200) {
             window.location.reload();
           }
         };
-        request.open("GET", `${window.location.origin}/refresh`);
+        request.open('GET', `${window.location.origin}/refresh`);
         request.send();
       }
     </script>
   </head>
   <body>
-    <div class="flex justify-center items-center min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div class="flex justify-center items-center min-h-screen bg-{{ theme }}-50 dark:bg-{{ theme }}-950">
       <div class="lg:px-8 sm:px-6 px-4 max-w-[80rem] mx-auto h-full w-full">
         <div class="max-w-[48rem] mx-auto h-full my-8">
           <div class="flex items-center gap-1">
@@ -130,12 +138,12 @@
               </g>
             </svg>
           </div>
-          <div class="shadow-sm bg-white dark:bg-gray-900 rounded-md my-8">
+          <div class="shadow-sm bg-white dark:bg-{{ theme }}-900 rounded-md my-8">
             <dl class="lg:grid-cols-4 md:grid-cols-2 gap-1 grid-cols-1 grid overflow-hidden *:relative">
               {% for metric in metrics %}
                 <div class="gi">
                   <div class="xl:px-8 px-6 py-4 gap-y-2 gap-x-4 justify-between align-baseline flex flex-col h-full">
-                    <dt class="text-gray-500 dark:text-gray-400 leading-6 font-medium flex gap-1 justify-between">
+                    <dt class="text-{{ theme }}-500 dark:text-{{ theme }}-400 leading-6 font-medium flex gap-1 justify-between">
                       {{ metric.name }}
                       {% if metric.name == 'Monitored images' %}
                         <svg
@@ -179,7 +187,7 @@
                           height="24"
                           viewBox="0 0 24 24"
                           fill="currentColor"
-                          class="size-6 text-gray-500 shrink-0"
+                          class="size-6 text-{{ theme }}-500 shrink-0"
                         >
                           <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                           <path d="M12 2c5.523 0 10 4.477 10 10a10 10 0 0 1 -19.995 .324l-.005 -.324l.004 -.28c.148 -5.393 4.566 -9.72 9.996 -9.72zm0 13a1 1 0 0 0 -.993 .883l-.007 .117l.007 .127a1 1 0 0 0 1.986 0l.007 -.117l-.007 -.127a1 1 0 0 0 -.993 -.883zm1.368 -6.673a2.98 2.98 0 0 0 -3.631 .728a1 1 0 0 0 1.44 1.383l.171 -.18a.98 .98 0 0 1 1.11 -.15a1 1 0 0 1 -.34 1.886l-.232 .012a1 1 0 0 0 .111 1.994a3 3 0 0 0 1.371 -5.673z" />
@@ -194,8 +202,8 @@
               {% endfor %}
             </dl>
           </div>
-          <div class="shadow-sm bg-white dark:bg-gray-900 rounded-md my-8">
-            <div class="flex justify-between items-center px-6 py-4 text-gray-500">
+          <div class="shadow-sm bg-white dark:bg-{{ theme }}-900 rounded-md my-8">
+            <div class="flex justify-between items-center px-6 py-4 text-{{ theme }}-500">
               <h3>Last checked: {{ last_updated }}</h3>
               <button class="group" onclick="refresh(event)">
                 <svg
@@ -214,7 +222,7 @@
                 </svg>
               </button>
             </div>
-            <ul class="*:py-4 *:px-6 *:flex *:items-center *:gap-3 dark:divide-gray-800 divide-y dark:text-white">
+            <ul class="*:py-4 *:px-6 *:flex *:items-center *:gap-3 dark:divide-{{ theme }}-800 divide-y dark:text-white">
               {% for image in images %}
                 <li>
                   <svg
@@ -266,7 +274,7 @@
                       height="24"
                       viewBox="0 0 24 24"
                       fill="currentColor"
-                      class="text-gray-500 ml-auto"
+                      class="text-{{ theme }}-500 ml-auto"
                     >
                       <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                       <path d="M12 2c5.523 0 10 4.477 10 10a10 10 0 0 1 -19.995 .324l-.005 -.324l.004 -.28c.148 -5.393 4.566 -9.72 9.996 -9.72zm0 13a1 1 0 0 0 -.993 .883l-.007 .117l.007 .127a1 1 0 0 0 1.986 0l.007 -.117l-.007 -.127a1 1 0 0 0 -.993 -.883zm1.368 -6.673a2.98 2.98 0 0 0 -3.631 .728a1 1 0 0 0 1.44 1.383l.171 -.18a.98 .98 0 0 1 1.11 -.15a1 1 0 0 1 -.34 1.886l-.232 .012a1 1 0 0 0 .111 1.994a3 3 0 0 0 1.371 -5.673z" />
