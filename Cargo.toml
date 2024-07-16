@@ -8,7 +8,7 @@ clap = { version = "4.5.7", features = ["derive"] }
 indicatif = { version = "0.17.8", optional = true }
 tokio = {version = "1.38.0", features = ["rt", "rt-multi-thread", "macros"]}
 ureq = { version = "2.9.7", features = ["tls"] }
-json = "0.12.4"
+serde_json = "1.0"
 rayon = "1.10.0"
 xitca-web = { version = "0.5.0", optional = true, features = ["logger"] }
 liquid = { version = "0.26.6", optional = true }
@@ -19,6 +19,7 @@ termsize = { version = "0.1.8", optional = true }
 regex = "1.10.5"
 chrono = { version = "0.4.38", default-features = false, features = ["std", "alloc", "clock"] }
 home = "0.5.9"
+serde = "1.0.204"
 
 [features]
 default = ["server", "cli"]

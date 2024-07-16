@@ -1,8 +1,8 @@
-use std::sync::{Arc, Mutex};
+use std::{collections::HashMap, sync::Arc};
 
 use chrono::Local;
 use liquid::{object, Object};
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use tokio::sync::Mutex;
 use xitca_web::{
     body::ResponseBody,
     handler::{handler_service, state::StateRef},
@@ -12,7 +12,11 @@ use xitca_web::{
     App,
 };
 
-use crate::{check::get_all_updates, utils::{sort_update_vec, Config}};
+use crate::{
+    check::get_all_updates,
+    error,
+    utils::{sort_update_vec, to_json, Config, JsonData},
+};
 
 const RAW_TEMPLATE: &str = include_str!("static/template.liquid");
 const STYLE: &str = include_str!("static/index.css");
@@ -39,16 +43,18 @@ pub async fn serve(port: &u16, socket: Option<String>, config: Config) -> std::i
 }
 
 async fn home(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
-    WebResponse::new(ResponseBody::from(data.lock().unwrap().template.clone()))
+    WebResponse::new(ResponseBody::from(data.lock().await.template.clone()))
 }
 
 async fn json(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
-    WebResponse::new(ResponseBody::from(data.lock().unwrap().json.clone()))
+    WebResponse::new(ResponseBody::from(
+        serde_json::to_string(&data.lock().await.json).unwrap(),
+    ))
 }
 
 async fn refresh(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
-    data.lock().unwrap().refresh().await;
-    return WebResponse::new(ResponseBody::from("OK"));
+    data.lock().await.refresh().await;
+    WebResponse::new(ResponseBody::from("OK"))
 }
 
 async fn favicon_ico() -> WebResponse {
@@ -66,22 +72,27 @@ async fn apple_touch_icon() -> WebResponse {
 struct ServerData {
     template: String,
     raw_updates: Vec<(String, Option<bool>)>,
-    json: String,
+    json: JsonData,
     socket: Option<String>,
     config: Config,
 }
 
 impl ServerData {
     async fn new(socket: Option<String>, config: Config) -> Self {
-        return Self {
+        let mut s = Self {
             socket,
             template: String::new(),
-            json: String::new(),
+            json: JsonData {
+                metrics: HashMap::new(),
+                images: HashMap::new(),
+            },
             raw_updates: Vec::new(),
             config,
         };
+        s.refresh().await;
+        s
     }
-    async fn refresh(self: &mut Self) {
+    async fn refresh(&mut self) {
         let updates = sort_update_vec(&get_all_updates(self.socket.clone()).await);
         self.raw_updates = updates;
         let template = liquid::ParserBuilder::with_stdlib()
@@ -92,46 +103,31 @@ impl ServerData {
         let images = self
             .raw_updates
             .iter()
-            .map(|(name, image)| match image {
-                Some(value) => {
-                    if *value {
-                        object!({"name": name, "status": "update-available"})
-                    } else {
-                        object!({"name": name, "status": "up-to-date"})
-                    }
-                }
-                None => object!({"name": name, "status": "unknown"}),
+            .map(|(name, has_update)| match has_update {
+                Some(v) => object!({"name": name, "has_update": v.to_string()}), // Liquid kinda thinks false == nil, so we'll be comparing strings from now on
+                None => object!({"name": name, "has_update": "null"}),
             })
             .collect::<Vec<Object>>();
-        let uptodate = images
-            .par_iter()
-            .filter(|&o| o["status"] == "up-to-date")
-            .collect::<Vec<&Object>>()
-            .len();
-        let updatable = images
-            .par_iter()
-            .filter(|&o| o["status"] == "update-available")
-            .collect::<Vec<&Object>>()
-            .len();
-        let unknown = images
-            .par_iter()
-            .filter(|&o| o["status"] == "unknown")
-            .collect::<Vec<&Object>>()
-            .len();
+        self.json = to_json(&self.raw_updates);
         let last_updated = Local::now().format("%Y-%m-%d %H:%M:%S");
+        let theme = match &self.config.theme {
+            Some(t) => match t.as_str() {
+                "default" => "neutral",
+                "blue" => "gray",
+                _ => error!(
+                    "Invalid theme {} specified! Please choose between 'default' and 'blue'",
+                    t
+                ),
+            },
+            None => "neutral",
+        };
         let globals = object!({
-            "metrics": [{"name": "Monitored images", "value": images.len()}, {"name": "Up to date", "value": uptodate}, {"name": "Updates available", "value": updatable}, {"name": "Unknown", "value": unknown}],
+            "metrics": [{"name": "Monitored images", "value": self.json.metrics.get("monitored_images")}, {"name": "Up to date", "value": self.json.metrics.get("up_to_date")}, {"name": "Updates available", "value": self.json.metrics.get("update_available")}, {"name": "Unknown", "value": self.json.metrics.get("unknown")}],
             "images": images,
             "style": STYLE,
             "last_updated": last_updated.to_string(),
-            "theme": self.config.theme
+            "theme": theme
         });
         self.template = template.render(&globals).unwrap();
-        let json_data: Mutex<json::object::Object> = Mutex::new(json::object::Object::new());
-        self.raw_updates.par_iter().for_each(|image| match image.1 {
-            Some(b) => json_data.lock().unwrap().insert(&image.0, json::from(b)),
-            None => json_data.lock().unwrap().insert(&image.0, json::Null),
-        });
-        self.json = json::stringify(json_data.lock().unwrap().clone());
     }
 }

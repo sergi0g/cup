@@ -7,6 +7,7 @@
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Cup</title>
     <style>
       {{ style }}
     </style>
@@ -243,7 +244,7 @@
                     <path d="M3.27 6.96l8.73 5.04" />
                   </svg>
                   {{ image.name }}
-                  {% if image.status == 'up-to-date' %}
+                  {% if image.has_update == 'false' %}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       width="24"
@@ -255,7 +256,7 @@
                       <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                       <path d="M17 3.34a10 10 0 1 1 -14.995 8.984l-.005 -.324l.005 -.324a10 10 0 0 1 14.995 -8.336zm-1.293 5.953a1 1 0 0 0 -1.32 -.083l-.094 .083l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.403 1.403l.083 .094l2 2l.094 .083a1 1 0 0 0 1.226 0l.094 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z" />
                     </svg>
-                  {% elsif image.status == 'update-available' %}
+                  {% elsif image.has_update == 'true' %}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       width="24"
@@ -267,7 +268,7 @@
                       <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                       <path d="M17 3.34a10 10 0 1 1 -14.995 8.984l-.005 -.324l.005 -.324a10 10 0 0 1 14.995 -8.336zm-4.98 3.66l-.163 .01l-.086 .016l-.142 .045l-.113 .054l-.07 .043l-.095 .071l-.058 .054l-4 4l-.083 .094a1 1 0 0 0 1.497 1.32l2.293 -2.293v5.586l.007 .117a1 1 0 0 0 1.993 -.117v-5.585l2.293 2.292l.094 .083a1 1 0 0 0 1.32 -1.497l-4 -4l-.082 -.073l-.089 -.064l-.113 -.062l-.081 -.034l-.113 -.034l-.112 -.02l-.098 -.006z" />
                     </svg>
-                  {% elsif image.status == 'unknown' %}
+                  {% elsif image.has_update == 'null' %}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       width="24"

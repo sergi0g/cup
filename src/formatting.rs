@@ -1,9 +1,9 @@
 use std::time::Duration;
 
 use indicatif::{ProgressBar, ProgressStyle};
-use json::object;
+use serde_json::json;
 
-use crate::utils::sort_update_vec;
+use crate::utils::{sort_update_vec, to_json};
 
 pub fn print_updates(updates: &[(String, Option<bool>)], icons: &bool) {
     let sorted_updates = sort_update_vec(updates);
@@ -40,11 +40,7 @@ pub fn print_updates(updates: &[(String, Option<bool>)], icons: &bool) {
 }
 
 pub fn print_raw_updates(updates: &[(String, Option<bool>)]) {
-    let mut result = json::Array::new();
-    for update in updates {
-        result.push(object! {image: update.0.clone(), has_update: update.1});
-    }
-    println!("{}", json::stringify(result));
+    println!("{}", serde_json::to_string(&to_json(updates)).unwrap());
 }
 
 pub fn print_update(name: &str, has_update: &Option<bool>) {
@@ -62,8 +58,8 @@ pub fn print_update(name: &str, has_update: &Option<bool>) {
 }
 
 pub fn print_raw_update(name: &str, has_update: &Option<bool>) {
-    let result = object!{image: name, has_update: *has_update};
-    println!("{}", json::stringify(result));
+    let result = json!({"images": {name: has_update}});
+    println!("{}", result);
 }
 
 pub struct Spinner {
