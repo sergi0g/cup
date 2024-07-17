@@ -9,7 +9,7 @@ module.exports = withNextra(
     images: {
       unoptimized: true
     },
-    basePath: '/cup'
+    basePath: process.env.NODE_ENV == 'production' ? '/cup' : ''
   }
 );
 
