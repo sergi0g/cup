@@ -2,6 +2,15 @@
     "index": {
         "title": "Introduction"
     },
+    "installation": {
+        "title": "Installation"
+    },
+    "configuration": {
+        "title": "Configuration"
+    },
+    "usage": {
+        "title": "Usage"
+    },
     "nightly": {
         "title": "Using the latest version"
     }
