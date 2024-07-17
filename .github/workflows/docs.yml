@@ -27,4 +27,4 @@ jobs:
       - name: Publish
         uses: actions/upload-pages-artifact@v3
         with:
-          path: out/
+          path: docs/out/
