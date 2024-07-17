@@ -9,9 +9,5 @@
         "theme": {
             "typesetting": "article"
         }
-    },
-    "index": {
-        "title": "Home",
-        "display": "hidden"
     }
 }
