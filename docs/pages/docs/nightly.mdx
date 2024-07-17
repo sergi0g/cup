@@ -1,0 +1,21 @@
+import { Callout } from "nextra-theme-docs"
+
+# Using the latest version
+
+The installation instructions you previously followed describe how to install Cup's stable version.
+
+However, it is only updated when a new release is created, so if you want the latest features, you'll need to install Cup's nightly version.
+
+Cup's nightly version always contains the latest changes in the main branch.
+
+<Callout emoji="⚠️">
+There is no guarantee that the nightly version will always work. There may be breaking changes or a bad commit and it may not work properly. Install nightly only if you know what you are doing. These instructions will assume you have the technical know-how to follow them. If you do not, please use the stable release
+</Callout>
+
+## With Docker
+
+Instead of `ghcr.io/sergi0g/cup`, use `ghcr.io/sergi0g/cup:nightly`
+
+## As a binary
+
+Go to a [nightly workflow run](https://github.com/sergi0g/cup/actions/workflows/nightly.yml) and download the artifact for your system.

@@ -1,1 +1,4 @@
 /target
+/docs/.next
+/docs/node_modules
+/docs/out

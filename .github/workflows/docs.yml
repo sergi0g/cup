@@ -1,0 +1,20 @@
+name: Deploy github pages
+on:
+  push:
+    paths:
+        - 'docs/**'
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+            - run: cd docs/
+            - name: Install dependencies
+              run: pnpm install
+            - name: Build
+              run: pnpm build
+            - name: Publish
+              uses: actions/upload-pages-artifact@v3
+              with:
+                path: out/

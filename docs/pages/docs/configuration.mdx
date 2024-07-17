@@ -1,0 +1,98 @@
+import Image from "next/image";
+import { Steps, Callout } from "nextra-theme-docs";
+import blue from "../../assets/blue_theme.png"
+import gray from "../../assets/gray_theme.png"
+
+# Configuration
+
+## Custom docker socket
+
+Sometimes, there may be a need to specify a custom docker socket. Cup provides the `-s` option for this.
+
+For example, if using Podman, you might do
+
+```
+$ cup -s /run/user/1000/podman/podman.sock check
+```
+
+## Configuration file
+
+Cup has an option to be configured from a configuration file named `cup.json`.
+
+<Steps>
+### Create the configuration file
+Create a `cup.json` file somewhere on your system. For binary installs, a path like `~/.config/cup.json` is recommended.
+If you're running with Docker, you can create a `cup.json` in the directory you're running cup and mount it into the container. _In the next section you will need to use the path where you **mounted** the file_
+
+### Configure Cup from the configuration file
+Follow the guides below (Theme and Authentication) to make your `cup.json`
+
+Here's a full example:
+```json
+{
+    authentication: {
+        "ghcr.io": "<YOUR_TOKEN_HERE>",
+        "registry-1.docker.io": "<YOUR_TOKEN_HERE>"
+    },
+    theme: "blue"
+}
+```
+
+### Run Cup with the new configuration file
+To let Cup know that you'd like it to use a custom configuration file, you can use the `-c` flag, followed by the _absolute_ path of the file.
+
+```bash
+$ cup -c /home/sergio/.config/cup.json check
+```
+
+```bash
+$ docker run -tv /var/run/docker.sock:/var/run/docker.sock -v /home/sergio/.config/cup.json:/config/cup.json ghcr.io/sergi0g/cup -c /config/cup.json serve
+```
+</Steps>
+
+## Theme (server only)
+
+Cup initially had a blue theme which looked like this:
+
+<Image alt="Screenshot of blue theme" src={blue} />
+
+This was replaced by a more neutral theme which is now the default:
+
+<Image alt="Screenshot of neutral theme" src={gray} />
+
+However, you can get the old theme back by adding the `theme` key to your `cup.json`
+Available values are `default` and `blue`.
+
+Here's an example:
+
+```json
+{
+    "theme": "blue",
+    // Other options
+}
+```
+
+## Authentication
+
+<Callout emoji="⛔">
+The features described in this section have not been implemented yet.
+</Callout>
+
+Some registries (or specific images) may require you to be authenticated. For those, you can modify `cup.json` like this:
+
+```json
+{
+    "authentication": {
+        "<YOUR_REGISTRY_DOMAIN_1>": "<YOUR_TOKEN_1>",
+        "<YOUR_REGISTRY_DOMAIN_2>": "<YOUR_TOKEN_2>"
+        // ...
+    },
+    // Other options
+}
+```
+
+You can use any registry, like `ghcr.io`, `quay.io`, `gcr.io`, etc.
+
+<Callout emoji="⚠️">
+For Docker Hub, use `registry-1.docker.io`
+</Callout>

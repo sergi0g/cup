@@ -1,0 +1,110 @@
+import Image from "next/image";
+import old_cup from "../assets/old_cup.png"
+import web_ui from "../assets/blue_theme.png"
+
+# About
+Cup is a small utility that checks for updates to Docker containers. The logic is simple: Cup checks the locally pulled images' digests against the latest ones in their registry. It then presents the results in a pretty interface. Here's the story:
+
+## How it started
+
+I got the basic idea for Cup a long time ago. I was looking at [Homepage's list of widgets](https://gethomepage.dev/latest/widgets/) when I discovered [What's Up Docker?](https://github.com/fmartinou/whats-up-docker) (referred to as WUD from now on).
+
+According to the docs:
+
+> What's up Docker ( aka WUD ) gets you notified when a new version of your Docker Container is available.
+
+It supports the most common registries, has integrations with IFTTT, Slack, Telegram and other apps/services for notifications or triggering workflows and also has the option to automatically update containers, like [Watchtower](https://github.com/containrrr/watchtower).
+
+I was managing my homelab myself at that time and the only way to check if I had updates was log in to the server and manually try to pull the images for *every single compose file*. WUD seemed to solve the problem nicely, so I decided to give it a try. I never used automatic updates or notifications, but I configured it and let it run.
+
+After deploying it and setting up my reverse proxy, I was greeted with this dashboard:
+<Image src="https://github.com/fmartinou/whats-up-docker/blob/master/docs/ui/ui.png?raw=true" alt="A screenshot of WUD's web UI, from the docs" />
+It was working fine, but... the UI was not what I expected. It really reminds me of some really old Android app (I hope I didn't offend anyone). That was strike one. Nevertheless, I left it running. It was useful after all.
+
+A few days later I was pulling some docker images, when I got this error message:
+
+> You have reached your pull rate limit. You may increase the limit by authenticating and upgrading: https://www.docker.com/increase-rate-limits.
+
+Wait a minute. What was that? I'd never encountered a message like this before. I thought "Weird. Maybe I pulled too many images today?". So I decided to finish those updates another day.
+
+Next time I tried, same issue. "What the heck is happening?" I thought. The only change I'd made to my homelab at that time was installing WUD. So I stopped it. And that's where the problems ended.
+
+The problem was clearly related to WUD, so I started trying to find what was going wrong. That was when I came upon [this page from Docker's documentation](https://docs.docker.com/docker-hub/download-rate-limit/). I noticed 2 things:
+
+> A pull request is defined as up to two `GET` requests on registry manifest URLs (`/v2/*/manifests/*`)
+
+> `HEAD` requests aren't counted.
+
+There were also helpful instructions on how to check the rate limit:
+
+```
+sergio@desktop:~ $ TOKEN=$(curl "https://auth.docker.io/token?service=registry.docker.io&scope=repository:ratelimitpreview/test:pull" | jq -r .token)
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  5429    0  5429    0     0   7431      0 --:--:-- --:--:-- --:--:--  7426
+
+sergio@desktop:~ $ curl --head -H "Authorization: Bearer $TOKEN" https://registry-1.docker.io/v2/ratelimitpreview/test/manifests/latest
+HTTP/1.1 200 OK
+content-length: 2782
+content-type: application/vnd.docker.distribution.manifest.v1+prettyjws
+docker-content-digest: sha256:767a3815c34823b355bed31760d5fa3daca0aec2ce15b217c9cd83229e0e2020
+docker-distribution-api-version: registry/2.0
+etag: "sha256:767a3815c34823b355bed31760d5fa3daca0aec2ce15b217c9cd83229e0e2020"
+date: Tue, 16 Jul 2024 12:13:17 GMT
+strict-transport-security: max-age=31536000
+ratelimit-limit: 100;w=21600
+ratelimit-remaining: 100;w=21600
+docker-ratelimit-source: <REDACTED>
+```
+
+The rate limit is there, just like in the docs, but do you see something else interesting? Look at this header: `docker-content-digest: sha256:767a3815c34823b355bed31760d5fa3daca0aec2ce15b217c9cd83229e0e2020`
+
+This is an image's digest. Can we check for updates by making `HEAD` requests to Docker Hub?
+
+The answer is yes:
+
+```
+$ set TOKEN $(curl -H "Accept: application/vnd.docker.distribution.manifest.list.v2+json" "https://auth.docker.io/token?service=registry.docker.io&scope=repository:library/busybox:pull" | jq -r .token)
+$ curl --head -H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.docker.distribution.manifest.v2.list+json" https://registry-1.docker.io/v2/library/busybox/manifests/latest
+HTTP/1.1 200 OK
+content-length: 6761
+content-type: application/vnd.oci.image.index.v1+json
+docker-content-digest: sha256:9ae97d36d26566ff84e8893c64a6dc4fe8ca6d1144bf5b87b2b85a32def253c7
+docker-distribution-api-version: registry/2.0
+etag: "sha256:9ae97d36d26566ff84e8893c64a6dc4fe8ca6d1144bf5b87b2b85a32def253c7"
+date: Tue, 16 Jul 2024 12:17:49 GMT
+strict-transport-security: max-age=31536000
+ratelimit-limit: 100;w=21600
+ratelimit-remaining: 100;w=21600
+docker-ratelimit-source: <REDACTED>
+```
+
+And then we can compare that with the digest of the image stored locally:
+
+```
+$ docker inspect busybox:latest | jq -r '.[0].RepoDigests[0]'
+busybox@sha256:9ae97d36d26566ff84e8893c64a6dc4fe8ca6d1144bf5b87b2b85a32def253c7
+```
+
+Notice how the 2 digests are the same. We can check for image updates without using up the rate limit!
+
+That's when I got the idea of writing a program to do this automatically.
+
+## The birth of Cup
+
+I initially intended to write a simple bash script but I chose not to for the following reasons:
+
+- I wanted something more than a simple script. WUD has a web UI and support for so many integrations! I had to match that some way!
+- Bash is slow and I was learning Rust at the time, so I wanted to practice (and make a proper project)
+
+It started out as a small CLI that could either check a single image, or check all the images.
+<Image src={old_cup} alt="The initial version of Cup" />
+It also couldn't check for updates to images not from Docker Hub, lacked a web UI and generally had many limitations. But it proved it could be done, quickly and efficiently. The binary was just 5 MB and took about 5 seconds for ~90 images on my development machine. That's insane!
+
+A few days later, I decided to completely rewrite it. I tried to write clean code, split it in files and fix every limitation from the previous version. I'm quite close. Here's what it looks like now:
+<Image src="https://github.com/sergi0g/cup/blob/main/screenshots/cup.gif?raw=true" alt="Cup's old CLI" />
+It also has a statically rendered web UI making it ideal for self hosting.
+<Image src={web_ui} alt="Cup's web UI"/>
+With some optimization (well ok, maybe a lot), the binary is 5 MB and that means I finally don't have to wait forever to pull the Docker image! Finally something that works nicely with my 1.5 MB/s internet connection! (Thank you powerline!)
+
+Now go ahead and try it out!

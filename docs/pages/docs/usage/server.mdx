@@ -1,0 +1,53 @@
+import { Callout } from "nextra-theme-docs";
+
+# Server
+
+The server provides the `cup serve` command.
+
+## Basic usage
+
+```ansi
+$ cup serve
+[2m2024-07-17T09:08:38.724922Z [0m  [32m INFO [0m  [2mxitca_server::net [0m [2m: [0m Started Tcp listening on: Some(0.0.0.0:8000)                                                                              
+[2m2024-07-17T09:08:38.725076Z [0m  [33m WARN [0m  [2mxitca_server::server::future [0m [2m: [0m ServerFuture::wait is called from within tokio context. It would block current thread from handling async tasks
+[2m2024-07-17T09:08:38.725248Z [0m  [32m INFO [0m  [2mxitca_server::worker [0m [2m: [0m Started xitca-server-worker-0                                                                                          
+[2m2024-07-17T09:08:38.725343Z [0m  [32m INFO [0m  [2mxitca_server::worker [0m [2m: [0m Started xitca-server-worker-1                                                                                          
+[2m2024-07-17T09:08:38.725580Z [0m  [32m INFO [0m  [2mxitca_server::worker [0m [2m: [0m Started xitca-server-worker-2                                                                                          
+[2m2024-07-17T09:08:38.725607Z [0m  [32m INFO [0m  [2mxitca_server::worker [0m [2m: [0m Started xitca-server-worker-3                                                                                          
+[2m2024-07-17T09:08:41.390783Z [0m  [32m INFO [0m  [1mrequest [0m [1m{ [0m [3mmethod [0m [2m= [0mGET  [3muri [0m [2m= [0m/ [1m} [0m [2m: [0m  [2mon_request [0m [2m: [0m serving request                       
+[2m2024-07-17T09:08:41.390905Z [0m  [32m INFO [0m  [1mrequest [0m [1m{ [0m [3mmethod [0m [2m= [0mGET  [3muri [0m [2m= [0m/ [1m} [0m [2m: [0m  [2mon_response [0m [2m: [0m sending response
+```
+
+This will launch the server on port `8000`. To access it, visit `http://<YOUR_IP>:8000` (replace `<YOUR_IP>` with the IP address of the machine running Cup.)
+
+<Callout>
+The URL `http://<YOUR_IP>:8000/json` is also available for usage with integrations.
+</Callout>
+
+## Use a different port
+
+Pass the `-p` argument with the port you want to use
+
+```ansi
+$ cup serve -p 9000
+[2m2024-07-17T09:08:38.724922Z [0m  [32m INFO [0m  [2mxitca_server::net [0m [2m: [0m Started Tcp listening on: Some(0.0.0.0:9000)                                                                              
+[2m2024-07-17T09:08:38.725076Z [0m  [33m WARN [0m  [2mxitca_server::server::future [0m [2m: [0m ServerFuture::wait is called from within tokio context. It would block current thread from handling async tasks
+[2m2024-07-17T09:08:38.725248Z [0m  [32m INFO [0m  [2mxitca_server::worker [0m [2m: [0m Started xitca-server-worker-0                                                                                          
+[2m2024-07-17T09:08:38.725343Z [0m  [32m INFO [0m  [2mxitca_server::worker [0m [2m: [0m Started xitca-server-worker-1                                                                                          
+[2m2024-07-17T09:08:38.725580Z [0m  [32m INFO [0m  [2mxitca_server::worker [0m [2m: [0m Started xitca-server-worker-2                                                                                          
+[2m2024-07-17T09:08:38.725607Z [0m  [32m INFO [0m  [2mxitca_server::worker [0m [2m: [0m Started xitca-server-worker-3                                                                                          
+[2m2024-07-17T09:08:41.390783Z [0m  [32m INFO [0m  [1mrequest [0m [1m{ [0m [3mmethod [0m [2m= [0mGET  [3muri [0m [2m= [0m/ [1m} [0m [2m: [0m  [2mon_request [0m [2m: [0m serving request                       
+[2m2024-07-17T09:08:41.390905Z [0m  [32m INFO [0m  [1mrequest [0m [1m{ [0m [3mmethod [0m [2m= [0mGET  [3muri [0m [2m= [0m/ [1m} [0m [2m: [0m  [2mon_response [0m [2m: [0m sending response
+```
+
+## Usage with Docker
+If you're using the Docker image, just replace all occurences of `cup` in the examples with `docker run -tv /var/run/docker.sock:/var/run/docker.sock -p <PORT>:<PORT> ghcr.io/sergi0g/cup`, where `<PORT>` is the port Cup will be using.
+
+For example, this:
+```bash /serve -p 9000/
+$ cup serve -p 9000
+```
+becomes:
+```bash /serve -p 9000/
+$ docker run -tv /var/run/docker.sock:/var/run/docker.sock -p 9000:9000 ghcr.io/sergi0g/cup serve -p 9000
+```

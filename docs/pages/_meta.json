@@ -1,0 +1,17 @@
+{
+    "docs": {
+        "title": "Documentation",
+        "type": "page"
+    },
+    "about": {
+        "title": "About",
+        "type": "page",
+        "theme": {
+            "typesetting": "article"
+        }
+    },
+    "index": {
+        "title": "Home",
+        "display": "hidden"
+    }
+}
