@@ -1,7 +1,7 @@
 use std::sync::Mutex;
 
+use json::JsonValue;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-use serde_json::Value;
 use ureq::Error;
 
 use http_auth::parse_challenges;
@@ -95,18 +95,13 @@ pub fn get_token(images: Vec<&Image>, auth_url: &str) -> String {
             error!("Token request failed!\n{}", e)
         }
     };
-    let parsed_token_response: Value = match serde_json::from_str(&raw_response) {
+    let parsed_token_response: JsonValue = match json::parse(&raw_response) {
         Ok(parsed) => parsed,
         Err(e) => {
             error!("Failed to parse server response\n{}", e)
         }
     };
-    parsed_token_response
-        .get("token")
-        .unwrap()
-        .as_str()
-        .unwrap()
-        .to_string()
+    parsed_token_response["token"].to_string()
 }
 
 fn parse_www_authenticate(www_auth: &str) -> String {

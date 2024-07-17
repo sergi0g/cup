@@ -1,6 +1,7 @@
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
 use chrono::Local;
+use json::JsonValue;
 use liquid::{object, Object};
 use tokio::sync::Mutex;
 use xitca_web::{
@@ -15,7 +16,7 @@ use xitca_web::{
 use crate::{
     check::get_all_updates,
     error,
-    utils::{sort_update_vec, to_json, Config, JsonData},
+    utils::{sort_update_vec, to_json},
 };
 
 const RAW_TEMPLATE: &str = include_str!("static/template.liquid");
@@ -24,7 +25,7 @@ const FAVICON_ICO: &[u8] = include_bytes!("static/favicon.ico");
 const FAVICON_SVG: &[u8] = include_bytes!("static/favicon.svg");
 const APPLE_TOUCH_ICON: &[u8] = include_bytes!("static/apple-touch-icon.png");
 
-pub async fn serve(port: &u16, socket: Option<String>, config: Config) -> std::io::Result<()> {
+pub async fn serve(port: &u16, socket: Option<String>, config: JsonValue) -> std::io::Result<()> {
     let mut data = ServerData::new(socket, config).await;
     data.refresh().await;
     App::new()
@@ -48,7 +49,7 @@ async fn home(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
 
 async fn json(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
     WebResponse::new(ResponseBody::from(
-        serde_json::to_string(&data.lock().await.json).unwrap(),
+        json::stringify(data.lock().await.json.clone())
     ))
 }
 
@@ -72,19 +73,19 @@ async fn apple_touch_icon() -> WebResponse {
 struct ServerData {
     template: String,
     raw_updates: Vec<(String, Option<bool>)>,
-    json: JsonData,
+    json: JsonValue,
     socket: Option<String>,
-    config: Config,
+    config: JsonValue,
 }
 
 impl ServerData {
-    async fn new(socket: Option<String>, config: Config) -> Self {
+    async fn new(socket: Option<String>, config: JsonValue) -> Self {
         let mut s = Self {
             socket,
             template: String::new(),
-            json: JsonData {
-                metrics: HashMap::new(),
-                images: HashMap::new(),
+            json: json::object! {
+                metrics: json::object! {},
+                images: json::object! {},
             },
             raw_updates: Vec::new(),
             config,
@@ -110,8 +111,8 @@ impl ServerData {
             .collect::<Vec<Object>>();
         self.json = to_json(&self.raw_updates);
         let last_updated = Local::now().format("%Y-%m-%d %H:%M:%S");
-        let theme = match &self.config.theme {
-            Some(t) => match t.as_str() {
+        let theme = match &self.config["theme"].as_str() {
+            Some(t) => match *t {
                 "default" => "neutral",
                 "blue" => "gray",
                 _ => error!(
@@ -122,7 +123,7 @@ impl ServerData {
             None => "neutral",
         };
         let globals = object!({
-            "metrics": [{"name": "Monitored images", "value": self.json.metrics.get("monitored_images")}, {"name": "Up to date", "value": self.json.metrics.get("up_to_date")}, {"name": "Updates available", "value": self.json.metrics.get("update_available")}, {"name": "Unknown", "value": self.json.metrics.get("unknown")}],
+            "metrics": [{"name": "Monitored images", "value": self.json["metrics"]["monitored_images"].as_usize()}, {"name": "Up to date", "value": self.json["metrics"]["up_to_date"].as_usize()}, {"name": "Updates available", "value": self.json["metrics"]["update_available"].as_usize()}, {"name": "Unknown", "value": self.json["metrics"]["unknown"].as_usize()}],
             "images": images,
             "style": STYLE,
             "last_updated": last_updated.to_string(),

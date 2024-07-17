@@ -1,8 +1,8 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::path::PathBuf;
 
+use json::{object, JsonValue};
 use once_cell::sync::Lazy;
 use regex::Regex;
-use serde::{Deserialize, Serialize};
 
 /// This macro is an alternative to panic. It prints the message you give it and exits the process with code 1, without printing a stack trace. Useful for when the program has to exit due to a user error or something unexpected which is unrelated to the program (e.g. a failed web request)
 #[macro_export]
@@ -87,7 +87,7 @@ pub fn sort_update_vec(updates: &[(String, Option<bool>)]) -> Vec<(String, Optio
 }
 
 /// Tries to load the config from the path provided and perform basic validation
-pub fn load_config(config_path: Option<PathBuf>) -> Config {
+pub fn load_config(config_path: Option<PathBuf>) -> JsonValue {
     let raw_config = match &config_path {
         Some(path) => std::fs::read_to_string(path),
         None => Ok(String::from("{\"theme\":\"default\"}")),
@@ -98,25 +98,19 @@ pub fn load_config(config_path: Option<PathBuf>) -> Config {
             &config_path.unwrap().to_str().unwrap()
         )
     };
-    match serde_json::from_str(&raw_config.unwrap()) {
+    match json::parse(&raw_config.unwrap()) {
         Ok(v) => v,
         Err(e) => panic!("Failed to parse config!\n{}", e),
     }
 }
 
-#[derive(Deserialize)]
-pub struct Config {
-    pub authentication: Option<HashMap<String, String>>,
-    pub theme: Option<String>,
-}
-
-pub fn to_json(updates: &[(String, Option<bool>)]) -> JsonData {
-    let mut json_data: JsonData = JsonData {
-        metrics: HashMap::new(),
-        images: HashMap::new(),
+pub fn to_json(updates: &[(String, Option<bool>)]) -> JsonValue {
+    let mut json_data: JsonValue = object! {
+        metrics: object! {},
+        images: object! {}
     };
     updates.iter().for_each(|(image, has_update)| {
-        let _ = json_data.images.insert(image.clone(), *has_update);
+        let _ = json_data["images"].insert(image, *has_update);
     });
     let up_to_date = updates
         .iter()
@@ -133,17 +127,9 @@ pub fn to_json(updates: &[(String, Option<bool>)]) -> JsonData {
         .filter(|&(_, value)| value.is_none())
         .collect::<Vec<&(String, Option<bool>)>>()
         .len();
-    let _ = json_data.metrics.insert("monitored_images", updates.len());
-    let _ = json_data.metrics.insert("up_to_date", up_to_date);
-    let _ = json_data
-        .metrics
-        .insert("update_available", update_available);
-    let _ = json_data.metrics.insert("unknown", unknown);
+    let _ = json_data["metrics"].insert("monitored_images", updates.len());
+    let _ = json_data["metrics"].insert("up_to_date", up_to_date);
+    let _ = json_data["metrics"].insert("update_available", update_available);
+    let _ = json_data["metrics"].insert("unknown", unknown);
     json_data
-}
-
-#[derive(Serialize)]
-pub struct JsonData {
-    pub metrics: HashMap<&'static str, usize>,
-    pub images: HashMap<String, Option<bool>>,
 }

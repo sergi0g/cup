@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use indicatif::{ProgressBar, ProgressStyle};
-use serde_json::json;
+use json::object;
 
 use crate::utils::{sort_update_vec, to_json};
 
@@ -40,7 +40,7 @@ pub fn print_updates(updates: &[(String, Option<bool>)], icons: &bool) {
 }
 
 pub fn print_raw_updates(updates: &[(String, Option<bool>)]) {
-    println!("{}", serde_json::to_string(&to_json(updates)).unwrap());
+    println!("{}", json::stringify(to_json(updates)));
 }
 
 pub fn print_update(name: &str, has_update: &Option<bool>) {
@@ -58,7 +58,7 @@ pub fn print_update(name: &str, has_update: &Option<bool>) {
 }
 
 pub fn print_raw_update(name: &str, has_update: &Option<bool>) {
-    let result = json!({"images": {name: has_update}});
+    let result = object! {images: {[name]: *has_update}} ;
     println!("{}", result);
 }
 

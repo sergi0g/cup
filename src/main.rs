@@ -1,8 +1,8 @@
-use check::{get_all_updates, get_update};
 use clap::{Parser, Subcommand};
 #[cfg(feature = "cli")]
 use formatting::{print_raw_update, print_raw_updates, print_update, print_updates, Spinner};
 #[cfg(feature = "cli")]
+use check::{get_all_updates, get_update};
 #[cfg(feature = "server")]
 use server::serve;
 use std::path::PathBuf;
@@ -10,13 +10,13 @@ use utils::load_config;
 
 pub mod check;
 pub mod docker;
-#[cfg(feature = "cli")]
-pub mod formatting;
 pub mod image;
 pub mod registry;
+pub mod utils;
+#[cfg(feature = "cli")]
+pub mod formatting;
 #[cfg(feature = "server")]
 pub mod server;
-pub mod utils;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
