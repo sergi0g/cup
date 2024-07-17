@@ -18,21 +18,10 @@ jobs:
   build-binary:
     strategy:
       matrix:
-        platform:
-          - release_for: linux-aarch64
-            os: ubuntu-latest
-            target: aarch64-unknown-linux-musl
-            bin: cup
-            name: cup-linux-aarch64
-            command: build
-
-          - release_for: linux-x86_64
-            os: ubuntu-latest
-            target: x86_64-unknown-linux-musl
-            bin: cup
-            name: cup-linux-x86_64
-            command: build
-    runs-on: ${{ matrix.platform.os }}
+        arch:
+          - aarch64
+          - x86_64
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -44,13 +33,13 @@ jobs:
         run: cargo install cross --git https://github.com/cross-rs/cross
 
       - name: Build binary
-        run: cross ${{ matrix.platform.command }} --target ${{ matrix.platform.target }} --release
+        run: cross build --target ${{ matrix.arch }}-unknown-linux-musl --release
 
       - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.platform.name }}
-          path: target/${{ matrix.platform.target }}/release/${{ matrix.platform.bin }}
+          name: cup-linux-${{ matrix.arch }}
+          path: target/${{ matrix.arch }}-unknown-linux-musl/release/cup
 
   build-image:
     needs: get-tag
@@ -98,6 +87,11 @@ jobs:
           name: cup-linux-x86_64
           path: cup-linux-x86_64
 
+      - name: Extract and rename binaries
+        run: |
+          unzip cup-linux-aarch64.zip && mv cup cup-linux-aarch64
+          unzip cup-linux-x86_64.zip && mv cup cup-linux-x86_64
+
       - name: Create release
         uses: softprops/action-gh-release@v2
         env:
@@ -107,5 +101,5 @@ jobs:
           tag_name: ${{ needs.get-tag.outputs.tag }}
           name: ${{ needs.get-tag.outputs.tag }}
           files: |
-            cup-linux-aarch64/cup-linux-aarch64
-            cup-linux-x86_64/cup-linux-x86_64
+            cup-linux-aarch64
+            cup-linux-x86_64
