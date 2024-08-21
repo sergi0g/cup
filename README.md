@@ -20,7 +20,7 @@ Cup is the easiest way to check for container image updates.
 
 ## Documentation
 
-Take a look at https://sergi0g.github.io/cup/docs/introduction!
+Take a look at https://sergi0g.github.io/cup/docs!
 
 ## Limitations
 
