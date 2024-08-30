@@ -29,7 +29,7 @@ pub fn get_latest_digest(image: &Image, token: Option<&String>) -> Image {
         request = request.set("Authorization", &format!("Bearer {}", t));
     }
     let raw_response = match request
-        .set("Accept", "application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.oci.image.index.v1+json")
+        .set("Accept", "application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.docker.distribution.manifest.v2+json, application/vnd.oci.image.index.v1+json")
         .call()
     {
         Ok(response) => response,
@@ -82,7 +82,7 @@ pub fn get_token(images: Vec<&Image>, auth_url: &str) -> String {
         final_url = format!("{}&scope=repository:{}:pull", final_url, image.repository);
     }
     let raw_response = match ureq::get(&final_url)
-        .set("Accept", "application/vnd.oci.image.index.v1+json")
+        .set("Accept", "application/vnd.oci.image.index.v1+json") // Seems to be unnecesarry. Will probably remove in the future
         .call()
     {
         Ok(response) => match response.into_string() {
