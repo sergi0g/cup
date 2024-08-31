@@ -2,7 +2,7 @@ use std::sync::Mutex;
 
 use json::JsonValue;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-use ureq::Error;
+use ureq::{Error, ErrorKind};
 
 use http_auth::parse_challenges;
 
@@ -56,8 +56,20 @@ pub fn get_latest_digest(image: &Image, token: Option<&String>, config: &JsonVal
                 digest: None,
                 ..image.clone()
             }
-        }
-        Err(ureq::Error::Transport(e)) => error!("Failed to send request!\n{}", e),
+        },
+        Err(Error::Transport(error)) => {
+            match error.kind() {
+                ErrorKind::Dns => {
+                    warn!("Failed to lookup the IP of the registry, retrying.");
+                    return get_latest_digest(image, token, config)
+                }, // If something goes really wrong, this can get stuck in a loop
+                ErrorKind::ConnectionFailed => {
+                    warn!("Connection probably timed out, retrying.");
+                    return get_latest_digest(image, token, config)
+                }, // Same here
+                _ => error!("Failed to retrieve image digest\n{}!", error)
+            }
+        },
     };
     match raw_response.header("docker-content-digest") {
         Some(digest) => Image {
@@ -83,7 +95,7 @@ pub fn get_latest_digests(images: Vec<&Image>, token: Option<&String>, config: &
 
 pub fn get_token(images: Vec<&Image>, auth_url: &str, credentials: &Option<String>) -> String {
     let mut final_url = auth_url.to_owned();
-    for image in images {
+    for image in &images {
         final_url = format!("{}&scope=repository:{}:pull", final_url, image.repository);
     }
     let mut base_request = ureq::get(&final_url).set("Accept", "application/vnd.oci.image.index.v1+json"); // Seems to be unnecesarry. Will probably remove in the future
@@ -97,6 +109,19 @@ pub fn get_token(images: Vec<&Image>, auth_url: &str, credentials: &Option<Strin
             Ok(res) => res,
             Err(e) => {
                 error!("Failed to parse response into string!\n{}", e)
+            }
+        },
+        Err(Error::Transport(error)) => {
+            match error.kind() {
+                ErrorKind::Dns => {
+                    warn!("Failed to lookup the IP of the registry, retrying.");
+                    return get_token(images, auth_url, credentials)
+                }, // If something goes really wrong, this can get stuck in a loop
+                ErrorKind::ConnectionFailed => {
+                    warn!("Connection probably timed out, retrying.");
+                    return get_token(images, auth_url, credentials)
+                }, // Same here
+                _ => error!("Token request failed\n{}!", error)
             }
         },
         Err(e) => {
