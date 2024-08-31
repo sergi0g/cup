@@ -87,10 +87,10 @@ jobs:
           name: cup-linux-x86_64
           path: cup-linux-x86_64
 
-      - name: Extract and rename binaries
-        run: |
-          unzip /home/runner/work/cup/cup/cup-linux-aarch64 && mv /home/runner/work/cup/cup/cup cup-linux-aarch64
-          unzip /home/runner/work/cup/cup/cup-linux-x86_64 && mv /home/runner/work/cup/cup/cup cup-linux-x86_64
+      # - name: Extract and rename binaries
+      #   run: |
+      #     unzip /home/runner/work/cup/cup/cup-linux-aarch64 && mv /home/runner/work/cup/cup/cup cup-linux-aarch64
+      #     unzip /home/runner/work/cup/cup/cup-linux-x86_64 && mv /home/runner/work/cup/cup/cup cup-linux-x86_64
 
       - name: Create release
         uses: softprops/action-gh-release@v2
