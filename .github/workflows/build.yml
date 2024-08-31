@@ -79,13 +79,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: cup-linux-aarch64
-          path: cup-linux-aarch64
 
       - name: Download x86 binary
         uses: actions/download-artifact@v4
         with:
           name: cup-linux-x86_64
-          path: cup-linux-x86_64
 
       - name: Extract and rename binaries
         run: |
