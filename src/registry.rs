@@ -6,24 +6,26 @@ use ureq::Error;
 
 use http_auth::parse_challenges;
 
-use crate::{error, image::Image};
+use crate::{error, image::Image, warn};
 
-pub fn check_auth(registry: &str) -> Option<String> {
-    let response = ureq::get(&format!("https://{}/v2/", registry)).call();
+pub fn check_auth(registry: &str, config: &JsonValue) -> Option<String> {
+    let protocol = if config["insecure_registries"].contains(registry) { "http" } else { "https" };
+    let response = ureq::get(&format!("{}://{}/v2/", protocol, registry)).call();
     match response {
         Ok(_) => None,
         Err(Error::Status(401, response)) => match response.header("www-authenticate") {
             Some(challenge) => Some(parse_www_authenticate(challenge)),
-            None => error!("Server returned invalid response!"),
+            None => error!("Unauthorized to access registry {} and no way to authenticate was provided", registry),
         },
         Err(e) => error!("{}", e),
     }
 }
 
-pub fn get_latest_digest(image: &Image, token: Option<&String>) -> Image {
+pub fn get_latest_digest(image: &Image, token: Option<&String>, config: &JsonValue) -> Image {
+    let protocol = if config["insecure_registries"].contains(json::JsonValue::from(image.registry.clone())) { "http" } else { "https" };
     let mut request = ureq::head(&format!(
-        "https://{}/v2/{}/manifests/{}",
-        &image.registry, &image.repository, &image.tag
+        "{}://{}/v2/{}/manifests/{}",
+        protocol, &image.registry, &image.repository, &image.tag
     ));
     if let Some(t) = token {
         request = request.set("Authorization", &format!("Bearer {}", t));
@@ -35,14 +37,17 @@ pub fn get_latest_digest(image: &Image, token: Option<&String>) -> Image {
         Ok(response) => response,
         Err(Error::Status(401, response)) => {
             if token.is_some() {
-                error!("Failed to authenticate to registry {} with given token!\n{}", &image.registry, token.unwrap())
+                warn!("Failed to authenticate to registry {} with given token!\n{}", &image.registry, token.unwrap());
+                return Image { digest: None, ..image.clone() }
             } else {
                 return get_latest_digest(
                     image,
                     Some(&get_token(
                         vec![image],
                         &parse_www_authenticate(response.header("www-authenticate").unwrap()),
+                        &None // I think?
                     )),
+                    config
                 );
             }
         }
@@ -63,10 +68,10 @@ pub fn get_latest_digest(image: &Image, token: Option<&String>) -> Image {
     }
 }
 
-pub fn get_latest_digests(images: Vec<&Image>, token: Option<&String>) -> Vec<Image> {
+pub fn get_latest_digests(images: Vec<&Image>, token: Option<&String>, config: &JsonValue) -> Vec<Image> {
     let result: Mutex<Vec<Image>> = Mutex::new(Vec::new());
     images.par_iter().for_each(|&image| {
-        let digest = get_latest_digest(image, token).digest;
+        let digest = get_latest_digest(image, token, config).digest;
         result.lock().unwrap().push(Image {
             digest,
             ..image.clone()
@@ -76,14 +81,17 @@ pub fn get_latest_digests(images: Vec<&Image>, token: Option<&String>) -> Vec<Im
     r
 }
 
-pub fn get_token(images: Vec<&Image>, auth_url: &str) -> String {
+pub fn get_token(images: Vec<&Image>, auth_url: &str, credentials: &Option<String>) -> String {
     let mut final_url = auth_url.to_owned();
     for image in images {
         final_url = format!("{}&scope=repository:{}:pull", final_url, image.repository);
     }
-    let raw_response = match ureq::get(&final_url)
-        .set("Accept", "application/vnd.oci.image.index.v1+json") // Seems to be unnecesarry. Will probably remove in the future
-        .call()
+    let mut base_request = ureq::get(&final_url).set("Accept", "application/vnd.oci.image.index.v1+json"); // Seems to be unnecesarry. Will probably remove in the future
+    base_request = match credentials {
+        Some(creds) => base_request.set("Authorization", &format!("Basic {}", creds)),
+        None => base_request
+    };
+    let raw_response = match base_request.call()
     {
         Ok(response) => match response.into_string() {
             Ok(res) => res,
@@ -118,6 +126,6 @@ fn parse_www_authenticate(www_auth: &str) -> String {
             error!("Unsupported scheme {}", &challenge.scheme)
         }
     } else {
-        error!("No challenge provided");
+        error!("No challenge provided by the server");
     }
 }

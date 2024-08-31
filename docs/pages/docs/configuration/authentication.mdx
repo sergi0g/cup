@@ -1,0 +1,22 @@
+import { Callout } from 'nextra-theme-docs'
+
+# Authentication
+
+Some registries (or specific images) may require you to be authenticated. For those, you can modify `cup.json` like this:
+
+```json
+{
+    "authentication": {
+        "<YOUR_REGISTRY_DOMAIN_1>": "<YOUR_TOKEN_1>",
+        "<YOUR_REGISTRY_DOMAIN_2>": "<YOUR_TOKEN_2>"
+        // ...
+    },
+    // Other options
+}
+```
+
+You can use any registry, like `ghcr.io`, `quay.io`, `gcr.io`, etc.
+
+<Callout emoji="⚠️">
+For Docker Hub, use `registry-1.docker.io`
+</Callout>

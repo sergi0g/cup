@@ -1,8 +1,10 @@
 use std::{collections::{HashMap, HashSet}, sync::Mutex};
 
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use json::JsonValue;
 
 use crate::{docker::get_images_from_docker_daemon, image::Image, registry::{check_auth, get_token, get_latest_digests}, utils::unsplit_image};
+
 #[cfg(feature = "cli")]
 use crate::docker::get_image_from_docker_daemon;
 #[cfg(feature = "cli")]
@@ -23,7 +25,7 @@ where
     }
 }
 
-pub async fn get_all_updates(socket: Option<String>) -> Vec<(String, Option<bool>)> {
+pub async fn get_all_updates(socket: Option<String>, config: &JsonValue) -> Vec<(String, Option<bool>)> {
     let image_map_mutex: Mutex<HashMap<String, &Option<String>>> = Mutex::new(HashMap::new());
     let local_images = get_images_from_docker_daemon(socket).await;
     local_images.par_iter().for_each(|image| {
@@ -42,12 +44,13 @@ pub async fn get_all_updates(socket: Option<String>) -> Vec<(String, Option<bool
             .par_iter()
             .filter(|image| &image.registry == registry)
             .collect();
-        let mut latest_images = match check_auth(registry) {
+        let credentials = config["authentication"][registry].clone().take_string().or(None);
+        let mut latest_images = match check_auth(registry, config) {
             Some(auth_url) => {
-                let token = get_token(images.clone(), &auth_url);
-                get_latest_digests(images, Some(&token))
+                let token = get_token(images.clone(), &auth_url, &credentials);
+                get_latest_digests(images, Some(&token), config)
             }
-            None => get_latest_digests(images, None),
+            None => get_latest_digests(images, None, config),
         };
         remote_images.append(&mut latest_images);
     }
@@ -67,15 +70,16 @@ pub async fn get_all_updates(socket: Option<String>) -> Vec<(String, Option<bool
 }
 
 #[cfg(feature = "cli")]
-pub async fn get_update(image: &str, socket: Option<String>) -> Option<bool> {
+pub async fn get_update(image: &str, socket: Option<String>, config: &JsonValue) -> Option<bool> {
     let local_image = get_image_from_docker_daemon(socket, image).await;
-    let token = match check_auth(&local_image.registry) {
-        Some(auth_url) => get_token(vec![&local_image], &auth_url),
+    let credentials = config["authentication"][&local_image.registry].clone().take_string().or(None);
+    let token = match check_auth(&local_image.registry, config) {
+        Some(auth_url) => get_token(vec![&local_image], &auth_url, &credentials),
         None => String::new(),
     };
     let remote_image = match token.as_str() {
-        "" => get_latest_digest(&local_image, None),
-        _ => get_latest_digest(&local_image, Some(&token)),
+        "" => get_latest_digest(&local_image, None, config),
+        _ => get_latest_digest(&local_image, Some(&token), config),
     };
     match &remote_image.digest {
         Some(d) => Some(d != &local_image.digest.unwrap()),

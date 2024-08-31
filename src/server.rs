@@ -94,7 +94,7 @@ impl ServerData {
         s
     }
     async fn refresh(&mut self) {
-        let updates = sort_update_vec(&get_all_updates(self.socket.clone()).await);
+        let updates = sort_update_vec(&get_all_updates(self.socket.clone(), &self.config["authentication"]).await);
         self.raw_updates = updates;
         let template = liquid::ParserBuilder::with_stdlib()
             .build()

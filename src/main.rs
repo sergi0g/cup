@@ -69,7 +69,7 @@ async fn main() {
         #[cfg(feature = "cli")]
         Some(Commands::Check { image, icons, raw }) => match image {
             Some(name) => {
-                let has_update = get_update(name, cli.socket).await;
+                let has_update = get_update(name, cli.socket, &config).await;
                 match raw {
                     true => print_raw_update(name, &has_update),
                     false => print_update(name, &has_update),
@@ -77,10 +77,10 @@ async fn main() {
             }
             None => {
                 match raw {
-                    true => print_raw_updates(&get_all_updates(cli.socket).await),
+                    true => print_raw_updates(&get_all_updates(cli.socket, &config).await),
                     false => {
                         let spinner = Spinner::new();
-                        let updates = get_all_updates(cli.socket).await;
+                        let updates = get_all_updates(cli.socket, &config).await;
                         spinner.succeed();
                         print_updates(&updates, icons);
                     }

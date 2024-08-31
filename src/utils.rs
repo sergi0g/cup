@@ -13,6 +13,14 @@ macro_rules! error {
     })
 }
 
+// A small macro to print in yellow as a warning
+#[macro_export]
+macro_rules! warn {
+    ($($arg:tt)*) => ({
+        eprintln!("\x1b[93m{}\x1b[0m", format!($($arg)*));
+    })
+}
+
 /// Takes an image and splits it into registry, repository and tag. For example ghcr.io/sergi0g/cup:latest becomes ['ghcr.io', 'sergi0g/cup', 'latest'].
 pub fn split_image(image: &str) -> (String, String, String) {
     static RE: Lazy<Regex> = Lazy::new(|| {
@@ -23,15 +31,16 @@ pub fn split_image(image: &str) -> (String, String, String) {
     });
     match RE.captures(image) {
         Some(c) => {
-            return (
-                match c.name("registry") {
+            let registry = match c.name("registry") {
                     Some(registry) => registry.as_str().to_owned(),
                     None => String::from("registry-1.docker.io"),
-                },
+                };
+            return (
+                registry.clone(),
                 match c.name("repository") {
                     Some(repository) => {
                         let repo = repository.as_str().to_owned();
-                        if !repo.contains('/') {
+                        if !repo.contains('/') && registry == "registry-1.docker.io" {
                             format!("library/{}", repo)
                         } else {
                             repo
