@@ -17,6 +17,19 @@ pub fn check_auth(registry: &str, config: &JsonValue) -> Option<String> {
             Some(challenge) => Some(parse_www_authenticate(challenge)),
             None => error!("Unauthorized to access registry {} and no way to authenticate was provided", registry),
         },
+        Err(Error::Transport(error)) => {
+            match error.kind() {
+                ErrorKind::Dns => {
+                    warn!("Failed to lookup the IP of the registry, retrying.");
+                    return check_auth(registry, config)
+                }, // If something goes really wrong, this can get stuck in a loop
+                ErrorKind::ConnectionFailed => {
+                    warn!("Connection probably timed out, retrying.");
+                    return check_auth(registry, config)
+                }, // Same here
+                _ => error!("{}", error)
+            }
+        },
         Err(e) => error!("{}", e),
     }
 }
