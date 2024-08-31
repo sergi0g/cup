@@ -27,7 +27,7 @@ Take a look at https://sergi0g.github.io/cup/docs!
 Cup is a work in progress. It might not have as many features as What's up Docker. If one of these features is really important for you, please consider using another tool.
 
 - ~~Cup currently doesn't support registries which use repositories without slashes. This includes Azure. This problem may sound a bit weird, but it's due to the regex that's used at the moment. This will (hopefully) be fixed in the future.~~
-- Cup doesn't support private images. This is on the roadmap. Currently, it just returns unknown for those images.
+- ~~Cup doesn't support private images. This is on the roadmap. Currently, it just returns unknown for those images.~~
 - Cup cannot trigger your integrations. If you want that to happen automatically, please use What's up docker instead. Cup was created to be simple. The data is there, and it's up to you to retrieve it (e.g. by running `cup check -r` with a cronjob or periodically requesting the `/json` url from the server)
 
 ## Roadmap
