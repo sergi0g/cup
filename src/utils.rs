@@ -32,9 +32,9 @@ pub fn split_image(image: &str) -> (String, String, String) {
     match RE.captures(image) {
         Some(c) => {
             let registry = match c.name("registry") {
-                    Some(registry) => registry.as_str().to_owned(),
-                    None => String::from("registry-1.docker.io"),
-                };
+                Some(registry) => registry.as_str().to_owned(),
+                None => String::from("registry-1.docker.io"),
+            };
             return (
                 registry.clone(),
                 match c.name("repository") {
@@ -52,7 +52,7 @@ pub fn split_image(image: &str) -> (String, String, String) {
                     Some(tag) => tag.as_str().to_owned(),
                     None => String::from("latest"),
                 },
-            )
+            );
         }
         None => error!("Failed to parse image {}", image),
     }

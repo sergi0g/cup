@@ -1,9 +1,17 @@
-use std::{collections::{HashMap, HashSet}, sync::Mutex};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Mutex,
+};
 
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use json::JsonValue;
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
-use crate::{docker::get_images_from_docker_daemon, image::Image, registry::{check_auth, get_token, get_latest_digests}, utils::unsplit_image};
+use crate::{
+    docker::get_images_from_docker_daemon,
+    image::Image,
+    registry::{check_auth, get_latest_digests, get_token},
+    utils::unsplit_image,
+};
 
 #[cfg(feature = "cli")]
 use crate::docker::get_image_from_docker_daemon;
@@ -25,7 +33,10 @@ where
     }
 }
 
-pub async fn get_all_updates(socket: Option<String>, config: &JsonValue) -> Vec<(String, Option<bool>)> {
+pub async fn get_all_updates(
+    socket: Option<String>,
+    config: &JsonValue,
+) -> Vec<(String, Option<bool>)> {
     let image_map_mutex: Mutex<HashMap<String, &Option<String>>> = Mutex::new(HashMap::new());
     let local_images = get_images_from_docker_daemon(socket).await;
     local_images.par_iter().for_each(|image| {
@@ -44,7 +55,10 @@ pub async fn get_all_updates(socket: Option<String>, config: &JsonValue) -> Vec<
             .par_iter()
             .filter(|image| &image.registry == registry)
             .collect();
-        let credentials = config["authentication"][registry].clone().take_string().or(None);
+        let credentials = config["authentication"][registry]
+            .clone()
+            .take_string()
+            .or(None);
         let mut latest_images = match check_auth(registry, config) {
             Some(auth_url) => {
                 let token = get_token(images.clone(), &auth_url, &credentials);
@@ -72,7 +86,10 @@ pub async fn get_all_updates(socket: Option<String>, config: &JsonValue) -> Vec<
 #[cfg(feature = "cli")]
 pub async fn get_update(image: &str, socket: Option<String>, config: &JsonValue) -> Option<bool> {
     let local_image = get_image_from_docker_daemon(socket, image).await;
-    let credentials = config["authentication"][&local_image.registry].clone().take_string().or(None);
+    let credentials = config["authentication"][&local_image.registry]
+        .clone()
+        .take_string()
+        .or(None);
     let token = match check_auth(&local_image.registry, config) {
         Some(auth_url) => get_token(vec![&local_image], &auth_url, &credentials),
         None => String::new(),

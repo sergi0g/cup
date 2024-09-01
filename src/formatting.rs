@@ -58,7 +58,7 @@ pub fn print_update(name: &str, has_update: &Option<bool>) {
 }
 
 pub fn print_raw_update(name: &str, has_update: &Option<bool>) {
-    let result = object! {images: {[name]: *has_update}} ;
+    let result = object! {images: {[name]: *has_update}};
     println!("{}", result);
 }
 

@@ -9,33 +9,45 @@ use http_auth::parse_challenges;
 use crate::{error, image::Image, warn};
 
 pub fn check_auth(registry: &str, config: &JsonValue) -> Option<String> {
-    let protocol = if config["insecure_registries"].contains(registry) { "http" } else { "https" };
+    let protocol = if config["insecure_registries"].contains(registry) {
+        "http"
+    } else {
+        "https"
+    };
     let response = ureq::get(&format!("{}://{}/v2/", protocol, registry)).call();
     match response {
         Ok(_) => None,
         Err(Error::Status(401, response)) => match response.header("www-authenticate") {
             Some(challenge) => Some(parse_www_authenticate(challenge)),
-            None => error!("Unauthorized to access registry {} and no way to authenticate was provided", registry),
+            None => error!(
+                "Unauthorized to access registry {} and no way to authenticate was provided",
+                registry
+            ),
         },
         Err(Error::Transport(error)) => {
             match error.kind() {
                 ErrorKind::Dns => {
                     warn!("Failed to lookup the IP of the registry, retrying.");
-                    return check_auth(registry, config)
-                }, // If something goes really wrong, this can get stuck in a loop
+                    return check_auth(registry, config);
+                } // If something goes really wrong, this can get stuck in a loop
                 ErrorKind::ConnectionFailed => {
                     warn!("Connection probably timed out, retrying.");
-                    return check_auth(registry, config)
-                }, // Same here
-                _ => error!("{}", error)
+                    return check_auth(registry, config);
+                } // Same here
+                _ => error!("{}", error),
             }
-        },
+        }
         Err(e) => error!("{}", e),
     }
 }
 
 pub fn get_latest_digest(image: &Image, token: Option<&String>, config: &JsonValue) -> Image {
-    let protocol = if config["insecure_registries"].contains(json::JsonValue::from(image.registry.clone())) { "http" } else { "https" };
+    let protocol =
+        if config["insecure_registries"].contains(json::JsonValue::from(image.registry.clone())) {
+            "http"
+        } else {
+            "https"
+        };
     let mut request = ureq::head(&format!(
         "{}://{}/v2/{}/manifests/{}",
         protocol, &image.registry, &image.repository, &image.tag
@@ -93,7 +105,11 @@ pub fn get_latest_digest(image: &Image, token: Option<&String>, config: &JsonVal
     }
 }
 
-pub fn get_latest_digests(images: Vec<&Image>, token: Option<&String>, config: &JsonValue) -> Vec<Image> {
+pub fn get_latest_digests(
+    images: Vec<&Image>,
+    token: Option<&String>,
+    config: &JsonValue,
+) -> Vec<Image> {
     let result: Mutex<Vec<Image>> = Mutex::new(Vec::new());
     images.par_iter().for_each(|&image| {
         let digest = get_latest_digest(image, token, config).digest;
@@ -111,13 +127,13 @@ pub fn get_token(images: Vec<&Image>, auth_url: &str, credentials: &Option<Strin
     for image in &images {
         final_url = format!("{}&scope=repository:{}:pull", final_url, image.repository);
     }
-    let mut base_request = ureq::get(&final_url).set("Accept", "application/vnd.oci.image.index.v1+json"); // Seems to be unnecesarry. Will probably remove in the future
+    let mut base_request =
+        ureq::get(&final_url).set("Accept", "application/vnd.oci.image.index.v1+json"); // Seems to be unnecesarry. Will probably remove in the future
     base_request = match credentials {
         Some(creds) => base_request.set("Authorization", &format!("Basic {}", creds)),
-        None => base_request
+        None => base_request,
     };
-    let raw_response = match base_request.call()
-    {
+    let raw_response = match base_request.call() {
         Ok(response) => match response.into_string() {
             Ok(res) => res,
             Err(e) => {
@@ -128,15 +144,15 @@ pub fn get_token(images: Vec<&Image>, auth_url: &str, credentials: &Option<Strin
             match error.kind() {
                 ErrorKind::Dns => {
                     warn!("Failed to lookup the IP of the registry, retrying.");
-                    return get_token(images, auth_url, credentials)
-                }, // If something goes really wrong, this can get stuck in a loop
+                    return get_token(images, auth_url, credentials);
+                } // If something goes really wrong, this can get stuck in a loop
                 ErrorKind::ConnectionFailed => {
                     warn!("Connection probably timed out, retrying.");
-                    return get_token(images, auth_url, credentials)
-                }, // Same here
-                _ => error!("Token request failed\n{}!", error)
+                    return get_token(images, auth_url, credentials);
+                } // Same here
+                _ => error!("Token request failed\n{}!", error),
             }
-        },
+        }
         Err(e) => {
             error!("Token request failed!\n{}", e)
         }

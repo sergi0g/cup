@@ -43,20 +43,44 @@ pub async fn serve(port: &u16, socket: Option<String>, config: JsonValue) -> std
 
 async fn _static(data: StateRef<'_, Arc<Mutex<ServerData>>>, path: PathRef<'_>) -> WebResponse {
     match path.0 {
-        "/" => WebResponse::builder().header("Content-Type", "text/html").body(ResponseBody::from(HTML)).unwrap(),
-        "/assets/index.js" => WebResponse::builder().header("Content-Type", "text/javascript").body(ResponseBody::from(JS.replace("=\"neutral\"", &format!("=\"{}\"", data.lock().await.theme)))).unwrap(),
-        "/assets/index.css" => WebResponse::builder().header("Content-Type", "text/css").body(ResponseBody::from(CSS)).unwrap(),
-        "/favicon.ico" => WebResponse::builder().header("Content-Type", "image/vnd.microsoft.icon").body(ResponseBody::from(FAVICON_ICO)).unwrap(),
-        "/favicon.svg" => WebResponse::builder().header("Content-Type", "image/svg+xml").body(ResponseBody::from(FAVICON_SVG)).unwrap(),
-        "/apple-touch-icon.png" => WebResponse::builder().header("Content-Type", "image/png").body(ResponseBody::from(APPLE_TOUCH_ICON)).unwrap(),
-        _ => WebResponse::builder().status(404).body(ResponseBody::from("Not found")).unwrap()
+        "/" => WebResponse::builder()
+            .header("Content-Type", "text/html")
+            .body(ResponseBody::from(HTML))
+            .unwrap(),
+        "/assets/index.js" => WebResponse::builder()
+            .header("Content-Type", "text/javascript")
+            .body(ResponseBody::from(JS.replace(
+                "=\"neutral\"",
+                &format!("=\"{}\"", data.lock().await.theme),
+            )))
+            .unwrap(),
+        "/assets/index.css" => WebResponse::builder()
+            .header("Content-Type", "text/css")
+            .body(ResponseBody::from(CSS))
+            .unwrap(),
+        "/favicon.ico" => WebResponse::builder()
+            .header("Content-Type", "image/vnd.microsoft.icon")
+            .body(ResponseBody::from(FAVICON_ICO))
+            .unwrap(),
+        "/favicon.svg" => WebResponse::builder()
+            .header("Content-Type", "image/svg+xml")
+            .body(ResponseBody::from(FAVICON_SVG))
+            .unwrap(),
+        "/apple-touch-icon.png" => WebResponse::builder()
+            .header("Content-Type", "image/png")
+            .body(ResponseBody::from(APPLE_TOUCH_ICON))
+            .unwrap(),
+        _ => WebResponse::builder()
+            .status(404)
+            .body(ResponseBody::from("Not found"))
+            .unwrap(),
     }
 }
 
 async fn json(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
-    WebResponse::new(ResponseBody::from(
-        json::stringify(data.lock().await.json.clone())
-    ))
+    WebResponse::new(ResponseBody::from(json::stringify(
+        data.lock().await.json.clone(),
+    )))
 }
 
 async fn refresh(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
@@ -69,7 +93,7 @@ struct ServerData {
     json: JsonValue,
     socket: Option<String>,
     config: JsonValue,
-    theme: &'static str
+    theme: &'static str,
 }
 
 impl ServerData {
@@ -82,13 +106,15 @@ impl ServerData {
             },
             raw_updates: Vec::new(),
             config,
-            theme: "neutral"
+            theme: "neutral",
         };
         s.refresh().await;
         s
     }
     async fn refresh(&mut self) {
-        let updates = sort_update_vec(&get_all_updates(self.socket.clone(), &self.config["authentication"]).await);
+        let updates = sort_update_vec(
+            &get_all_updates(self.socket.clone(), &self.config["authentication"]).await,
+        );
         self.raw_updates = updates;
         self.json = to_json(&self.raw_updates);
         let last_updated = Local::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
