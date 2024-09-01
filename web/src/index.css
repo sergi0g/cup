@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Kinda hacky, but thank you https://geary.co/internal-borders-css-grid/ */
+.gi {
+  position: relative;
+  height: 100%;
+}
+
+.gi::before,
+.gi::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+}
+
+.gi::before {
+  inline-size: 1px;
+  block-size: 100vh;
+  inset-inline-start: -0.125rem;
+}
+
+.gi::after {
+  inline-size: 100vw;
+  block-size: 1px;
+  inset-inline-start: 0;
+  inset-block-start: -0.12rem;
+}
+
+@supports (scrollbar-color: auto) {
+  html {
+    scrollbar-color: #707070 #343840;
+  }
+}
+
+@supports selector(::-webkit-scrollbar) {
+  html::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  html::-webkit-scrollbar-track {
+    background: #343840;
+  }
+
+  html::-webkit-scrollbar-thumb {
+    background: #707070;
+    border-radius: 0.375rem;
+  }
+
+  html::-webkit-scrollbar-thumb:hover {
+    background: #b5b5b5;
+  }
+}
