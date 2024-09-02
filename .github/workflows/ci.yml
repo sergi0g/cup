@@ -14,13 +14,8 @@ jobs:
       - name: Setup rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
 
-      - name: Install cross
-        run: cargo install cross --git https://github.com/cross-rs/cross
-
-      - name: Build binary
-        run: |
-          cross build --target x86_64-unknown-linux-musl --release
-          mv target/x86_x64-unknown-linux-musl/release/cup cup-linux-amd64
+      - name: Build
+        run: cargo build --verbose
 
   build-image:
     runs-on: ubuntu-latest

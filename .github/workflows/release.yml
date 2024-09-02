@@ -30,12 +30,12 @@ jobs:
       - name: Build amd64 binary
         run: |
           cross build --target x86_64-unknown-linux-musl --release
-          mv target/x86_x64-unknown-linux-musl/release/cup cup-linux-amd64
+          mv target/x86_x64-unknown-linux-musl/release/cup ./cup-linux-amd64
 
       - name: Build arm64 binary
         run: |
           cross build --target aarch64-unknown-linux-musl --release
-          mv target/aarch64-unknown-linux-musl/release/cup cup-linux-arm64
+          mv target/aarch64-unknown-linux-musl/release/cup ./cup-linux-arm64
 
       - name: Upload binaries
         uses: actions/upload-artifact@v4
