@@ -20,7 +20,7 @@ jobs:
           node-version: 20
 
       - name: Build
-        run: ./build cargo-dev
+        run: ./build.sh cargo-dev
 
   build-image:
     runs-on: ubuntu-latest

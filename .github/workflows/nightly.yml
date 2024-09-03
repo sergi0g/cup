@@ -22,12 +22,12 @@ jobs:
 
       - name: Build amd64 binary
         run: |
-          ./build cross x86_x64-unknown-linux-musl
+          ./build.sh cross x86_x64-unknown-linux-musl
           mv target/x86_x64-unknown-linux-musl/release/cup ./cup-linux-amd64
 
       - name: Build arm64 binary
         run: |
-          ./build cross aarch64-unknown-linux-musl
+          ./build.sh cross aarch64-unknown-linux-musl
           mv target/aarch64-unknown-linux-musl/release/cup ./cup-linux-arm64
 
       - name: Upload binaries
