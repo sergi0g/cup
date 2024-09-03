@@ -1,7 +1,4 @@
-use bollard::{
-    secret::ImageSummary,
-    ClientVersion, Docker,
-};
+use bollard::{secret::ImageSummary, ClientVersion, Docker};
 
 #[cfg(feature = "cli")]
 use bollard::secret::ImageInspect;

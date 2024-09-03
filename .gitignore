@@ -2,6 +2,7 @@
 /docs/.next
 /docs/node_modules
 /docs/out
+/src/static
 
 # In case I accidentally commit mine...
 cup.json

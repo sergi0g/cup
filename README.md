@@ -46,8 +46,6 @@ Here are some ideas to get you started:
 
 To contribute, fork the repository, make your changes and the submit a pull request.
 
-Note: If you update the UI, please make sure to recompile the CSS with `tailwindcss -mo src/static/index.css`. You need to have the Tailwind CSS CLI installed ([instructions here](https://tailwindcss.com/docs/installation))
-
 ## Support
 
 If you have any questions about Cup, feel free to ask in the [discussions](https://github.com/sergi0g/cup/discussions)!
