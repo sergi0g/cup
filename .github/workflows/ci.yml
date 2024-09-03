@@ -14,8 +14,13 @@ jobs:
       - name: Setup rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
 
+      - name: Set up node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Build
-        run: cargo build --verbose
+        run: ./build cargo-dev
 
   build-image:
     runs-on: ubuntu-latest

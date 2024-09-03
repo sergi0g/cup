@@ -1,20 +1,39 @@
-FROM rust:alpine AS build
-WORKDIR /
+# Build UI
+FROM node:20-alpine3.20 as web
 
+# Copy web folder
+COPY ./web ./web
+WORKDIR web
+
+# Install requirements
+RUN npm i
+
+# Build
+RUN npm run build
+
+# Build Cup
+FROM rust:1.80.1-alpine3.20 AS build
+
+# Requirements
 RUN apk add musl-dev
 
-RUN USER=root cargo new --bin cup
+# Copy rust
 WORKDIR /cup
 
-COPY Cargo.toml Cargo.lock .
-RUN cargo build --release
-RUN rm -rf src/
+COPY Cargo.toml .
+COPY Cargo.lock .
+COPY ./src ./src
 
-COPY src src
-# This is a very bad workaround, but cargo only triggers a rebuild this way for some reason
-RUN printf "\n" >> src/main.rs
+# Copy UI from web builder
+COPY --from=web /web/dist src/static
+
+# Build
 RUN cargo build --release
 
+# Runner
 FROM scratch
+
+# Copy binary
 COPY --from=build /cup/target/release/cup /cup
+
 ENTRYPOINT ["/cup"]

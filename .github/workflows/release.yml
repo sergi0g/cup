@@ -27,14 +27,19 @@ jobs:
       - name: Install cross
         run: cargo install cross --git https://github.com/cross-rs/cross
 
+      - name: Set up node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Build amd64 binary
         run: |
-          cross build --target x86_64-unknown-linux-musl --release
+          ./build cross x86_x64-unknown-linux-musl
           mv target/x86_x64-unknown-linux-musl/release/cup ./cup-linux-amd64
 
       - name: Build arm64 binary
         run: |
-          cross build --target aarch64-unknown-linux-musl --release
+          ./build cross aarch64-unknown-linux-musl
           mv target/aarch64-unknown-linux-musl/release/cup ./cup-linux-arm64
 
       - name: Upload binaries
