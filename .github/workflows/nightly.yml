@@ -9,25 +9,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup rust
+      - name: Set up Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
 
       - name: Install cross
         run: cargo install cross --git https://github.com/cross-rs/cross
 
-      - name: Set up node
+      - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
+      
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v1
 
       - name: Build amd64 binary
         run: |
-          ./build.sh cross x86_x64-unknown-linux-musl
+          ./build.sh cross build --target x86_x64-unknown-linux-musl --release
           mv target/x86_x64-unknown-linux-musl/release/cup ./cup-linux-amd64
 
       - name: Build arm64 binary
         run: |
-          ./build.sh cross aarch64-unknown-linux-musl
+          ./build.sh cross build --target aarch64-unknown-linux-musl --release
           mv target/aarch64-unknown-linux-musl/release/cup ./cup-linux-arm64
 
       - name: Upload binaries

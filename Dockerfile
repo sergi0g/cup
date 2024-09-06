@@ -1,23 +1,26 @@
-# Build UI
-FROM node:20-alpine3.20 as web
+### Build UI ###
+FROM node:20 AS web
+
+# Install bun
+RUN curl -fsSL https://bun.sh/install | bash
 
 # Copy web folder
-COPY ./web ./web
-WORKDIR web
+COPY ./web /web
+WORKDIR /web
 
 # Install requirements
-RUN npm i
+RUN ~/.bun/bin/bun install
 
-# Build
-RUN npm run build
+# Build frontend
+RUN ~/.bun/bin/bun run build
 
-# Build Cup
-FROM rust:1.80.1-alpine3.20 AS build
+### Build Cup ###
+FROM rust:1.80.1-alpine AS build
 
 # Requirements
 RUN apk add musl-dev
 
-# Copy rust
+# Copy files
 WORKDIR /cup
 
 COPY Cargo.toml .
@@ -30,7 +33,7 @@ COPY --from=web /web/dist src/static
 # Build
 RUN cargo build --release
 
-# Runner
+### Main ###
 FROM scratch
 
 # Copy binary
