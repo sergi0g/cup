@@ -34,7 +34,7 @@ pub async fn get_images_from_docker_daemon(socket: Option<String>) -> Vec<Image>
     };
     let mut result: Vec<Image> = Vec::new();
     for image in images {
-        if !image.repo_tags.is_empty() && image.repo_digests.len() == 1 {
+        if !image.repo_tags.is_empty() && !image.repo_digests.is_empty() {
             for t in &image.repo_tags {
                 let (registry, repository, tag) = split_image(t);
                 result.push(Image {

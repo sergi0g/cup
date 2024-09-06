@@ -2,7 +2,6 @@ import { MouseEvent, useState } from "react";
 import Logo from "./components/Logo";
 import Statistic from "./components/Statistic";
 import Image from "./components/Image";
-import { IconRefresh } from "@tabler/icons-react";
 import { LastChecked } from "./components/LastChecked";
 import Loading from "./components/Loading";
 import { Data } from "./types";
@@ -16,7 +15,7 @@ function App() {
     btn.disabled = true;
 
     let request = new XMLHttpRequest();
-    request.onload = function () {
+    request.onload = () => {
       if (request.status === 200) {
         window.location.reload();
       }
@@ -24,8 +23,8 @@ function App() {
     request.open(
       "GET",
       process.env.NODE_ENV === "production"
-        ? "/json"
-        : `http://${window.location.hostname}:8000/json`,
+        ? "/refresh"
+        : `http://${window.location.hostname}:8000/refresh`
     );
     request.send();
   };
@@ -58,7 +57,22 @@ function App() {
             >
               <LastChecked datetime={data.last_updated} />
               <button className="group" onClick={refresh}>
-                <IconRefresh className="-scale-x-100 group-disabled:animate-spin" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  className="group-disabled:animate-spin"
+                >
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M4,11A8.1,8.1 0 0 1 19.5,9M20,5v4h-4" />
+                  <path d="M20,13A8.1,8.1 0 0 1 4.5,15M4,19v-4h4" />
+                </svg>
               </button>
             </div>
             <ul

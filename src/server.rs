@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use chrono::Local;
 use json::JsonValue;
+use liquid::{object, Object};
 use tokio::sync::Mutex;
 use xitca_web::{
     body::ResponseBody,
@@ -45,7 +46,7 @@ async fn _static(data: StateRef<'_, Arc<Mutex<ServerData>>>, path: PathRef<'_>) 
     match path.0 {
         "/" => WebResponse::builder()
             .header("Content-Type", "text/html")
-            .body(ResponseBody::from(HTML))
+            .body(ResponseBody::from(data.lock().await.template.clone()))
             .unwrap(),
         "/assets/index.js" => WebResponse::builder()
             .header("Content-Type", "text/javascript")
@@ -89,6 +90,7 @@ async fn refresh(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
 }
 
 struct ServerData {
+    template: String,
     raw_updates: Vec<(String, Option<bool>)>,
     json: JsonValue,
     socket: Option<String>,
@@ -100,6 +102,7 @@ impl ServerData {
     async fn new(socket: Option<String>, config: JsonValue) -> Self {
         let mut s = Self {
             socket,
+            template: String::new(),
             json: json::object! {
                 metrics: json::object! {},
                 images: json::object! {},
@@ -116,9 +119,22 @@ impl ServerData {
             &get_all_updates(self.socket.clone(), &self.config["authentication"]).await,
         );
         self.raw_updates = updates;
+        let template = liquid::ParserBuilder::with_stdlib()
+            .build()
+            .unwrap()
+            .parse(HTML)
+            .unwrap();
+        let images = self
+            .raw_updates
+            .iter()
+            .map(|(name, has_update)| match has_update {
+                Some(v) => object!({"name": name, "has_update": v.to_string()}), // Liquid kinda thinks false == nil, so we'll be comparing strings from now on
+                None => object!({"name": name, "has_update": "null"}),
+            })
+            .collect::<Vec<Object>>();
         self.json = to_json(&self.raw_updates);
-        let last_updated = Local::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
-        self.json["last_updated"] = last_updated.to_string().into();
+        let last_updated = Local::now();
+        self.json["last_updated"] = last_updated.to_rfc3339_opts(chrono::SecondsFormat::Secs, true).to_string().into();
         self.theme = match &self.config["theme"].as_str() {
             Some(t) => match *t {
                 "default" => "neutral",
@@ -130,5 +146,12 @@ impl ServerData {
             },
             None => "neutral",
         };
+        let globals = object!({
+            "metrics": [{"name": "Monitored images", "value": self.json["metrics"]["monitored_images"].as_usize()}, {"name": "Up to date", "value": self.json["metrics"]["up_to_date"].as_usize()}, {"name": "Updates available", "value": self.json["metrics"]["update_available"].as_usize()}, {"name": "Unknown", "value": self.json["metrics"]["unknown"].as_usize()}],
+            "images": images,
+            "last_updated": last_updated.format("%Y-%m-%d %H:%M:%S").to_string(),
+            "theme": &self.theme
+        });
+        self.template = template.render(&globals).unwrap();
     }
 }
