@@ -23,6 +23,9 @@ jobs:
       - name: Set up Bun
         uses: oven-sh/setup-bun@v1
 
+      - name: Install deps
+        run: cd web && bun install
+
       - name: Build amd64 binary
         run: |
           ./build.sh cross build --target x86_x64-unknown-linux-musl --release

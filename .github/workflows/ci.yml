@@ -22,6 +22,9 @@ jobs:
       - name: Set up Bun
         uses: oven-sh/setup-bun@v1
 
+      - name: Install deps
+        run: cd web && bun install
+
       - name: Build
         run: ./build.sh cargo build --verbose
 
