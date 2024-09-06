@@ -28,8 +28,8 @@ jobs:
 
       - name: Build amd64 binary
         run: |
-          ./build.sh cross build --target x86_x64-unknown-linux-musl --release
-          mv target/x86_x64-unknown-linux-musl/release/cup ./cup-linux-amd64
+          ./build.sh cross build --target x86_64-unknown-linux-musl --release
+          mv target/x86_64-unknown-linux-musl/release/cup ./cup-linux-amd64
 
       - name: Build arm64 binary
         run: |
