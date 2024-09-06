@@ -8,6 +8,9 @@ jobs:
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Get current tag
         id: tag
         run: |
