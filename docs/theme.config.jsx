@@ -16,7 +16,7 @@ export default {
     const { asPath } = useRouter()
     const { frontMatter } = useConfig()
     const url =
-      'https://sergi0g.github.io/cup' +
+      'https://sergi0g.github.io/cup/docs/' +
       (`/${asPath}`);
  
     return (
@@ -36,9 +36,9 @@ export default {
       <h1 className="font-bold ml-2">Cup</h1>
     </div>
   ),
-  logoLink: "sergi0g.github.io/cup",
+  logoLink: "https://sergi0g.github.io/cup/docs/",
   project: {
-    link: "https://github.com/sergi0g/cup",
+    link: "https://github.com/sergi0g/cup/",
   },
   navbar: {
     extraContent: <ThemeSwitch lite className="[&_span]:hidden" />,
