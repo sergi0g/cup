@@ -4,6 +4,7 @@ import {
   IconEyeFilled,
   IconHelpCircleFilled,
 } from "@tabler/icons-react";
+import { theme } from "../theme";
 
 export default function Statistic({
   name,
@@ -12,7 +13,6 @@ export default function Statistic({
   name: string;
   value: number;
 }) {
-  const theme = "neutral";
   name = name.replaceAll("_", " ");
   name = name.slice(0, 1).toUpperCase() + name.slice(1); // Capitalize name
   return (

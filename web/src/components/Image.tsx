@@ -4,6 +4,7 @@ import {
   IconCube,
   IconHelpCircleFilled,
 } from "@tabler/icons-react";
+import { WithTooltip } from "./Tooltip";
 
 export default function Image({
   name,
@@ -17,13 +18,28 @@ export default function Image({
       <IconCube className="size-6 shrink-0" />
       {name}
       {status == false && (
-        <IconCircleCheckFilled className="text-green-500 ml-auto size-6 shrink-0" />
+        <WithTooltip
+          text="Up to date"
+          className="text-green-500 ml-auto size-6 shrink-0"
+        >
+          <IconCircleCheckFilled />
+        </WithTooltip>
       )}
       {status == true && (
-        <IconCircleArrowUpFilled className="text-blue-500 ml-auto size-6 shrink-0" />
+        <WithTooltip
+          text="Update available"
+          className="text-blue-500 ml-auto size-6 shrink-0"
+        >
+          <IconCircleArrowUpFilled />
+        </WithTooltip>
       )}
       {status == null && (
-        <IconHelpCircleFilled className="text-gray-500 ml-auto size-6 shrink-0" />
+        <WithTooltip
+          text="Unknown"
+          className="text-gray-500 ml-auto size-6 shrink-0"
+        >
+          <IconHelpCircleFilled />
+        </WithTooltip>
       )}
     </li>
   );

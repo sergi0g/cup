@@ -1,12 +1,10 @@
-export type Data = {
+export interface Data {
   metrics: {
     monitored_images: number;
     up_to_date: number;
     update_available: number;
     unknown: number;
   };
-  images: {
-    [key: string]: boolean | null;
-  };
+  images: Record<string, boolean | null>;
   last_updated: string;
 };

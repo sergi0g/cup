@@ -5,7 +5,8 @@ import react from "@vitejs/plugin-react-swc";
 export default defineConfig({
   plugins: [react()],
   build: {
-    rollupOptions: { // https://stackoverflow.com/q/69614671/vite-without-hash-in-filename#75344943
+    rollupOptions: {
+      // https://stackoverflow.com/q/69614671/vite-without-hash-in-filename#75344943
       output: {
         entryFileNames: `assets/[name].js`,
         chunkFileNames: `assets/[name].js`,

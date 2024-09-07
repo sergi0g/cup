@@ -1,14 +1,14 @@
 import { IconLoader2 } from "@tabler/icons-react";
 import { Data } from "../types";
 import Logo from "./Logo";
+import { theme } from "../theme";
 
 export default function Loading({ onLoad }: { onLoad: (data: Data) => void }) {
-  const theme = "neutral";
   fetch(
     process.env.NODE_ENV === "production"
       ? "/json"
       : `http://${window.location.hostname}:8000/json`,
-  ).then((response) => response.json().then((data) => onLoad(data)));
+  ).then((response) => response.json().then((data) => {onLoad(data as Data)}));
   return (
     <div
       className={`flex justify-center min-h-screen bg-${theme}-50 dark:bg-${theme}-950`}

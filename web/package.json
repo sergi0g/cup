@@ -11,10 +11,14 @@
     "fmt": "prettier --write ."
   },
   "dependencies": {
+    "@radix-ui/react-tooltip": "^1.1.2",
     "@tabler/icons-react": "^3.14.0",
+    "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "tailwind-merge": "^2.5.2",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",

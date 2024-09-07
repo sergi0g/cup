@@ -4,7 +4,7 @@ export default {
   theme: {
     extend: {},
   },
-  plugins: [],
+  plugins: [require("tailwindcss-animate")],
   safelist: [
     // Generate minimum extra CSS
     {
@@ -31,6 +31,13 @@ export default {
     },
     {
       pattern: /divide-(gray|neutral)-800/,
+      variants: ["dark"],
+    },
+    {
+      pattern: /border-(gray|neutral)-200/,
+    },
+    {
+      pattern: /border-(gray|neutral)-800/,
       variants: ["dark"],
     },
   ],
