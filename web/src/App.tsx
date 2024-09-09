@@ -7,9 +7,11 @@ import Loading from "./components/Loading";
 import { Data } from "./types";
 import { theme } from "./theme";
 import RefreshButton from "./components/RefreshButton";
+import Search from "./components/Search";
 
 function App() {
   const [data, setData] = useState<Data | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   if (!data) return <Loading onLoad={setData} />;
   return (
     <div
@@ -41,10 +43,11 @@ function App() {
               <LastChecked datetime={data.last_updated} />
               <RefreshButton />
             </div>
+            <Search onChange={setSearchQuery}/>
             <ul
               className={`*:py-4 *:px-6 *:flex *:items-center *:gap-3 dark:divide-${theme}-800 divide-y dark:text-white`}
             >
-              {Object.entries(data.images).map(([name, status]) => (
+              {Object.entries(data.images).filter(([name]) => name.includes(searchQuery)).map(([name, status]) => (
                 <Image name={name} status={status} key={name} />
               ))}
             </ul>

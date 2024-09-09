@@ -1,6 +1,12 @@
 #!/bin/sh
 
+# Exit on error
+set -e
+
 # This is kind of like a shim that makes sure the frontend is rebuilt when running a build. For example you can run `./build.sh cargo build --release`
+
+# Remove old files
+rm -rf src/static
 
 # Frontend
 cd web/

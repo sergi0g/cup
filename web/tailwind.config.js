@@ -24,10 +24,11 @@ export default {
     },
     {
       pattern: /text-(gray|neutral)-400/,
+      variants: ["hover"]
     },
     {
       pattern: /text-(gray|neutral)-500/,
-      variants: ["dark"],
+      variants: ["dark", "placeholder"],
     },
     {
       pattern: /divide-(gray|neutral)-800/,
@@ -37,7 +38,7 @@ export default {
       pattern: /border-(gray|neutral)-200/,
     },
     {
-      pattern: /border-(gray|neutral)-800/,
+      pattern: /border-(gray|neutral)-700/,
       variants: ["dark"],
     },
   ],
