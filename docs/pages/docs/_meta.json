@@ -11,6 +11,9 @@
     "usage": {
         "title": "Usage"
     },
+    "community-resources": {
+        "title": "Community Resources"
+    },
     "nightly": {
         "title": "Using the latest version"
     }

@@ -350,7 +350,7 @@ dependencies = [
 
 [[package]]
 name = "cup"
-version = "2.2.1"
+version = "2.2.2"
 dependencies = [
  "bollard",
  "chrono",

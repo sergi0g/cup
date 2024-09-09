@@ -1,0 +1,23 @@
+# Docker Compose
+
+Many users find it useful to run Cup with Docker Compose, as it enables them to have it constantly running in the background and easily control it. Cup's lightweight resource usae makes it ideal for this use case.
+
+There have been requests for an official Docker Compose file, but I believe you should customize it to your needs.
+
+Here is an example of what I would use (by [@ioverho](https://github.com/ioverho)):
+
+```yaml
+services:
+  cup:
+    image: ghcr.io/sergi0g/cup:latest
+    container_name: cup # Optional
+    restart: unless-stopped
+    command: -c /config/cup.json serve
+    ports:
+      - 8000:8000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./cup.json:/config/cup.json
+```
+
+This can be customized further of course, if you choose to use a different port, another config location, or would like to change something else. Have fun!
