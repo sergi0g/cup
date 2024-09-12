@@ -6,10 +6,16 @@ use ureq::{Error, ErrorKind};
 
 use http_auth::parse_challenges;
 
-use crate::{error, image::Image, warn};
+use crate::{debug, error, image::Image, utils::CliConfig, warn};
 
-pub fn check_auth(registry: &str, config: &JsonValue) -> Option<String> {
-    let protocol = if config["insecure_registries"].contains(registry) {
+pub fn check_auth(registry: &str, options: &CliConfig) -> Option<String> {
+    let protocol = if options.config["insecure_registries"].contains(registry) {
+        if options.verbose {
+            debug!(
+                "{} is configured as an insecure registry. Downgrading to HTTP",
+                registry
+            );
+        };
         "http"
     } else {
         "https"
@@ -27,12 +33,16 @@ pub fn check_auth(registry: &str, config: &JsonValue) -> Option<String> {
         Err(Error::Transport(error)) => {
             match error.kind() {
                 ErrorKind::Dns => {
-                    warn!("Failed to lookup the IP of the registry, retrying.");
-                    return check_auth(registry, config);
+                    if options.verbose {
+                        warn!("DNS lookup of {} failed. Retrying", registry);
+                    };
+                    check_auth(registry, options)
                 } // If something goes really wrong, this can get stuck in a loop
                 ErrorKind::ConnectionFailed => {
-                    warn!("Connection probably timed out, retrying.");
-                    return check_auth(registry, config);
+                    if options.verbose {
+                        warn!("Connection to {} failed. Retrying.", registry);
+                    };
+                    check_auth(registry, options)
                 } // Same here
                 _ => error!("{}", error),
             }
@@ -41,13 +51,14 @@ pub fn check_auth(registry: &str, config: &JsonValue) -> Option<String> {
     }
 }
 
-pub fn get_latest_digest(image: &Image, token: Option<&String>, config: &JsonValue) -> Image {
-    let protocol =
-        if config["insecure_registries"].contains(json::JsonValue::from(image.registry.clone())) {
-            "http"
-        } else {
-            "https"
-        };
+pub fn get_latest_digest(image: &Image, token: Option<&String>, options: &CliConfig) -> Image {
+    let protocol = if options.config["insecure_registries"]
+        .contains(json::JsonValue::from(image.registry.clone()))
+    {
+        "http"
+    } else {
+        "https"
+    };
     let mut request = ureq::head(&format!(
         "{}://{}/v2/{}/manifests/{}",
         protocol, &image.registry, &image.repository, &image.tag
@@ -70,9 +81,10 @@ pub fn get_latest_digest(image: &Image, token: Option<&String>, config: &JsonVal
                     Some(&get_token(
                         vec![image],
                         &parse_www_authenticate(response.header("www-authenticate").unwrap()),
-                        &None // I think?
+                        &None, // I think?
+                        options
                     )),
-                    config
+                    options
                 );
             }
         }
@@ -85,12 +97,16 @@ pub fn get_latest_digest(image: &Image, token: Option<&String>, config: &JsonVal
         Err(Error::Transport(error)) => {
             match error.kind() {
                 ErrorKind::Dns => {
-                    warn!("Failed to lookup the IP of the registry, retrying.");
-                    return get_latest_digest(image, token, config)
+                    if options.verbose {
+                        warn!("DNS lookup of the registry failed. Retrying");
+                    }
+                    return get_latest_digest(image, token, options)
                 }, // If something goes really wrong, this can get stuck in a loop
                 ErrorKind::ConnectionFailed => {
-                    warn!("Connection probably timed out, retrying.");
-                    return get_latest_digest(image, token, config)
+                    if options.verbose {
+                        warn!("Connection to the registry failed. Retrying.");
+                    }
+                    return get_latest_digest(image, token, options)
                 }, // Same here
                 _ => error!("Failed to retrieve image digest\n{}!", error)
             }
@@ -108,11 +124,11 @@ pub fn get_latest_digest(image: &Image, token: Option<&String>, config: &JsonVal
 pub fn get_latest_digests(
     images: Vec<&Image>,
     token: Option<&String>,
-    config: &JsonValue,
+    options: &CliConfig,
 ) -> Vec<Image> {
     let result: Mutex<Vec<Image>> = Mutex::new(Vec::new());
     images.par_iter().for_each(|&image| {
-        let digest = get_latest_digest(image, token, config).digest;
+        let digest = get_latest_digest(image, token, options).digest;
         result.lock().unwrap().push(Image {
             digest,
             ..image.clone()
@@ -122,7 +138,12 @@ pub fn get_latest_digests(
     r
 }
 
-pub fn get_token(images: Vec<&Image>, auth_url: &str, credentials: &Option<String>) -> String {
+pub fn get_token(
+    images: Vec<&Image>,
+    auth_url: &str,
+    credentials: &Option<String>,
+    options: &CliConfig,
+) -> String {
     let mut final_url = auth_url.to_owned();
     for image in &images {
         final_url = format!("{}&scope=repository:{}:pull", final_url, image.repository);
@@ -143,12 +164,16 @@ pub fn get_token(images: Vec<&Image>, auth_url: &str, credentials: &Option<Strin
         Err(Error::Transport(error)) => {
             match error.kind() {
                 ErrorKind::Dns => {
-                    warn!("Failed to lookup the IP of the registry, retrying.");
-                    return get_token(images, auth_url, credentials);
+                    if options.verbose {
+                        warn!("DNS lookup of the registry failed. Retrying");
+                    }
+                    return get_token(images, auth_url, credentials, options);
                 } // If something goes really wrong, this can get stuck in a loop
                 ErrorKind::ConnectionFailed => {
-                    warn!("Connection probably timed out, retrying.");
-                    return get_token(images, auth_url, credentials);
+                    if options.verbose {
+                        warn!("Connection to the registry failed. Retrying.");
+                    }
+                    return get_token(images, auth_url, credentials, options);
                 } // Same here
                 _ => error!("Token request failed\n{}!", error),
             }

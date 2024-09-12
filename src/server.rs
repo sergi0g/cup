@@ -15,8 +15,8 @@ use xitca_web::{
 
 use crate::{
     check::get_all_updates,
-    error,
-    utils::{sort_update_vec, to_json},
+    error, info,
+    utils::{sort_update_vec, to_json, CliConfig},
 };
 
 const HTML: &str = include_str!("static/index.html");
@@ -26,9 +26,10 @@ const FAVICON_ICO: &[u8] = include_bytes!("static/favicon.ico");
 const FAVICON_SVG: &[u8] = include_bytes!("static/favicon.svg");
 const APPLE_TOUCH_ICON: &[u8] = include_bytes!("static/apple-touch-icon.png");
 
-pub async fn serve(port: &u16, socket: Option<String>, config: JsonValue) -> std::io::Result<()> {
-    println!("Starting server, please wait...");
-    let data = ServerData::new(socket, config).await;
+pub async fn serve(port: &u16, options: &CliConfig) -> std::io::Result<()> {
+    info!("Starting server, please wait...");
+    let data = ServerData::new(options).await;
+    info!("Ready to start!");
     App::new()
         .with_state(Arc::new(Mutex::new(data)))
         .at("/", get(handler_service(_static)))
@@ -93,31 +94,28 @@ struct ServerData {
     template: String,
     raw_updates: Vec<(String, Option<bool>)>,
     json: JsonValue,
-    socket: Option<String>,
-    config: JsonValue,
+    options: CliConfig,
     theme: &'static str,
 }
 
 impl ServerData {
-    async fn new(socket: Option<String>, config: JsonValue) -> Self {
+    async fn new(options: &CliConfig) -> Self {
         let mut s = Self {
-            socket,
+            options: options.clone(),
             template: String::new(),
             json: json::object! {
                 metrics: json::object! {},
                 images: json::object! {},
             },
             raw_updates: Vec::new(),
-            config,
             theme: "neutral",
         };
         s.refresh().await;
         s
     }
     async fn refresh(&mut self) {
-        let updates = sort_update_vec(
-            &get_all_updates(self.socket.clone(), &self.config["authentication"]).await,
-        );
+        info!("Refreshing data");
+        let updates = sort_update_vec(&get_all_updates(&self.options).await);
         self.raw_updates = updates;
         let template = liquid::ParserBuilder::with_stdlib()
             .build()
@@ -134,8 +132,11 @@ impl ServerData {
             .collect::<Vec<Object>>();
         self.json = to_json(&self.raw_updates);
         let last_updated = Local::now();
-        self.json["last_updated"] = last_updated.to_rfc3339_opts(chrono::SecondsFormat::Secs, true).to_string().into();
-        self.theme = match &self.config["theme"].as_str() {
+        self.json["last_updated"] = last_updated
+            .to_rfc3339_opts(chrono::SecondsFormat::Secs, true)
+            .to_string()
+            .into();
+        self.theme = match &self.options.config["theme"].as_str() {
             Some(t) => match *t {
                 "default" => "neutral",
                 "blue" => "gray",

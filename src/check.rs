@@ -3,14 +3,16 @@ use std::{
     sync::Mutex,
 };
 
-use json::JsonValue;
+use chrono::Local;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::{
+    debug,
     docker::get_images_from_docker_daemon,
     image::Image,
+    info,
     registry::{check_auth, get_latest_digests, get_token},
-    utils::unsplit_image,
+    utils::{unsplit_image, CliConfig},
 };
 
 #[cfg(feature = "cli")]
@@ -33,14 +35,12 @@ where
     }
 }
 
-pub async fn get_all_updates(
-    socket: Option<String>,
-    config: &JsonValue,
-) -> Vec<(String, Option<bool>)> {
+pub async fn get_all_updates(options: &CliConfig) -> Vec<(String, Option<bool>)> {
+    let start = Local::now().timestamp_millis();
     let image_map_mutex: Mutex<HashMap<String, &Option<String>>> = Mutex::new(HashMap::new());
-    let local_images = get_images_from_docker_daemon(socket).await;
+    let local_images = get_images_from_docker_daemon(options).await;
     local_images.par_iter().for_each(|image| {
-        let img = unsplit_image(&image.registry, &image.repository, &image.tag);
+        let img = unsplit_image(image);
         image_map_mutex.lock().unwrap().insert(img, &image.digest);
     });
     let image_map = image_map_mutex.lock().unwrap().clone();
@@ -51,26 +51,35 @@ pub async fn get_all_updates(
     registries.unique();
     let mut remote_images: Vec<Image> = Vec::new();
     for registry in registries {
+        if options.verbose {
+            debug!("Checking images from registry {}", registry)
+        }
         let images: Vec<&Image> = local_images
             .par_iter()
             .filter(|image| &image.registry == registry)
             .collect();
-        let credentials = config["authentication"][registry]
+        let credentials = options.config["authentication"][registry]
             .clone()
             .take_string()
             .or(None);
-        let mut latest_images = match check_auth(registry, config) {
+        let mut latest_images = match check_auth(registry, options) {
             Some(auth_url) => {
-                let token = get_token(images.clone(), &auth_url, &credentials);
-                get_latest_digests(images, Some(&token), config)
+                let token = get_token(images.clone(), &auth_url, &credentials, options);
+                if options.verbose {
+                    debug!("Using token {}", token);
+                }
+                get_latest_digests(images, Some(&token), options)
             }
-            None => get_latest_digests(images, None, config),
+            None => get_latest_digests(images, None, options),
         };
         remote_images.append(&mut latest_images);
     }
+    if options.verbose {
+        debug!("Collecting results")
+    }
     let result_mutex: Mutex<Vec<(String, Option<bool>)>> = Mutex::new(Vec::new());
     remote_images.par_iter().for_each(|image| {
-        let img = unsplit_image(&image.registry, &image.repository, &image.tag);
+        let img = unsplit_image(image);
         match &image.digest {
             Some(d) => {
                 let r = d != image_map.get(&img).unwrap().as_ref().unwrap();
@@ -80,23 +89,28 @@ pub async fn get_all_updates(
         }
     });
     let result = result_mutex.lock().unwrap().clone();
+    let end = Local::now().timestamp_millis();
+    info!("✨ Checked {} images in {}ms", local_images.len(), end - start);
     result
 }
 
 #[cfg(feature = "cli")]
-pub async fn get_update(image: &str, socket: Option<String>, config: &JsonValue) -> Option<bool> {
-    let local_image = get_image_from_docker_daemon(socket, image).await;
-    let credentials = config["authentication"][&local_image.registry]
+pub async fn get_update(image: &str, options: &CliConfig) -> Option<bool> {
+    let local_image = get_image_from_docker_daemon(options.socket.clone(), image).await;
+    let credentials = options.config["authentication"][&local_image.registry]
         .clone()
         .take_string()
         .or(None);
-    let token = match check_auth(&local_image.registry, config) {
-        Some(auth_url) => get_token(vec![&local_image], &auth_url, &credentials),
+    let token = match check_auth(&local_image.registry, options) {
+        Some(auth_url) => get_token(vec![&local_image], &auth_url, &credentials, options),
         None => String::new(),
     };
+    if options.verbose {
+        debug!("Using token {}", token);
+    };
     let remote_image = match token.as_str() {
-        "" => get_latest_digest(&local_image, None, config),
-        _ => get_latest_digest(&local_image, Some(&token), config),
+        "" => get_latest_digest(&local_image, None, options),
+        _ => get_latest_digest(&local_image, Some(&token), options),
     };
     match &remote_image.digest {
         Some(d) => Some(d != &local_image.digest.unwrap()),

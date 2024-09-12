@@ -3,7 +3,11 @@ use bollard::{secret::ImageSummary, ClientVersion, Docker};
 #[cfg(feature = "cli")]
 use bollard::secret::ImageInspect;
 
-use crate::{error, image::Image, utils::split_image};
+use crate::{
+    debug, error,
+    image::Image,
+    utils::{split_image, CliConfig},
+};
 
 fn create_docker_client(socket: Option<String>) -> Docker {
     let client: Result<Docker, bollard::errors::Error> = match socket {
@@ -24,8 +28,8 @@ fn create_docker_client(socket: Option<String>) -> Docker {
     }
 }
 
-pub async fn get_images_from_docker_daemon(socket: Option<String>) -> Vec<Image> {
-    let client: Docker = create_docker_client(socket);
+pub async fn get_images_from_docker_daemon(options: &CliConfig) -> Vec<Image> {
+    let client: Docker = create_docker_client(options.socket.clone());
     let images: Vec<ImageSummary> = match client.list_images::<String>(None).await {
         Ok(images) => images,
         Err(e) => {
@@ -50,6 +54,11 @@ pub async fn get_images_from_docker_daemon(socket: Option<String>) -> Vec<Image>
                     ),
                 });
             }
+        } else if options.verbose {
+            debug!(
+                "Skipped an image\nTags: {:#?}\nDigests: {:#?}",
+                image.repo_tags, image.repo_digests
+            )
         }
     }
     result

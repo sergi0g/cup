@@ -6,7 +6,7 @@ use formatting::{print_raw_update, print_raw_updates, print_update, print_update
 #[cfg(feature = "server")]
 use server::serve;
 use std::path::PathBuf;
-use utils::load_config;
+use utils::{load_config, CliConfig};
 
 pub mod check;
 pub mod docker;
@@ -25,6 +25,13 @@ struct Cli {
     socket: Option<String>,
     #[arg(short, long, default_value_t = String::new(), help = "Config file path")]
     config_path: String,
+    #[arg(
+        short,
+        long,
+        default_value_t = false,
+        help = "Enable verbose (debug) logging"
+    )]
+    verbose: bool,
     #[command(subcommand)]
     command: Option<Commands>,
 }
@@ -64,12 +71,24 @@ async fn main() {
         "" => None,
         path => Some(PathBuf::from(path)),
     };
-    let config = load_config(cfg_path);
+    if cli.verbose {
+        debug!("CLI options:");
+        debug!("Config path: {:?}", cfg_path);
+        debug!("Socket: {:?}", &cli.socket)
+    }
+    let cli_config = CliConfig {
+        socket: cli.socket,
+        verbose: cli.verbose,
+        config: load_config(cfg_path),
+    };
+    if cli.verbose {
+        debug!("Config: {}", cli_config.config)
+    }
     match &cli.command {
         #[cfg(feature = "cli")]
         Some(Commands::Check { image, icons, raw }) => match image {
             Some(name) => {
-                let has_update = get_update(name, cli.socket, &config).await;
+                let has_update = get_update(name, &cli_config).await;
                 match raw {
                     true => print_raw_update(name, &has_update),
                     false => print_update(name, &has_update),
@@ -77,10 +96,10 @@ async fn main() {
             }
             None => {
                 match raw {
-                    true => print_raw_updates(&get_all_updates(cli.socket, &config).await),
+                    true => print_raw_updates(&get_all_updates(&cli_config).await),
                     false => {
                         let spinner = Spinner::new();
-                        let updates = get_all_updates(cli.socket, &config).await;
+                        let updates = get_all_updates(&cli_config).await;
                         spinner.succeed();
                         print_updates(&updates, icons);
                     }
@@ -89,7 +108,7 @@ async fn main() {
         },
         #[cfg(feature = "server")]
         Some(Commands::Serve { port }) => {
-            let _ = serve(port, cli.socket, config).await;
+            let _ = serve(port, &cli_config).await;
         }
         None => (),
     }
