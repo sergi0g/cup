@@ -11,7 +11,7 @@ Cup is the easiest way to check for container image updates.
 
 ## Features
 
-- Extremely fast. Cup takes full advantage of your CPU and is hightly optimized, resulting in lightning fast speed. On my test machine, it took ~6 seconds for 70 images.
+- Extremely fast. Cup takes full advantage of your CPU and is hightly optimized, resulting in lightning fast speed. On my test machine, it took ~12 seconds for ~95 images.
 - Supports most registries, including Docker Hub, ghcr.io, Quay, lscr.io and even Gitea (or derivatives)
 - Doesn't exhaust any rate limits. This is the original reason I created Cup. It was inspired by [What's up docker?](https://github.com/fmartinou/whats-up-docker) which would always use it up.
 - Beautiful CLI and web interface for checking on your containers any time.
