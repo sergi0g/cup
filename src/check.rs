@@ -1,12 +1,9 @@
 use std::collections::{HashMap, HashSet};
 
-use chrono::Local;
-
 use crate::{
     debug,
     docker::get_images_from_docker_daemon,
     image::Image,
-    info,
     registry::{check_auth, get_latest_digests, get_token},
     utils::{new_reqwest_client, unsplit_image, CliConfig},
 };
@@ -32,7 +29,6 @@ where
 }
 
 pub async fn get_all_updates(options: &CliConfig) -> Vec<(String, Option<bool>)> {
-    let start = Local::now().timestamp_millis();
     let local_images = get_images_from_docker_daemon(options).await;
     let mut image_map: HashMap<String, Option<String>> = HashMap::with_capacity(local_images.len());
     for image in &local_images {
@@ -81,12 +77,6 @@ pub async fn get_all_updates(options: &CliConfig) -> Vec<(String, Option<bool>)>
             None => result.push((img, None)),
         }
     });
-    let end = Local::now().timestamp_millis();
-    info!(
-        "✨ Checked {} images in {}ms",
-        local_images.len(),
-        end - start
-    );
     result
 }
 

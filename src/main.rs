@@ -1,5 +1,6 @@
 #[cfg(feature = "cli")]
 use check::{get_all_updates, get_update};
+use chrono::Local;
 use clap::{Parser, Subcommand};
 #[cfg(feature = "cli")]
 use formatting::{print_raw_update, print_raw_updates, print_update, print_updates, Spinner};
@@ -95,13 +96,21 @@ async fn main() {
                 };
             }
             None => {
+                let start = Local::now().timestamp_millis();
                 match *raw || cli.verbose {
-                    true => print_raw_updates(&get_all_updates(&cli_config).await),
+                    true => {
+                        let updates = get_all_updates(&cli_config).await;
+                        let end = Local::now().timestamp_millis();
+                        print_raw_updates(&updates);
+                        info!("✨ Checked {} images in {}ms", updates.len(), end - start);
+                    }
                     false => {
                         let spinner = Spinner::new();
                         let updates = get_all_updates(&cli_config).await;
                         spinner.succeed();
+                        let end = Local::now().timestamp_millis();
                         print_updates(&updates, icons);
+                        info!("✨ Checked {} images in {}ms", updates.len(), end - start);
                     }
                 };
             }
