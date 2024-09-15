@@ -1,160 +1,136 @@
-use std::sync::Mutex;
-
+use futures::future::join_all;
 use json::JsonValue;
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-use ureq::{Error, ErrorKind};
 
 use http_auth::parse_challenges;
+use reqwest_middleware::ClientWithMiddleware;
 
 use crate::{error, image::Image, warn};
 
-pub fn check_auth(registry: &str, config: &JsonValue) -> Option<String> {
+pub async fn check_auth(registry: &str, config: &JsonValue, client: &ClientWithMiddleware) -> Option<String> {
     let protocol = if config["insecure_registries"].contains(registry) {
         "http"
     } else {
         "https"
     };
-    let response = ureq::get(&format!("{}://{}/v2/", protocol, registry)).call();
+    let response = client.get(&format!("{}://{}/v2/", protocol, registry)).send().await;
     match response {
-        Ok(_) => None,
-        Err(Error::Status(401, response)) => match response.header("www-authenticate") {
-            Some(challenge) => Some(parse_www_authenticate(challenge)),
-            None => error!(
-                "Unauthorized to access registry {} and no way to authenticate was provided",
-                registry
-            ),
+        Ok(r) => {
+            let status = r.status().as_u16();
+            if status == 401 {
+                match r.headers().get("www-authenticate") {
+                    Some(challenge) => Some(parse_www_authenticate(challenge.to_str().unwrap())),
+                    None => error!(
+                        "Unauthorized to access registry {} and no way to authenticate was provided",
+                        registry
+                    ),
+                }
+            } else if status == 200 {
+                None
+            } else {
+                warn!("Received unexpected status code {}\nResponse: {}", status, r.text().await.unwrap());
+                None
+            }
         },
-        Err(Error::Transport(error)) => {
-            match error.kind() {
-                ErrorKind::Dns => {
-                    warn!("Failed to lookup the IP of the registry, retrying.");
-                    return check_auth(registry, config);
-                } // If something goes really wrong, this can get stuck in a loop
-                ErrorKind::ConnectionFailed => {
-                    warn!("Connection probably timed out, retrying.");
-                    return check_auth(registry, config);
-                } // Same here
-                _ => error!("{}", error),
+        Err(e) => {
+            if e.is_connect() {
+                warn!("Connection to registry {} failed.", &registry);
+                None
+            } else {
+                error!("Unexpected error: {}", e.to_string())
             }
         }
-        Err(e) => error!("{}", e),
     }
 }
 
-pub fn get_latest_digest(image: &Image, token: Option<&String>, config: &JsonValue) -> Image {
+pub async fn get_latest_digest(image: &Image, token: Option<&String>, config: &JsonValue, client: &ClientWithMiddleware) -> Image {
     let protocol =
         if config["insecure_registries"].contains(json::JsonValue::from(image.registry.clone())) {
             "http"
         } else {
             "https"
         };
-    let mut request = ureq::head(&format!(
+    let mut request = client.head(&format!(
         "{}://{}/v2/{}/manifests/{}",
         protocol, &image.registry, &image.repository, &image.tag
     ));
     if let Some(t) = token {
-        request = request.set("Authorization", &format!("Bearer {}", t));
+        request = request.header("Authorization", &format!("Bearer {}", t));
     }
     let raw_response = match request
-        .set("Accept", "application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.docker.distribution.manifest.v2+json, application/vnd.oci.image.index.v1+json")
-        .call()
+        .header("Accept", "application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.docker.distribution.manifest.v2+json, application/vnd.oci.image.index.v1+json")
+        .send().await
     {
-        Ok(response) => response,
-        Err(Error::Status(401, response)) => {
-            if token.is_some() {
-                warn!("Failed to authenticate to registry {} with given token!\n{}", &image.registry, token.unwrap());
+        Ok(response) => {
+            let status = response.status();
+            if status == 401 {
+                if token.is_some() {
+                    warn!("Failed to authenticate to registry {} with given token!\n{}", &image.registry, token.unwrap());
+                } else {
+                    warn!("Registry requires authentication");
+                }
+                return Image { digest: None, ..image.clone() }
+            } else if status == 404 {
+                warn!("Image {:?} not found", &image);
                 return Image { digest: None, ..image.clone() }
             } else {
-                return get_latest_digest(
-                    image,
-                    Some(&get_token(
-                        vec![image],
-                        &parse_www_authenticate(response.header("www-authenticate").unwrap()),
-                        &None // I think?
-                    )),
-                    config
-                );
-            }
-        }
-        Err(Error::Status(_, _)) => {
-            return Image {
-                digest: None,
-                ..image.clone()
+                response
             }
         },
-        Err(Error::Transport(error)) => {
-            match error.kind() {
-                ErrorKind::Dns => {
-                    warn!("Failed to lookup the IP of the registry, retrying.");
-                    return get_latest_digest(image, token, config)
-                }, // If something goes really wrong, this can get stuck in a loop
-                ErrorKind::ConnectionFailed => {
-                    warn!("Connection probably timed out, retrying.");
-                    return get_latest_digest(image, token, config)
-                }, // Same here
-                _ => error!("Failed to retrieve image digest\n{}!", error)
+        Err(e) => {
+            if e.is_connect() {
+                warn!("Connection to registry failed.");
+                return Image { digest: None, ..image.clone() }
+            } else {
+                error!("Unexpected error: {}", e.to_string())
             }
         },
     };
-    match raw_response.header("docker-content-digest") {
+    match raw_response.headers().get("docker-content-digest") {
         Some(digest) => Image {
-            digest: Some(digest.to_string()),
+            digest: Some(digest.to_str().unwrap().to_string()),
             ..image.clone()
         },
-        None => error!("Server returned invalid response! No docker-content-digest!"),
+        None => error!("Server returned invalid response! No docker-content-digest!\n{:#?}", raw_response),
     }
 }
 
-pub fn get_latest_digests(
+pub async fn get_latest_digests(
     images: Vec<&Image>,
     token: Option<&String>,
     config: &JsonValue,
+    client: &ClientWithMiddleware
 ) -> Vec<Image> {
-    let result: Mutex<Vec<Image>> = Mutex::new(Vec::new());
-    images.par_iter().for_each(|&image| {
-        let digest = get_latest_digest(image, token, config).digest;
-        result.lock().unwrap().push(Image {
-            digest,
-            ..image.clone()
-        });
-    });
-    let r = result.lock().unwrap().clone();
-    r
+    let mut handles = Vec::new();
+    for image in images {
+        handles.push(get_latest_digest(image, token, config, client))
+    }
+    join_all(handles).await
 }
 
-pub fn get_token(images: Vec<&Image>, auth_url: &str, credentials: &Option<String>) -> String {
+pub async fn get_token(images: Vec<&Image>, auth_url: &str, credentials: &Option<String>, client: &ClientWithMiddleware) -> String {
     let mut final_url = auth_url.to_owned();
     for image in &images {
         final_url = format!("{}&scope=repository:{}:pull", final_url, image.repository);
     }
     let mut base_request =
-        ureq::get(&final_url).set("Accept", "application/vnd.oci.image.index.v1+json"); // Seems to be unnecesarry. Will probably remove in the future
+        client.get(&final_url).header("Accept", "application/vnd.oci.image.index.v1+json"); // Seems to be unnecessary. Will probably remove in the future
     base_request = match credentials {
-        Some(creds) => base_request.set("Authorization", &format!("Basic {}", creds)),
+        Some(creds) => base_request.header("Authorization", &format!("Basic {}", creds)),
         None => base_request,
     };
-    let raw_response = match base_request.call() {
-        Ok(response) => match response.into_string() {
+    let raw_response = match base_request.send().await {
+        Ok(response) => match response.text().await {
             Ok(res) => res,
             Err(e) => {
                 error!("Failed to parse response into string!\n{}", e)
             }
         },
-        Err(Error::Transport(error)) => {
-            match error.kind() {
-                ErrorKind::Dns => {
-                    warn!("Failed to lookup the IP of the registry, retrying.");
-                    return get_token(images, auth_url, credentials);
-                } // If something goes really wrong, this can get stuck in a loop
-                ErrorKind::ConnectionFailed => {
-                    warn!("Connection probably timed out, retrying.");
-                    return get_token(images, auth_url, credentials);
-                } // Same here
-                _ => error!("Token request failed\n{}!", error),
-            }
-        }
         Err(e) => {
-            error!("Token request failed!\n{}", e)
+            if e.is_connect() {
+                error!("Connection to registry failed.");
+            } else {
+                error!("Token request failed!\n{}", e.to_string())
+            }
         }
     };
     let parsed_token_response: JsonValue = match json::parse(&raw_response) {

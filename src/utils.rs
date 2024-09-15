@@ -3,6 +3,8 @@ use std::path::PathBuf;
 use json::{object, JsonValue};
 use once_cell::sync::Lazy;
 use regex::Regex;
+use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
+use reqwest_retry::{RetryTransientMiddleware, policies::ExponentialBackoff};
 
 /// This macro is an alternative to panic. It prints the message you give it and exits the process with code 1, without printing a stack trace. Useful for when the program has to exit due to a user error or something unexpected which is unrelated to the program (e.g. a failed web request)
 #[macro_export]
@@ -21,14 +23,15 @@ macro_rules! warn {
     })
 }
 
+static RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(
+        r#"^(?P<name>(?:(?P<registry>(?:(?:localhost|[\w-]+(?:\.[\w-]+)+)(?::\d+)?)|[\w]+:\d+)/)?(?P<repository>[a-z0-9_.-]+(?:/[a-z0-9_.-]+)*))(?::(?P<tag>[\w][\w.-]{0,127}))?$"#, // From https://regex101.com/r/nmSDPA/1
+    )
+    .unwrap()
+});
+
 /// Takes an image and splits it into registry, repository and tag. For example ghcr.io/sergi0g/cup:latest becomes ['ghcr.io', 'sergi0g/cup', 'latest'].
 pub fn split_image(image: &str) -> (String, String, String) {
-    static RE: Lazy<Regex> = Lazy::new(|| {
-        Regex::new(
-            r#"^(?P<name>(?:(?P<registry>(?:(?:localhost|[\w-]+(?:\.[\w-]+)+)(?::\d+)?)|[\w]+:\d+)/)?(?P<repository>[a-z0-9_.-]+(?:/[a-z0-9_.-]+)*))(?::(?P<tag>[\w][\w.-]{0,127}))?$"#, // From https://regex101.com/r/nmSDPA/1
-        )
-        .unwrap()
-    });
     match RE.captures(image) {
         Some(c) => {
             let registry = match c.name("registry") {
@@ -124,21 +127,24 @@ pub fn to_json(updates: &[(String, Option<bool>)]) -> JsonValue {
     let up_to_date = updates
         .iter()
         .filter(|&(_, value)| *value == Some(false))
-        .collect::<Vec<&(String, Option<bool>)>>()
-        .len();
+        .count();
     let update_available = updates
         .iter()
         .filter(|&(_, value)| *value == Some(true))
-        .collect::<Vec<&(String, Option<bool>)>>()
-        .len();
+        .count();
     let unknown = updates
         .iter()
         .filter(|&(_, value)| value.is_none())
-        .collect::<Vec<&(String, Option<bool>)>>()
-        .len();
+        .count();
     let _ = json_data["metrics"].insert("monitored_images", updates.len());
     let _ = json_data["metrics"].insert("up_to_date", up_to_date);
     let _ = json_data["metrics"].insert("update_available", update_available);
     let _ = json_data["metrics"].insert("unknown", unknown);
     json_data
+}
+
+pub fn new_reqwest_client() -> ClientWithMiddleware {
+    ClientBuilder::new(reqwest::Client::new())
+        .with(RetryTransientMiddleware::new_with_policy(ExponentialBackoff::builder().build_with_max_retries(3)))
+        .build()
 }

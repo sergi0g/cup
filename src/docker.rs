@@ -2,6 +2,7 @@ use bollard::{secret::ImageSummary, ClientVersion, Docker};
 
 #[cfg(feature = "cli")]
 use bollard::secret::ImageInspect;
+use futures::future::join_all;
 
 use crate::{error, image::Image, utils::split_image};
 
@@ -32,27 +33,16 @@ pub async fn get_images_from_docker_daemon(socket: Option<String>) -> Vec<Image>
             error!("Failed to retrieve list of images available!\n{}", e)
         }
     };
-    let mut result: Vec<Image> = Vec::new();
+    let mut handles = Vec::new();
     for image in images {
-        if !image.repo_tags.is_empty() && !image.repo_digests.is_empty() {
-            for t in &image.repo_tags {
-                let (registry, repository, tag) = split_image(t);
-                result.push(Image {
-                    registry,
-                    repository,
-                    tag,
-                    digest: Some(
-                        image.repo_digests[0]
-                            .clone()
-                            .split('@')
-                            .collect::<Vec<&str>>()[1]
-                            .to_string(),
-                    ),
-                });
-            }
+        handles.push(Image::from(image))
+    };
+    join_all(handles).await.iter().filter(|img| {
+        match img {
+            Some(_) => true,
+            None => false
         }
-    }
-    result
+    }).map(|img| img.clone().unwrap()).collect()
 }
 
 #[cfg(feature = "cli")]

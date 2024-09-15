@@ -1,16 +1,12 @@
-use std::{
-    collections::{HashMap, HashSet},
-    sync::Mutex,
-};
+use std::collections::{HashMap, HashSet};
 
 use json::JsonValue;
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::{
     docker::get_images_from_docker_daemon,
     image::Image,
     registry::{check_auth, get_latest_digests, get_token},
-    utils::unsplit_image,
+    utils::{new_reqwest_client, unsplit_image},
 };
 
 #[cfg(feature = "cli")]
@@ -37,49 +33,48 @@ pub async fn get_all_updates(
     socket: Option<String>,
     config: &JsonValue,
 ) -> Vec<(String, Option<bool>)> {
-    let image_map_mutex: Mutex<HashMap<String, &Option<String>>> = Mutex::new(HashMap::new());
     let local_images = get_images_from_docker_daemon(socket).await;
-    local_images.par_iter().for_each(|image| {
+    let mut image_map: HashMap<String, Option<String>> = HashMap::with_capacity(local_images.len());
+    for image in &local_images {
         let img = unsplit_image(&image.registry, &image.repository, &image.tag);
-        image_map_mutex.lock().unwrap().insert(img, &image.digest);
-    });
-    let image_map = image_map_mutex.lock().unwrap().clone();
+        image_map.insert(img, image.digest.clone());
+    };
     let mut registries: Vec<&String> = local_images
-        .par_iter()
+        .iter()
         .map(|image| &image.registry)
         .collect();
     registries.unique();
-    let mut remote_images: Vec<Image> = Vec::new();
+    let mut remote_images: Vec<Image> = Vec::with_capacity(local_images.len());
+    let client = new_reqwest_client();
     for registry in registries {
         let images: Vec<&Image> = local_images
-            .par_iter()
+            .iter()
             .filter(|image| &image.registry == registry)
             .collect();
         let credentials = config["authentication"][registry]
             .clone()
             .take_string()
             .or(None);
-        let mut latest_images = match check_auth(registry, config) {
+        let mut latest_images = match check_auth(registry, config, &client).await {
             Some(auth_url) => {
-                let token = get_token(images.clone(), &auth_url, &credentials);
-                get_latest_digests(images, Some(&token), config)
+                let token = get_token(images.clone(), &auth_url, &credentials, &client).await;
+                get_latest_digests(images, Some(&token), config, &client).await
             }
-            None => get_latest_digests(images, None, config),
+            None => get_latest_digests(images, None, config, &client).await,
         };
         remote_images.append(&mut latest_images);
     }
-    let result_mutex: Mutex<Vec<(String, Option<bool>)>> = Mutex::new(Vec::new());
-    remote_images.par_iter().for_each(|image| {
+    let mut result: Vec<(String, Option<bool>)> = Vec::new();
+    remote_images.iter().for_each(|image| {
         let img = unsplit_image(&image.registry, &image.repository, &image.tag);
         match &image.digest {
             Some(d) => {
                 let r = d != image_map.get(&img).unwrap().as_ref().unwrap();
-                result_mutex.lock().unwrap().push((img, Some(r)))
+                result.push((img, Some(r)))
             }
-            None => result_mutex.lock().unwrap().push((img, None)),
+            None => result.push((img, None)),
         }
     });
-    let result = result_mutex.lock().unwrap().clone();
     result
 }
 
@@ -90,13 +85,14 @@ pub async fn get_update(image: &str, socket: Option<String>, config: &JsonValue)
         .clone()
         .take_string()
         .or(None);
-    let token = match check_auth(&local_image.registry, config) {
-        Some(auth_url) => get_token(vec![&local_image], &auth_url, &credentials),
+    let client = new_reqwest_client();
+    let token = match check_auth(&local_image.registry, config, &client).await {
+        Some(auth_url) => get_token(vec![&local_image], &auth_url, &credentials, &client).await,
         None => String::new(),
     };
     let remote_image = match token.as_str() {
-        "" => get_latest_digest(&local_image, None, config),
-        _ => get_latest_digest(&local_image, Some(&token), config),
+        "" => get_latest_digest(&local_image, None, config, &client).await,
+        _ => get_latest_digest(&local_image, Some(&token), config, &client).await,
     };
     match &remote_image.digest {
         Some(d) => Some(d != &local_image.digest.unwrap()),
