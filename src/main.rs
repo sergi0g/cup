@@ -95,7 +95,7 @@ async fn main() {
                 };
             }
             None => {
-                match raw || cli.verbose {
+                match *raw || cli.verbose {
                     true => print_raw_updates(&get_all_updates(&cli_config).await),
                     false => {
                         let spinner = Spinner::new();
