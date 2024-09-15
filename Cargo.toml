@@ -16,7 +16,7 @@ termsize = { version = "0.1.8", optional = true }
 regex = "1.10.5"
 chrono = { version = "0.4.38", default-features = false, features = ["std", "alloc", "clock"], optional = true }
 json = "0.12.4"
-reqwest = "0.12.7"
+reqwest = { version = "0.12.7", features = ["native-tls"]}
 futures = "0.3.30"
 reqwest-retry = "0.6.1"
 reqwest-middleware = "0.3.3"
