@@ -4,15 +4,28 @@ use json::JsonValue;
 use http_auth::parse_challenges;
 use reqwest_middleware::ClientWithMiddleware;
 
-use crate::{error, image::Image, warn};
+use crate::{debug, error, image::Image, utils::CliConfig, warn};
 
-pub async fn check_auth(registry: &str, config: &JsonValue, client: &ClientWithMiddleware) -> Option<String> {
-    let protocol = if config["insecure_registries"].contains(registry) {
+pub async fn check_auth(
+    registry: &str,
+    options: &CliConfig,
+    client: &ClientWithMiddleware,
+) -> Option<String> {
+    let protocol = if options.config["insecure_registries"].contains(registry) {
+        if options.verbose {
+            debug!(
+                "{} is configured as an insecure registry. Downgrading to HTTP",
+                registry
+            );
+        };
         "http"
     } else {
         "https"
     };
-    let response = client.get(&format!("{}://{}/v2/", protocol, registry)).send().await;
+    let response = client
+        .get(format!("{}://{}/v2/", protocol, registry))
+        .send()
+        .await;
     match response {
         Ok(r) => {
             let status = r.status().as_u16();
@@ -27,10 +40,14 @@ pub async fn check_auth(registry: &str, config: &JsonValue, client: &ClientWithM
             } else if status == 200 {
                 None
             } else {
-                warn!("Received unexpected status code {}\nResponse: {}", status, r.text().await.unwrap());
+                warn!(
+                    "Received unexpected status code {}\nResponse: {}",
+                    status,
+                    r.text().await.unwrap()
+                );
                 None
             }
-        },
+        }
         Err(e) => {
             if e.is_connect() {
                 warn!("Connection to registry {} failed.", &registry);
@@ -42,14 +59,20 @@ pub async fn check_auth(registry: &str, config: &JsonValue, client: &ClientWithM
     }
 }
 
-pub async fn get_latest_digest(image: &Image, token: Option<&String>, config: &JsonValue, client: &ClientWithMiddleware) -> Image {
-    let protocol =
-        if config["insecure_registries"].contains(json::JsonValue::from(image.registry.clone())) {
-            "http"
-        } else {
-            "https"
-        };
-    let mut request = client.head(&format!(
+pub async fn get_latest_digest(
+    image: &Image,
+    token: Option<&String>,
+    options: &CliConfig,
+    client: &ClientWithMiddleware,
+) -> Image {
+    let protocol = if options.config["insecure_registries"]
+        .contains(json::JsonValue::from(image.registry.clone()))
+    {
+        "http"
+    } else {
+        "https"
+    };
+    let mut request = client.head(format!(
         "{}://{}/v2/{}/manifests/{}",
         protocol, &image.registry, &image.repository, &image.tag
     ));
@@ -90,30 +113,39 @@ pub async fn get_latest_digest(image: &Image, token: Option<&String>, config: &J
             digest: Some(digest.to_str().unwrap().to_string()),
             ..image.clone()
         },
-        None => error!("Server returned invalid response! No docker-content-digest!\n{:#?}", raw_response),
+        None => error!(
+            "Server returned invalid response! No docker-content-digest!\n{:#?}",
+            raw_response
+        ),
     }
 }
 
 pub async fn get_latest_digests(
     images: Vec<&Image>,
     token: Option<&String>,
-    config: &JsonValue,
-    client: &ClientWithMiddleware
+    options: &CliConfig,
+    client: &ClientWithMiddleware,
 ) -> Vec<Image> {
     let mut handles = Vec::new();
     for image in images {
-        handles.push(get_latest_digest(image, token, config, client))
+        handles.push(get_latest_digest(image, token, options, client))
     }
     join_all(handles).await
 }
 
-pub async fn get_token(images: Vec<&Image>, auth_url: &str, credentials: &Option<String>, client: &ClientWithMiddleware) -> String {
+pub async fn get_token(
+    images: Vec<&Image>,
+    auth_url: &str,
+    credentials: &Option<String>,
+    client: &ClientWithMiddleware,
+) -> String {
     let mut final_url = auth_url.to_owned();
     for image in &images {
         final_url = format!("{}&scope=repository:{}:pull", final_url, image.repository);
     }
-    let mut base_request =
-        client.get(&final_url).header("Accept", "application/vnd.oci.image.index.v1+json"); // Seems to be unnecessary. Will probably remove in the future
+    let mut base_request = client
+        .get(&final_url)
+        .header("Accept", "application/vnd.oci.image.index.v1+json"); // Seems to be unnecessary. Will probably remove in the future
     base_request = match credentials {
         Some(creds) => base_request.header("Authorization", &format!("Basic {}", creds)),
         None => base_request,

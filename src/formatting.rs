@@ -8,7 +8,7 @@ use crate::utils::{sort_update_vec, to_json};
 pub fn print_updates(updates: &[(String, Option<bool>)], icons: &bool) {
     let sorted_updates = sort_update_vec(updates);
     let term_width: usize = termsize::get()
-        .unwrap_or_else(|| termsize::Size { rows: 24, cols: 80 })
+        .unwrap_or(termsize::Size { rows: 24, cols: 80 })
         .cols as usize;
     for update in sorted_updates {
         let description = match update.1 {

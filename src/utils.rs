@@ -1,27 +1,11 @@
 use std::path::PathBuf;
 
+use crate::{error, image::Image};
 use json::{object, JsonValue};
 use once_cell::sync::Lazy;
 use regex::Regex;
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
-use reqwest_retry::{RetryTransientMiddleware, policies::ExponentialBackoff};
-
-/// This macro is an alternative to panic. It prints the message you give it and exits the process with code 1, without printing a stack trace. Useful for when the program has to exit due to a user error or something unexpected which is unrelated to the program (e.g. a failed web request)
-#[macro_export]
-macro_rules! error {
-    ($($arg:tt)*) => ({
-        eprintln!($($arg)*);
-        std::process::exit(1);
-    })
-}
-
-// A small macro to print in yellow as a warning
-#[macro_export]
-macro_rules! warn {
-    ($($arg:tt)*) => ({
-        eprintln!("\x1b[93m{}\x1b[0m", format!($($arg)*));
-    })
-}
+use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
 
 static RE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(
@@ -62,22 +46,22 @@ pub fn split_image(image: &str) -> (String, String, String) {
 }
 
 /// Given an image's parts which were previously created by split_image, recreate a reference that docker would use. This means removing the registry part, if it's Docker Hub and removing "library" if the image is official
-pub fn unsplit_image(registry: &str, repository: &str, tag: &str) -> String {
-    let reg = match registry {
+pub fn unsplit_image(image: &Image) -> String {
+    let reg = match image.registry.as_str() {
         "registry-1.docker.io" => String::new(),
         r => format!("{}/", r),
     };
-    let repo = match repository.split('/').collect::<Vec<&str>>()[0] {
+    let repo = match image.repository.split('/').collect::<Vec<&str>>()[0] {
         "library" => {
             if reg.is_empty() {
-                repository.strip_prefix("library/").unwrap()
+                image.repository.strip_prefix("library/").unwrap()
             } else {
-                repository
+                image.repository.as_str()
             }
         }
-        _ => repository,
+        _ => image.repository.as_str(),
     };
-    format!("{}{}:{}", reg, repo, tag)
+    format!("{}{}:{}", reg, repo, image.tag)
 }
 
 /// Sorts the update vector alphabetically and where Some(true) > Some(false) > None
@@ -132,10 +116,7 @@ pub fn to_json(updates: &[(String, Option<bool>)]) -> JsonValue {
         .iter()
         .filter(|&(_, value)| *value == Some(true))
         .count();
-    let unknown = updates
-        .iter()
-        .filter(|&(_, value)| value.is_none())
-        .count();
+    let unknown = updates.iter().filter(|&(_, value)| value.is_none()).count();
     let _ = json_data["metrics"].insert("monitored_images", updates.len());
     let _ = json_data["metrics"].insert("up_to_date", up_to_date);
     let _ = json_data["metrics"].insert("update_available", update_available);
@@ -143,8 +124,51 @@ pub fn to_json(updates: &[(String, Option<bool>)]) -> JsonValue {
     json_data
 }
 
+/// Struct to hold some config values to avoid having to pass them all the time
+#[derive(Clone)]
+pub struct CliConfig {
+    pub socket: Option<String>,
+    pub verbose: bool,
+    pub config: JsonValue,
+}
+
+// Logging
+
+/// This macro is an alternative to panic. It prints the message you give it and exits the process with code 1, without printing a stack trace. Useful for when the program has to exit due to a user error or something unexpected which is unrelated to the program (e.g. a failed web request)
+#[macro_export]
+macro_rules! error {
+    ($($arg:tt)*) => ({
+        eprintln!("\x1b[41m ERROR \x1b[0m {}", format!($($arg)*));
+        std::process::exit(1);
+    })
+}
+
+// A small macro to print in yellow as a warning
+#[macro_export]
+macro_rules! warn {
+    ($($arg:tt)*) => ({
+        eprintln!("\x1b[103m WARN  \x1b[0m {}", format!($($arg)*));
+    })
+}
+
+#[macro_export]
+macro_rules! info {
+    ($($arg:tt)*) => ({
+        println!("\x1b[44m INFO  \x1b[0m {}", format!($($arg)*));
+    })
+}
+
+#[macro_export]
+macro_rules! debug {
+    ($($arg:tt)*) => ({
+        println!("\x1b[48:5:57m DEBUG \x1b[0m {}", format!($($arg)*));
+    })
+}
+
 pub fn new_reqwest_client() -> ClientWithMiddleware {
     ClientBuilder::new(reqwest::Client::new())
-        .with(RetryTransientMiddleware::new_with_policy(ExponentialBackoff::builder().build_with_max_retries(3)))
+        .with(RetryTransientMiddleware::new_with_policy(
+            ExponentialBackoff::builder().build_with_max_retries(3),
+        ))
         .build()
 }

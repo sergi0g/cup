@@ -4,7 +4,11 @@ use bollard::{secret::ImageSummary, ClientVersion, Docker};
 use bollard::secret::ImageInspect;
 use futures::future::join_all;
 
-use crate::{error, image::Image, utils::split_image};
+use crate::{
+    error,
+    image::Image,
+    utils::{split_image, CliConfig},
+};
 
 fn create_docker_client(socket: Option<String>) -> Docker {
     let client: Result<Docker, bollard::errors::Error> = match socket {
@@ -25,8 +29,8 @@ fn create_docker_client(socket: Option<String>) -> Docker {
     }
 }
 
-pub async fn get_images_from_docker_daemon(socket: Option<String>) -> Vec<Image> {
-    let client: Docker = create_docker_client(socket);
+pub async fn get_images_from_docker_daemon(options: &CliConfig) -> Vec<Image> {
+    let client: Docker = create_docker_client(options.socket.clone());
     let images: Vec<ImageSummary> = match client.list_images::<String>(None).await {
         Ok(images) => images,
         Err(e) => {
@@ -35,14 +39,14 @@ pub async fn get_images_from_docker_daemon(socket: Option<String>) -> Vec<Image>
     };
     let mut handles = Vec::new();
     for image in images {
-        handles.push(Image::from(image))
-    };
-    join_all(handles).await.iter().filter(|img| {
-        match img {
-            Some(_) => true,
-            None => false
-        }
-    }).map(|img| img.clone().unwrap()).collect()
+        handles.push(Image::from(image, options))
+    }
+    join_all(handles)
+        .await
+        .iter()
+        .filter(|img| img.is_some())
+        .map(|img| img.clone().unwrap())
+        .collect()
 }
 
 #[cfg(feature = "cli")]
