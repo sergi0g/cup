@@ -15,7 +15,7 @@ Cup is the easiest way to check for container image updates.
 - Supports most registries, including Docker Hub, ghcr.io, Quay, lscr.io and even Gitea (or derivatives)
 - Doesn't exhaust any rate limits. This is the original reason I created Cup. It was inspired by [What's up docker?](https://github.com/fmartinou/whats-up-docker) which would always use it up.
 - Beautiful CLI and web interface for checking on your containers any time.
-- The binary is tiny! At the time of writing it's just 4.7 MB. No more pulling 100+ MB docker images for a such a simple program.
+- The binary is tiny! At the time of writing it's just 5.1 MB. No more pulling 100+ MB docker images for a such a simple program.
 - JSON output for both the CLI and web interface so you can connect Cup to integrations. It's easy to parse and makes webhooks and pretty dashboards simple to set up!
 
 ## Documentation
