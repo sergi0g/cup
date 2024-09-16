@@ -114,8 +114,13 @@ impl ServerData {
         s
     }
     async fn refresh(&mut self) {
-        info!("Refreshing data");
+        let start = Local::now().timestamp_millis();
+        if !self.raw_updates.is_empty() {
+            info!("Refreshing data");
+        }
         let updates = sort_update_vec(&get_all_updates(&self.options).await);
+        let end = Local::now().timestamp_millis();
+        info!("✨ Checked {} images in {}ms", updates.len(), end - start);
         self.raw_updates = updates;
         let template = liquid::ParserBuilder::with_stdlib()
             .build()
