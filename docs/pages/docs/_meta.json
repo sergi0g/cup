@@ -16,5 +16,8 @@
     },
     "nightly": {
         "title": "Using the latest version"
+    },
+    "contributing": {
+        "title": "Contributing"
     }
 }

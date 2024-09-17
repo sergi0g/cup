@@ -4,6 +4,8 @@ Cup is the easiest way to check for container image updates.
 
 ![Demo](screenshots/cup.gif)
 
+_If you like this project and/or use Cup, please consider starring the project ⭐. It motivates me to continue working on it and imrpoving it. Plus, you get updates for new releases!_
+
 ## Screenshots
 
 ![Cup web in light mode](screenshots/web_light.png)
@@ -44,7 +46,7 @@ Here are some ideas to get you started:
 - Help optimize Cup and make it even better!
 - Add more features to the web UI
 
-To contribute, fork the repository, make your changes and the submit a pull request.
+For more information, check the [docs](https://sergi0g.github.io/cup/docs/contributing)!
 
 ## Support
 
