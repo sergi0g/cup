@@ -97,12 +97,10 @@ async fn main() {
             }
             None => {
                 let start = Local::now().timestamp_millis();
-                match *raw || cli.verbose {
+                match raw {
                     true => {
                         let updates = get_all_updates(&cli_config).await;
-                        let end = Local::now().timestamp_millis();
                         print_raw_updates(&updates);
-                        info!("✨ Checked {} images in {}ms", updates.len(), end - start);
                     }
                     false => {
                         let spinner = Spinner::new();
