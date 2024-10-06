@@ -354,6 +354,7 @@ dependencies = [
  "reqwest",
  "reqwest-middleware",
  "reqwest-retry",
+ "rustc-hash",
  "termsize",
  "tokio",
  "xitca-web",

@@ -67,6 +67,7 @@ pub struct Spinner {
 }
 
 impl Spinner {
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Spinner {
         let spinner = ProgressBar::new_spinner();
         let style: &[&str] = &["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];

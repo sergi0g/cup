@@ -4,11 +4,7 @@ use bollard::{secret::ImageSummary, ClientVersion, Docker};
 use bollard::secret::ImageInspect;
 use futures::future::join_all;
 
-use crate::{
-    error,
-    image::Image,
-    utils::{split_image, CliConfig},
-};
+use crate::{error, image::Image, utils::CliConfig};
 
 fn create_docker_client(socket: Option<String>) -> Docker {
     let client: Result<Docker, bollard::errors::Error> = match socket {
@@ -39,37 +35,24 @@ pub async fn get_images_from_docker_daemon(options: &CliConfig) -> Vec<Image> {
     };
     let mut handles = Vec::new();
     for image in images {
-        handles.push(Image::from(image, options))
+        handles.push(Image::from_summary(image, options))
     }
     join_all(handles)
         .await
         .iter()
-        .filter(|img| img.is_some())
-        .map(|img| img.clone().unwrap())
+        .filter_map(|img| img.clone())
         .collect()
 }
 
 #[cfg(feature = "cli")]
-pub async fn get_image_from_docker_daemon(socket: Option<String>, name: &str) -> Image {
-    let client: Docker = create_docker_client(socket);
+pub async fn get_image_from_docker_daemon(socket: &Option<String>, name: &str) -> Image {
+    let client: Docker = create_docker_client(socket.clone());
     let image: ImageInspect = match client.inspect_image(name).await {
         Ok(i) => i,
         Err(e) => error!("Failed to retrieve image {} from daemon\n{}", name, e),
     };
-    match image.repo_tags {
-        Some(_) => (),
-        None => error!("Image has no tags"), // I think this is actually unreachable
-    }
-    match image.repo_digests {
-        Some(d) => {
-            let (registry, repository, tag) = split_image(&image.repo_tags.unwrap()[0]);
-            Image {
-                registry,
-                repository,
-                tag,
-                digest: Some(d[0].clone().split('@').collect::<Vec<&str>>()[1].to_string()),
-            }
-        }
-        None => error!("No digests found for image {}", name),
+    match Image::from_inspect(image).await {
+        Some(img) => img,
+        None => error!("No valid tags or digests for image!"),
     }
 }

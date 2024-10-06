@@ -1,106 +1,100 @@
-use std::collections::{HashMap, HashSet};
+use futures::future::join_all;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
-    debug,
-    docker::get_images_from_docker_daemon,
     image::Image,
-    registry::{check_auth, get_latest_digests, get_token},
-    utils::{new_reqwest_client, unsplit_image, CliConfig},
+    registry::{check_auth, get_token},
+    utils::{new_reqwest_client, CliConfig},
 };
 
-#[cfg(feature = "cli")]
-use crate::docker::get_image_from_docker_daemon;
-#[cfg(feature = "cli")]
 use crate::registry::get_latest_digest;
 
+/// Trait for a type that implements a function `unique` that removes any duplicates.
+/// In this case, it will be used for a Vec.
 pub trait Unique<T> {
-    // So we can filter vecs for duplicates
-    fn unique(&mut self);
+    fn unique(&mut self) -> Vec<T>;
 }
 
 impl<T> Unique<T> for Vec<T>
 where
     T: Clone + Eq + std::hash::Hash,
 {
-    fn unique(self: &mut Vec<T>) {
-        let mut seen: HashSet<T> = HashSet::new();
+    /// Remove duplicates from Vec
+    fn unique(self: &mut Vec<T>) -> Self {
+        let mut seen: FxHashSet<T> = FxHashSet::default();
         self.retain(|item| seen.insert(item.clone()));
+        self.to_vec()
     }
 }
 
-pub async fn get_all_updates(options: &CliConfig) -> Vec<(String, Option<bool>)> {
-    let local_images = get_images_from_docker_daemon(options).await;
-    let mut image_map: HashMap<String, Option<String>> = HashMap::with_capacity(local_images.len());
-    for image in &local_images {
-        let img = unsplit_image(image);
-        image_map.insert(img, image.digest.clone());
-    }
-    let mut registries: Vec<&String> = local_images.iter().map(|image| &image.registry).collect();
-    registries.unique();
-    let mut remote_images: Vec<Image> = Vec::with_capacity(local_images.len());
+/// Returns a list of updates for all images passed in.
+pub async fn get_updates(images: &[Image], options: &CliConfig) -> Vec<(String, Option<bool>)> {
+    // Get a list of unique registries our images belong to. We are unwrapping the registry because it's guaranteed to be there.
+    let registries: Vec<&String> = images
+        .iter()
+        .map(|image| image.registry.as_ref().unwrap())
+        .collect::<Vec<&String>>()
+        .unique();
+
+    // Create request client. All network requests share the same client for better performance.
+    // This client is also configured to retry a failed request up to 3 times with exponential backoff in between.
     let client = new_reqwest_client();
+
+    // Create a map of images indexed by registry. This solution seems quite inefficient, since each iteration causes a key to be looked up. I can't find anything better at the moment.
+    let mut image_map: FxHashMap<&String, Vec<&Image>> = FxHashMap::default();
+
+    for image in images {
+        image_map
+            .entry(image.registry.as_ref().unwrap())
+            .or_default()
+            .push(image);
+    }
+
+    // Retrieve an authentication token (if required) for each registry.
+    let mut tokens: FxHashMap<&String, Option<String>> = FxHashMap::default();
     for registry in registries {
-        if options.verbose {
-            debug!("Checking images from registry {}", registry)
-        }
-        let images: Vec<&Image> = local_images
-            .iter()
-            .filter(|image| &image.registry == registry)
-            .collect();
         let credentials = options.config["authentication"][registry]
             .clone()
             .take_string()
             .or(None);
-        let mut latest_images = match check_auth(registry, options, &client).await {
+        match check_auth(registry, options, &client).await {
             Some(auth_url) => {
-                let token = get_token(images.clone(), &auth_url, &credentials, &client).await;
-                if options.verbose {
-                    debug!("Using token {}", token);
-                }
-                get_latest_digests(images, Some(&token), options, &client).await
+                let token = get_token(
+                    image_map.get(registry).unwrap(),
+                    &auth_url,
+                    &credentials,
+                    &client,
+                )
+                .await;
+                tokens.insert(registry, Some(token));
             }
-            None => get_latest_digests(images, None, options, &client).await,
-        };
-        remote_images.append(&mut latest_images);
-    }
-    if options.verbose {
-        debug!("Collecting results")
-    }
-    let mut result: Vec<(String, Option<bool>)> = Vec::new();
-    remote_images.iter().for_each(|image| {
-        let img = unsplit_image(image);
-        match &image.digest {
-            Some(d) => {
-                let r = d != image_map.get(&img).unwrap().as_ref().unwrap();
-                result.push((img, Some(r)))
+            None => {
+                tokens.insert(registry, None);
             }
-            None => result.push((img, None)),
         }
-    });
-    result
-}
-
-#[cfg(feature = "cli")]
-pub async fn get_update(image: &str, options: &CliConfig) -> Option<bool> {
-    let local_image = get_image_from_docker_daemon(options.socket.clone(), image).await;
-    let credentials = options.config["authentication"][&local_image.registry]
-        .clone()
-        .take_string()
-        .or(None);
-    let client = new_reqwest_client();
-    let token = match check_auth(&local_image.registry, options, &client).await {
-        Some(auth_url) => get_token(vec![&local_image], &auth_url, &credentials, &client).await,
-        None => String::new(),
-    };
-    if options.verbose {
-        debug!("Using token {}", token);
-    };
-    let remote_image = match token.as_str() {
-        "" => get_latest_digest(&local_image, None, options, &client).await,
-        _ => get_latest_digest(&local_image, Some(&token), options, &client).await,
-    };
-    match &remote_image.digest {
-        Some(d) => Some(d != &local_image.digest.unwrap()),
-        None => None,
     }
+
+    // Create a Vec to store futures so we can await them all at once.
+    let mut handles = Vec::new();
+    // Loop through images and get the latest digest for each
+    for image in images {
+        let token = tokens.get(&image.registry.as_ref().unwrap()).unwrap();
+        let future = get_latest_digest(image, token.as_ref(), options, &client);
+        handles.push(future);
+    }
+    // Await all the futures
+    let final_images = join_all(handles).await;
+
+    let mut result: Vec<(String, Option<bool>)> = Vec::with_capacity(images.len());
+    final_images
+        .iter()
+        .for_each(|image| match &image.remote_digest {
+            Some(digest) => {
+                let has_update = !image.local_digests.as_ref().unwrap().contains(digest);
+                result.push((image.reference.clone(), Some(has_update)))
+            }
+            None => result.push((image.reference.clone(), None)),
+        });
+
+    result
 }

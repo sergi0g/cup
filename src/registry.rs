@@ -1,4 +1,3 @@
-use futures::future::join_all;
 use json::JsonValue;
 
 use http_auth::parse_challenges;
@@ -74,7 +73,10 @@ pub async fn get_latest_digest(
     };
     let mut request = client.head(format!(
         "{}://{}/v2/{}/manifests/{}",
-        protocol, &image.registry, &image.repository, &image.tag
+        protocol,
+        &image.registry.as_ref().unwrap(),
+        &image.repository.as_ref().unwrap(),
+        &image.tag.as_ref().unwrap()
     ));
     if let Some(t) = token {
         request = request.header("Authorization", &format!("Bearer {}", t));
@@ -87,14 +89,14 @@ pub async fn get_latest_digest(
             let status = response.status();
             if status == 401 {
                 if token.is_some() {
-                    warn!("Failed to authenticate to registry {} with given token!\n{}", &image.registry, token.unwrap());
+                    warn!("Failed to authenticate to registry {} with given token!\n{}", &image.registry.as_ref().unwrap(), token.unwrap());
                 } else {
                     warn!("Registry requires authentication");
                 }
-                return Image { digest: None, ..image.clone() }
+                return Image { remote_digest: None, ..image.clone() }
             } else if status == 404 {
                 warn!("Image {:?} not found", &image);
-                return Image { digest: None, ..image.clone() }
+                return Image { remote_digest: None, ..image.clone() }
             } else {
                 response
             }
@@ -102,7 +104,7 @@ pub async fn get_latest_digest(
         Err(e) => {
             if e.is_connect() {
                 warn!("Connection to registry failed.");
-                return Image { digest: None, ..image.clone() }
+                return Image { remote_digest: None, ..image.clone() }
             } else {
                 error!("Unexpected error: {}", e.to_string())
             }
@@ -110,7 +112,7 @@ pub async fn get_latest_digest(
     };
     match raw_response.headers().get("docker-content-digest") {
         Some(digest) => Image {
-            digest: Some(digest.to_str().unwrap().to_string()),
+            remote_digest: Some(digest.to_str().unwrap().to_string()),
             ..image.clone()
         },
         None => error!(
@@ -120,28 +122,19 @@ pub async fn get_latest_digest(
     }
 }
 
-pub async fn get_latest_digests(
-    images: Vec<&Image>,
-    token: Option<&String>,
-    options: &CliConfig,
-    client: &ClientWithMiddleware,
-) -> Vec<Image> {
-    let mut handles = Vec::new();
-    for image in images {
-        handles.push(get_latest_digest(image, token, options, client))
-    }
-    join_all(handles).await
-}
-
 pub async fn get_token(
-    images: Vec<&Image>,
+    images: &Vec<&Image>,
     auth_url: &str,
     credentials: &Option<String>,
     client: &ClientWithMiddleware,
 ) -> String {
     let mut final_url = auth_url.to_owned();
-    for image in &images {
-        final_url = format!("{}&scope=repository:{}:pull", final_url, image.repository);
+    for image in images {
+        final_url = format!(
+            "{}&scope=repository:{}:pull",
+            final_url,
+            image.repository.as_ref().unwrap()
+        );
     }
     let mut base_request = client
         .get(&final_url)

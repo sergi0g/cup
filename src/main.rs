@@ -1,9 +1,9 @@
-#[cfg(feature = "cli")]
-use check::{get_all_updates, get_update};
+use check::get_updates;
 use chrono::Local;
 use clap::{Parser, Subcommand};
+use docker::{get_image_from_docker_daemon, get_images_from_docker_daemon};
 #[cfg(feature = "cli")]
-use formatting::{print_raw_update, print_raw_updates, print_update, print_updates, Spinner};
+use formatting::{print_raw_updates, print_updates, Spinner};
 #[cfg(feature = "server")]
 use server::serve;
 use std::path::PathBuf;
@@ -89,22 +89,28 @@ async fn main() {
         #[cfg(feature = "cli")]
         Some(Commands::Check { image, icons, raw }) => match image {
             Some(name) => {
-                let has_update = get_update(name, &cli_config).await;
+                // This is a single update, but it's in a Vec so let's just call it updates
+                let updates = get_updates(
+                    &[get_image_from_docker_daemon(&cli_config.socket, name).await],
+                    &cli_config,
+                )
+                .await;
                 match raw {
-                    true => print_raw_update(name, &has_update),
-                    false => print_update(name, &has_update),
+                    false => print_updates(&updates, icons),
+                    true => print_raw_updates(&updates),
                 };
             }
             None => {
                 let start = Local::now().timestamp_millis();
+                let images = get_images_from_docker_daemon(&cli_config).await;
                 match raw {
                     true => {
-                        let updates = get_all_updates(&cli_config).await;
+                        let updates = get_updates(&images, &cli_config).await;
                         print_raw_updates(&updates);
                     }
                     false => {
                         let spinner = Spinner::new();
-                        let updates = get_all_updates(&cli_config).await;
+                        let updates = get_updates(&images, &cli_config).await;
                         spinner.succeed();
                         let end = Local::now().timestamp_millis();
                         print_updates(&updates, icons);
