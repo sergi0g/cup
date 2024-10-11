@@ -67,7 +67,10 @@ async fn main() {
         path => Some(PathBuf::from(path)),
     };
     let mut config = Config::new().load(cfg_path);
-    config.socket = cli.socket;
+    match cli.socket {
+        Some(socket) => config.socket = Some(socket),
+        None => ()
+    }
     match &cli.command {
         #[cfg(feature = "cli")]
         Some(Commands::Check {
