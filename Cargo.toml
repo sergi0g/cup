@@ -1,6 +1,6 @@
 [package]
 name = "cup"
-version = "2.3.1"
+version = "2.4.0"
 edition = "2021"
 
 [dependencies]
@@ -20,6 +20,7 @@ reqwest = { version = "0.12.7", default-features = false, features = ["rustls-tl
 futures = "0.3.30"
 reqwest-retry = "0.6.1"
 reqwest-middleware = "0.3.3"
+rustc-hash = "2.0.0"
 
 [features]
 default = ["server", "cli"]

@@ -20,12 +20,22 @@ rockylinux:9-minimal                                    Up to date
 rabbitmq:3.11.9-management                              Up to date
 [0m...
 [90msome/deleted:image                                         Unknown
+[38:5:86mINFO  ✨ Checked 58 images in 3772ms
 ```
 
-### Check for updates to a specific image
-```
+### Check for updates to specific images
+```ansi
 $ cup check node:latest
-node:latest has an update available
+[32mnode:latest                                      Update available
+[38:5:86mINFO  ✨ Checked 1 images in 1310ms
+```
+
+```ansi
+$ cup check node:latest
+[32mnextcloud:30                                          Update available
+postgres:14                                           Update available
+[34mmysql:8.0                                               Up to date
+[38:5:86mINFO  ✨ Checked 3 images in 1769ms
 ```
 
 ## Enable icons
@@ -46,7 +56,7 @@ $ cup check -r
 Here is how it would look in Typescript:
 
 ```ts
-type CupData = {
+interface CupData {
     metrics: {
         monitored_images: number,
         up_to_date: number,

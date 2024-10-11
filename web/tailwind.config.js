@@ -20,11 +20,15 @@ export default {
     },
     {
       pattern: /bg-(gray|neutral)-800/,
-      variants: ["before:dark", "after:dark"],
+      variants: ["before:dark", "after:dark", "dark"],
+    },
+    {
+      pattern: /text-(gray|neutral)-600/,
+      variants: ["hover"]
     },
     {
       pattern: /text-(gray|neutral)-400/,
-      variants: ["hover"]
+      variants: ["hover", "dark", "dark:hover"]
     },
     {
       pattern: /text-(gray|neutral)-500/,
@@ -35,7 +39,7 @@ export default {
       variants: ["dark"],
     },
     {
-      pattern: /border-(gray|neutral)-200/,
+      pattern: /border-(gray|neutral)-300/,
     },
     {
       pattern: /border-(gray|neutral)-700/,

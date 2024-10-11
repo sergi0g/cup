@@ -1,5 +1,5 @@
 import { Steps, Callout, Card, Cards } from "nextra-theme-docs";
-import { IconPaint, IconLockOpen, IconKey } from '@tabler/icons-react';
+import { IconPaint, IconLockOpen, IconKey, IconPlug } from '@tabler/icons-react';
 
 # Configuration
 
@@ -13,7 +13,8 @@ For example, if using Podman, you might do
 $ cup -s /run/user/1000/podman/podman.sock check
 ```
 
-This option will hopefully be moved to the configuration file soon.
+This option is also available in the configuration file and it's best to put it there.
+<Card icon={<IconPlug />} title="Custom Docker socket" href="/docs/configuration/socket" />
 
 ## Configuration file
 

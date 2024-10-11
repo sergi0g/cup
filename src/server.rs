@@ -14,9 +14,7 @@ use xitca_web::{
 };
 
 use crate::{
-    check::get_all_updates,
-    error, info,
-    utils::{sort_update_vec, to_json, CliConfig},
+    check::get_updates, config::{Config, Theme}, docker::get_images_from_docker_daemon, info, utils::{sort_update_vec, to_json}
 };
 
 const HTML: &str = include_str!("static/index.html");
@@ -26,9 +24,9 @@ const FAVICON_ICO: &[u8] = include_bytes!("static/favicon.ico");
 const FAVICON_SVG: &[u8] = include_bytes!("static/favicon.svg");
 const APPLE_TOUCH_ICON: &[u8] = include_bytes!("static/apple-touch-icon.png");
 
-pub async fn serve(port: &u16, options: &CliConfig) -> std::io::Result<()> {
+pub async fn serve(port: &u16, config: &Config) -> std::io::Result<()> {
     info!("Starting server, please wait...");
-    let data = ServerData::new(options).await;
+    let data = ServerData::new(config).await;
     info!("Ready to start!");
     App::new()
         .with_state(Arc::new(Mutex::new(data)))
@@ -94,14 +92,14 @@ struct ServerData {
     template: String,
     raw_updates: Vec<(String, Option<bool>)>,
     json: JsonValue,
-    options: CliConfig,
+    config: Config,
     theme: &'static str,
 }
 
 impl ServerData {
-    async fn new(options: &CliConfig) -> Self {
+    async fn new(config: &Config) -> Self {
         let mut s = Self {
-            options: options.clone(),
+            config: config.clone(),
             template: String::new(),
             json: json::object! {
                 metrics: json::object! {},
@@ -118,7 +116,8 @@ impl ServerData {
         if !self.raw_updates.is_empty() {
             info!("Refreshing data");
         }
-        let updates = sort_update_vec(&get_all_updates(&self.options).await);
+        let images = get_images_from_docker_daemon(&self.config, &None).await;
+        let updates = sort_update_vec(&get_updates(&images, &self.config).await);
         let end = Local::now().timestamp_millis();
         info!("✨ Checked {} images in {}ms", updates.len(), end - start);
         self.raw_updates = updates;
@@ -141,16 +140,9 @@ impl ServerData {
             .to_rfc3339_opts(chrono::SecondsFormat::Secs, true)
             .to_string()
             .into();
-        self.theme = match &self.options.config["theme"].as_str() {
-            Some(t) => match *t {
-                "default" => "neutral",
-                "blue" => "gray",
-                _ => error!(
-                    "Invalid theme {} specified! Please choose between 'default' and 'blue'",
-                    t
-                ),
-            },
-            None => "neutral",
+        self.theme = match &self.config.theme {
+            Theme::Default => "neutral",
+            Theme::Blue => "gray"
         };
         let globals = object!({
             "metrics": [{"name": "Monitored images", "value": self.json["metrics"]["monitored_images"].as_usize()}, {"name": "Up to date", "value": self.json["metrics"]["up_to_date"].as_usize()}, {"name": "Updates available", "value": self.json["metrics"]["update_available"].as_usize()}, {"name": "Unknown", "value": self.json["metrics"]["unknown"].as_usize()}],

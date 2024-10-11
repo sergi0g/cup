@@ -1,15 +1,16 @@
-#[cfg(feature = "cli")]
-use check::{get_all_updates, get_update};
+use check::get_updates;
 use chrono::Local;
 use clap::{Parser, Subcommand};
+use config::Config;
+use docker::get_images_from_docker_daemon;
 #[cfg(feature = "cli")]
-use formatting::{print_raw_update, print_raw_updates, print_update, print_updates, Spinner};
+use formatting::{print_raw_updates, print_updates, Spinner};
 #[cfg(feature = "server")]
 use server::serve;
 use std::path::PathBuf;
-use utils::{load_config, CliConfig};
 
 pub mod check;
+pub mod config;
 pub mod docker;
 #[cfg(feature = "cli")]
 pub mod formatting;
@@ -26,13 +27,6 @@ struct Cli {
     socket: Option<String>,
     #[arg(short, long, default_value_t = String::new(), help = "Config file path")]
     config_path: String,
-    #[arg(
-        short,
-        long,
-        default_value_t = false,
-        help = "Enable verbose (debug) logging"
-    )]
-    verbose: bool,
     #[command(subcommand)]
     command: Option<Commands>,
 }
@@ -41,8 +35,8 @@ struct Cli {
 enum Commands {
     #[cfg(feature = "cli")]
     Check {
-        #[arg(default_value = None)]
-        image: Option<String>,
+        #[arg(name = "Images", default_value = None)]
+        references: Option<Vec<String>>,
         #[arg(short, long, default_value_t = false, help = "Enable icons")]
         icons: bool,
         #[arg(
@@ -72,50 +66,38 @@ async fn main() {
         "" => None,
         path => Some(PathBuf::from(path)),
     };
-    if cli.verbose {
-        debug!("CLI options:");
-        debug!("Config path: {:?}", cfg_path);
-        debug!("Socket: {:?}", &cli.socket)
-    }
-    let cli_config = CliConfig {
-        socket: cli.socket,
-        verbose: cli.verbose,
-        config: load_config(cfg_path),
-    };
-    if cli.verbose {
-        debug!("Config: {}", cli_config.config)
+    let mut config = Config::new().load(cfg_path);
+    match cli.socket {
+        Some(socket) => config.socket = Some(socket),
+        None => ()
     }
     match &cli.command {
         #[cfg(feature = "cli")]
-        Some(Commands::Check { image, icons, raw }) => match image {
-            Some(name) => {
-                let has_update = get_update(name, &cli_config).await;
-                match raw {
-                    true => print_raw_update(name, &has_update),
-                    false => print_update(name, &has_update),
-                };
-            }
-            None => {
-                let start = Local::now().timestamp_millis();
-                match raw {
-                    true => {
-                        let updates = get_all_updates(&cli_config).await;
-                        print_raw_updates(&updates);
-                    }
-                    false => {
-                        let spinner = Spinner::new();
-                        let updates = get_all_updates(&cli_config).await;
-                        spinner.succeed();
-                        let end = Local::now().timestamp_millis();
-                        print_updates(&updates, icons);
-                        info!("✨ Checked {} images in {}ms", updates.len(), end - start);
-                    }
-                };
-            }
-        },
+        Some(Commands::Check {
+            references,
+            icons,
+            raw,
+        }) => {
+            let start = Local::now().timestamp_millis();
+            let images = get_images_from_docker_daemon(&config, references).await;
+            match raw {
+                true => {
+                    let updates = get_updates(&images, &config).await;
+                    print_raw_updates(&updates);
+                }
+                false => {
+                    let spinner = Spinner::new();
+                    let updates = get_updates(&images, &config).await;
+                    spinner.succeed();
+                    let end = Local::now().timestamp_millis();
+                    print_updates(&updates, icons);
+                    info!("✨ Checked {} images in {}ms", updates.len(), end - start);
+                }
+            };
+        }
         #[cfg(feature = "server")]
         Some(Commands::Serve { port }) => {
-            let _ = serve(port, &cli_config).await;
+            let _ = serve(port, &config).await;
         }
         None => (),
     }
