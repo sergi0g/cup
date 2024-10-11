@@ -22,6 +22,7 @@ pub struct Config {
 
 impl Config {
     /// A stupid new function that exists just so calling `load` doesn't require a self argument
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Self {
             authentication: FxHashMap::default(),
