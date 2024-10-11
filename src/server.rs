@@ -119,7 +119,7 @@ impl ServerData {
         if !self.raw_updates.is_empty() {
             info!("Refreshing data");
         }
-        let images = get_images_from_docker_daemon(&self.options).await;
+        let images = get_images_from_docker_daemon(&self.options, &None).await;
         let updates = sort_update_vec(&get_updates(&images, &self.options).await);
         let end = Local::now().timestamp_millis();
         info!("✨ Checked {} images in {}ms", updates.len(), end - start);

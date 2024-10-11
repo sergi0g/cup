@@ -1,7 +1,6 @@
 use std::time::Duration;
 
 use indicatif::{ProgressBar, ProgressStyle};
-use json::object;
 
 use crate::utils::{sort_update_vec, to_json};
 
@@ -41,25 +40,6 @@ pub fn print_updates(updates: &[(String, Option<bool>)], icons: &bool) {
 
 pub fn print_raw_updates(updates: &[(String, Option<bool>)]) {
     println!("{}", json::stringify(to_json(updates)));
-}
-
-pub fn print_update(name: &str, has_update: &Option<bool>) {
-    let color = match has_update {
-        Some(true) => "\u{001b}[38;5;12m",
-        Some(false) => "\u{001b}[38;5;2m",
-        None => "\u{001b}[38;5;8m",
-    };
-    let description = match has_update {
-        Some(true) => "has an update available",
-        Some(false) => "is up to date",
-        None => "wasn't found",
-    };
-    println!("{}{} {}", color, name, description);
-}
-
-pub fn print_raw_update(name: &str, has_update: &Option<bool>) {
-    let result = object! {images: {[name]: *has_update}};
-    println!("{}", result);
 }
 
 pub struct Spinner {

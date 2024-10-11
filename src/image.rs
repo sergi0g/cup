@@ -1,4 +1,4 @@
-use bollard::secret::{ImageInspect, ImageSummary};
+use bollard::models::{ImageInspect, ImageSummary};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
