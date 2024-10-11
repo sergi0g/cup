@@ -3,20 +3,14 @@ use json::JsonValue;
 use http_auth::parse_challenges;
 use reqwest_middleware::ClientWithMiddleware;
 
-use crate::{debug, error, image::Image, utils::CliConfig, warn};
+use crate::{config::Config, error, image::Image, warn};
 
 pub async fn check_auth(
     registry: &str,
-    options: &CliConfig,
+    config: &Config,
     client: &ClientWithMiddleware,
 ) -> Option<String> {
-    let protocol = if options.config["insecure_registries"].contains(registry) {
-        if options.verbose {
-            debug!(
-                "{} is configured as an insecure registry. Downgrading to HTTP",
-                registry
-            );
-        };
+    let protocol = if config.insecure_registries.contains(&registry.to_string()) {
         "http"
     } else {
         "https"
@@ -61,11 +55,10 @@ pub async fn check_auth(
 pub async fn get_latest_digest(
     image: &Image,
     token: Option<&String>,
-    options: &CliConfig,
+    config: &Config,
     client: &ClientWithMiddleware,
 ) -> Image {
-    let protocol = if options.config["insecure_registries"]
-        .contains(json::JsonValue::from(image.registry.clone()))
+    let protocol = if config.insecure_registries.contains(&image.registry.clone().unwrap())
     {
         "http"
     } else {
@@ -125,7 +118,7 @@ pub async fn get_latest_digest(
 pub async fn get_token(
     images: &Vec<&Image>,
     auth_url: &str,
-    credentials: &Option<String>,
+    credentials: &Option<&String>,
     client: &ClientWithMiddleware,
 ) -> String {
     let mut final_url = auth_url.to_owned();

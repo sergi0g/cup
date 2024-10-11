@@ -2,9 +2,7 @@ use futures::future::join_all;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
-    image::Image,
-    registry::{check_auth, get_token},
-    utils::{new_reqwest_client, CliConfig},
+    config::Config, image::Image, registry::{check_auth, get_token}, utils::new_reqwest_client
 };
 
 use crate::registry::get_latest_digest;
@@ -28,7 +26,7 @@ where
 }
 
 /// Returns a list of updates for all images passed in.
-pub async fn get_updates(images: &[Image], options: &CliConfig) -> Vec<(String, Option<bool>)> {
+pub async fn get_updates(images: &[Image], config: &Config) -> Vec<(String, Option<bool>)> {
     // Get a list of unique registries our images belong to. We are unwrapping the registry because it's guaranteed to be there.
     let registries: Vec<&String> = images
         .iter()
@@ -53,11 +51,8 @@ pub async fn get_updates(images: &[Image], options: &CliConfig) -> Vec<(String, 
     // Retrieve an authentication token (if required) for each registry.
     let mut tokens: FxHashMap<&String, Option<String>> = FxHashMap::default();
     for registry in registries {
-        let credentials = options.config["authentication"][registry]
-            .clone()
-            .take_string()
-            .or(None);
-        match check_auth(registry, options, &client).await {
+        let credentials = config.authentication.get(registry);
+        match check_auth(registry, config, &client).await {
             Some(auth_url) => {
                 let token = get_token(
                     image_map.get(registry).unwrap(),
@@ -79,7 +74,7 @@ pub async fn get_updates(images: &[Image], options: &CliConfig) -> Vec<(String, 
     // Loop through images and get the latest digest for each
     for image in images {
         let token = tokens.get(&image.registry.as_ref().unwrap()).unwrap();
-        let future = get_latest_digest(image, token.as_ref(), options, &client);
+        let future = get_latest_digest(image, token.as_ref(), config, &client);
         handles.push(future);
     }
     // Await all the futures

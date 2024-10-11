@@ -2,7 +2,7 @@ use bollard::models::{ImageInspect, ImageSummary};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
-use crate::{debug, error, utils::CliConfig};
+use crate::error;
 
 /// Image struct that contains all information that may be needed by a function.
 /// It's designed to be passed around between functions
@@ -18,7 +18,7 @@ pub struct Image {
 
 impl Image {
     /// Creates an populates the fields of an Image object based on the ImageSummary from the Docker daemon
-    pub async fn from_summary(image: ImageSummary, options: &CliConfig) -> Option<Self> {
+    pub async fn from_summary(image: ImageSummary) -> Option<Self> {
         if !image.repo_tags.is_empty() && !image.repo_digests.is_empty() {
             let mut image = Image {
                 reference: image.repo_tags[0].clone(),
@@ -41,11 +41,6 @@ impl Image {
             image.tag = Some(tag);
 
             return Some(image);
-        } else if options.verbose {
-            debug!(
-                "Skipped an image\nTags: {:#?}\nDigests: {:#?}",
-                image.repo_tags, image.repo_digests
-            )
         }
         None
     }

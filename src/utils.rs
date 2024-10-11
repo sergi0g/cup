@@ -64,14 +64,6 @@ pub fn to_json(updates: &[(String, Option<bool>)]) -> JsonValue {
     json_data
 }
 
-/// Struct to hold some config values to avoid having to pass them all the time
-#[derive(Clone)]
-pub struct CliConfig {
-    pub socket: Option<String>,
-    pub verbose: bool,
-    pub config: JsonValue,
-}
-
 // Logging
 
 /// This macro is an alternative to panic. It prints the message you give it and exits the process with code 1, without printing a stack trace. Useful for when the program has to exit due to a user error or something unexpected which is unrelated to the program (e.g. a failed web request)
