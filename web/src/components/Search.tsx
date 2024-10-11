@@ -25,19 +25,19 @@ export default function Search({
   return (
     <div className={`w-full px-6 text-${theme}-500`}>
       <div
-        className={`flex items-center w-full rounded-md border border-${theme}-200 dark:border-${theme}-700 px-2 gap-1 bg-${theme}-800 flex-nowrap peer`}
+        className={`flex items-center w-full rounded-md border border-${theme}-300 dark:border-${theme}-700 px-2 gap-1 bg-${theme}-200 dark:bg-${theme}-800 flex-nowrap peer`}
       >
         <IconSearch className="size-5" />
         <div className="w-full">
           <input
-            className={`w-full h-10 text-sm text-${theme}-400 focus:outline-none peer bg-transparent placeholder:text-${theme}-500`}
+            className={`w-full h-10 text-sm text-${theme}-600 dark:text-${theme}-400 focus:outline-none peer bg-transparent placeholder:text-${theme}-500`}
             placeholder="Search"
             onChange={handleChange}
             value={searchQuery}
           ></input>
         </div>
         {showClear && (
-          <button onClick={handleClear} className={`hover:text-${theme}-400`}>
+          <button onClick={handleClear} className={`hover:text-${theme}-600 dark:hover:text-${theme}-400`}>
             <IconX className="size-5" />
           </button>
         )}
