@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use json::{object, JsonValue};
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
@@ -20,24 +18,6 @@ pub fn sort_update_vec(updates: &[(String, Option<bool>)]) -> Vec<(String, Optio
         (None, None) => a.0.cmp(&b.0),
     });
     sorted_updates.to_vec()
-}
-
-/// Tries to load the config from the path provided and perform basic validation
-pub fn load_config(config_path: Option<PathBuf>) -> JsonValue {
-    let raw_config = match &config_path {
-        Some(path) => std::fs::read_to_string(path),
-        None => Ok(String::from("{\"theme\":\"default\"}")),
-    };
-    if raw_config.is_err() {
-        panic!(
-            "Failed to read config file from {}. Are you sure the file exists?",
-            &config_path.unwrap().to_str().unwrap()
-        )
-    };
-    match json::parse(&raw_config.unwrap()) {
-        Ok(v) => v,
-        Err(e) => panic!("Failed to parse config!\n{}", e),
-    }
 }
 
 pub fn to_json(updates: &[(String, Option<bool>)]) -> JsonValue {
