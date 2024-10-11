@@ -70,7 +70,7 @@ pub fn to_json(updates: &[(String, Option<bool>)]) -> JsonValue {
 #[macro_export]
 macro_rules! error {
     ($($arg:tt)*) => ({
-        eprintln!("\x1b[41m ERROR \x1b[0m {}", format!($($arg)*));
+        eprintln!("\x1b[38:5:204mERROR \x1b[0m {}", format!($($arg)*));
         std::process::exit(1);
     })
 }
@@ -79,21 +79,21 @@ macro_rules! error {
 #[macro_export]
 macro_rules! warn {
     ($($arg:tt)*) => ({
-        eprintln!("\x1b[103m WARN  \x1b[0m {}", format!($($arg)*));
+        eprintln!("\x1b[38:5:192mWARN \x1b[0m {}", format!($($arg)*));
     })
 }
 
 #[macro_export]
 macro_rules! info {
     ($($arg:tt)*) => ({
-        println!("\x1b[44m INFO  \x1b[0m {}", format!($($arg)*));
+        println!("\x1b[38:5:86mINFO \x1b[0m {}", format!($($arg)*));
     })
 }
 
 #[macro_export]
 macro_rules! debug {
     ($($arg:tt)*) => ({
-        println!("\x1b[48:5:57m DEBUG \x1b[0m {}", format!($($arg)*));
+        println!("\x1b[38:5:63mDEBUG \x1b[0m {}", format!($($arg)*));
     })
 }
 
