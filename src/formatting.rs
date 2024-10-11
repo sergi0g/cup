@@ -32,7 +32,7 @@ pub fn print_updates(updates: &[(String, Option<bool>)], icons: &bool) {
         let dynamic_space =
             " ".repeat(term_width - description.len() - icon.len() - update.0.len());
         println!(
-            "{}{}{}{}{}",
+            "{}{}{}{}{}\u{001b}[0m",
             color, icon, update.0, dynamic_space, description
         );
     }
