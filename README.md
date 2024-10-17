@@ -2,16 +2,16 @@
 
 Cup is the easiest way to check for container image updates.
 
-![Demo](screenshots/cup.gif)
+![Cup web in dark mode](screenshots/web_dark.png)
 
 _If you like this project and/or use Cup, please consider starring the project ⭐. It motivates me to continue working on it and imrpoving it. Plus, you get updates for new releases!_
 
-## Screenshots
+## Screenshots 📷
 
 ![Cup web in light mode](screenshots/web_light.png)
-![Cup web in dark mode](screenshots/web_dark.png)
+![Cup's CLI](screenshots/cup.gif)
 
-## Features
+## Features ✨
 
 - Extremely fast. Cup takes full advantage of your CPU and is hightly optimized, resulting in lightning fast speed. On my Raspberry Pi 5, it took 3.7 seconds for 58 images!
 - Supports most registries, including Docker Hub, ghcr.io, Quay, lscr.io and even Gitea (or derivatives)
@@ -20,7 +20,7 @@ _If you like this project and/or use Cup, please consider starring the project �
 - The binary is tiny! At the time of writing it's just 5.2 MB. No more pulling 100+ MB docker images for a such a simple program.
 - JSON output for both the CLI and web interface so you can connect Cup to integrations. It's easy to parse and makes webhooks and pretty dashboards simple to set up!
 
-## Documentation
+## Documentation 📘
 
 Take a look at https://sergi0g.github.io/cup/docs!
 
