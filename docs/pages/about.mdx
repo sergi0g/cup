@@ -7,7 +7,7 @@ Cup is a small utility that checks for updates to Docker containers. The logic i
 
 ## How it started
 
-I got the basic idea for Cup a long time ago. I was looking at [Homepage's list of widgets](https://gethomepage.dev/latest/widgets/) when I discovered [What's Up Docker?](https://github.com/fmartinou/whats-up-docker) (referred to as WUD from now on).
+I got the basic idea for Cup a long time ago. I was looking at [Homepage's list of widgets](https://gethomepage.dev/latest/widgets/) when I discovered [What's Up Docker?](https://github.com/getwud/wud) (referred to as WUD from now on).
 
 According to the docs:
 
@@ -18,7 +18,7 @@ It supports the most common registries, has integrations with IFTTT, Slack, Tele
 I was managing my homelab myself at that time and the only way to check if I had updates was log in to the server and manually try to pull the images for *every single compose file*. WUD seemed to solve the problem nicely, so I decided to give it a try. I never used automatic updates or notifications, but I configured it and let it run.
 
 After deploying it and setting up my reverse proxy, I was greeted with this dashboard:
-<Image src="https://github.com/fmartinou/whats-up-docker/blob/master/docs/ui/ui.png?raw=true" alt="A screenshot of WUD's web UI, from the docs" />
+<Image src="https://github.com/getwud/wud/blob/master/docs/ui/ui.png?raw=true" alt="A screenshot of WUD's web UI, from the docs" />
 It was working fine, but... the UI was not what I expected. It really reminds me of some really old Android app (I hope I didn't offend anyone). That was strike one. Nevertheless, I left it running. It was useful after all.
 
 A few days later I was pulling some docker images, when I got this error message:

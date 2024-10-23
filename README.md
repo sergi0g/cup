@@ -15,7 +15,7 @@ _If you like this project and/or use Cup, please consider starring the project â
 
 - Extremely fast. Cup takes full advantage of your CPU and is hightly optimized, resulting in lightning fast speed. On my Raspberry Pi 5, it took 3.7 seconds for 58 images!
 - Supports most registries, including Docker Hub, ghcr.io, Quay, lscr.io and even Gitea (or derivatives)
-- Doesn't exhaust any rate limits. This is the original reason I created Cup. It was inspired by [What's up docker?](https://github.com/fmartinou/whats-up-docker) which would always use it up.
+- Doesn't exhaust any rate limits. This is the original reason I created Cup. It was inspired by [What's up docker?](https://github.com/getwud/wud) which would always use it up.
 - Beautiful CLI and web interface for checking on your containers any time.
 - The binary is tiny! At the time of writing it's just 5.2 MB. No more pulling 100+ MB docker images for a such a simple program.
 - JSON output for both the CLI and web interface so you can connect Cup to integrations. It's easy to parse and makes webhooks and pretty dashboards simple to set up!
@@ -55,4 +55,4 @@ If you find a bug, or want to propose a feature, search for it in the [issues](h
 
 ## Acknowledgements
 
-Thanks to [What's up Docker?](https://github.com/fmartinou/whats-up-docker) for inspiring this project.
+Thanks to [What's up Docker?](https://github.com/getwud/wud) for inspiring this project.
