@@ -5,6 +5,22 @@ export interface Data {
     update_available: number;
     unknown: number;
   };
-  images: Record<string, boolean | null>;
+  images: Image[];
   last_updated: string;
 };
+
+export interface Image {
+  reference: string,
+  parts: {
+    registry: string,
+    repository: string,
+    tag: string,
+  },
+  local_digests: string[],
+  remote_digest: string,
+  result: {
+    has_update: boolean | null,
+    error: string | null
+  },
+  time: number
+}

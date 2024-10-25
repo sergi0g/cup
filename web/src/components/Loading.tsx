@@ -6,8 +6,8 @@ import { theme } from "../theme";
 export default function Loading({ onLoad }: { onLoad: (data: Data) => void }) {
   fetch(
     process.env.NODE_ENV === "production"
-      ? "/json"
-      : `http://${window.location.hostname}:8000/json`,
+      ? "/api/v1/full"
+      : `http://${window.location.hostname}:8000/api/v1/full`,
   ).then((response) => response.json().then((data) => {onLoad(data as Data)}));
   return (
     <div

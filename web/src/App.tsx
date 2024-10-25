@@ -45,10 +45,10 @@ function App() {
             </div>
             <Search onChange={setSearchQuery}/>
             <ul
-              className={`*:py-4 *:px-6 *:flex *:items-center *:gap-3 dark:divide-${theme}-800 divide-y dark:text-white`}
+              className={`dark:divide-${theme}-800 divide-y dark:text-white`}
             >
-              {Object.entries(data.images).filter(([name]) => name.includes(searchQuery)).map(([name, status]) => (
-                <Image name={name} status={status} key={name} />
+              {data.images.filter((image) => image.reference.includes(searchQuery)).map((image) => (
+                <Image data={image} key={image.reference} />
               ))}
             </ul>
           </div>

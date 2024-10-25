@@ -38,7 +38,7 @@ pub async fn serve(port: &u16, config: &Config) -> std::io::Result<()> {
         .at("/", get(handler_service(_static)))
         .at("/api/v1/simple", get(handler_service(api_simple)))
         .at("/api/v1/full", get(handler_service(api_full)))
-        .at("/refresh", get(handler_service(refresh)))
+        .at("/api/v1/refresh", get(handler_service(refresh)))
         .at("/*", get(handler_service(_static)))
         .enclosed(Logger::new())
         .serve()

@@ -8,7 +8,7 @@ export default {
   safelist: [
     // Generate minimum extra CSS
     {
-      pattern: /bg-(gray|neutral)-50/,
+      pattern: /bg-(gray|neutral)-(50|500)/,
     },
     {
       pattern: /bg-(gray|neutral)-(900|950)/,
@@ -39,10 +39,10 @@ export default {
       variants: ["dark"],
     },
     {
-      pattern: /border-(gray|neutral)-300/,
+      pattern: /border-(gray|neutral)-(200|300)/,
     },
     {
-      pattern: /border-(gray|neutral)-700/,
+      pattern: /border-(gray|neutral)-(700|800)/,
       variants: ["dark"],
     },
   ],

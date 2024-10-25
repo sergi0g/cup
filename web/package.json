@@ -11,6 +11,7 @@
     "fmt": "prettier --write ."
   },
   "dependencies": {
+    "@headlessui/react": "^2.1.10",
     "@radix-ui/react-tooltip": "^1.1.2",
     "@tabler/icons-react": "^3.14.0",
     "clsx": "^2.1.1",
