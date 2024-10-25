@@ -1,5 +1,4 @@
 use check::get_updates;
-use chrono::Local;
 use clap::{Parser, Subcommand};
 use config::Config;
 use docker::get_images_from_docker_daemon;
@@ -7,6 +6,7 @@ use docker::get_images_from_docker_daemon;
 use formatting::{print_raw_updates, print_updates, Spinner};
 #[cfg(feature = "server")]
 use server::serve;
+use utils::timestamp;
 use std::path::PathBuf;
 
 pub mod check;
@@ -67,9 +67,8 @@ async fn main() {
         path => Some(PathBuf::from(path)),
     };
     let mut config = Config::new().load(cfg_path);
-    match cli.socket {
-        Some(socket) => config.socket = Some(socket),
-        None => ()
+    if let Some(socket) = cli.socket {
+        config.socket = Some(socket)
     }
     match &cli.command {
         #[cfg(feature = "cli")]
@@ -78,7 +77,7 @@ async fn main() {
             icons,
             raw,
         }) => {
-            let start = Local::now().timestamp_millis();
+            let start = timestamp();
             let images = get_images_from_docker_daemon(&config, references).await;
             match raw {
                 true => {
@@ -89,7 +88,7 @@ async fn main() {
                     let spinner = Spinner::new();
                     let updates = get_updates(&images, &config).await;
                     spinner.succeed();
-                    let end = Local::now().timestamp_millis();
+                    let end = timestamp();
                     print_updates(&updates, icons);
                     info!("✨ Checked {} images in {}ms", updates.len(), end - start);
                 }

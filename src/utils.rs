@@ -1,3 +1,4 @@
+use chrono::Local;
 use json::{object, JsonValue};
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
@@ -8,29 +9,23 @@ use crate::image::{Image, Status};
 pub fn sort_image_vec(updates: &[Image]) -> Vec<Image> {
     let mut sorted_updates = updates.to_vec();
     sorted_updates.sort_unstable_by(|a, b| match (a.has_update(), b.has_update()) {
-        (Status::UpdateAvailable, Status::UpdateAvailable) => {
-            a.reference.cmp(&b.reference)
+        (Status::UpdateAvailable, Status::UpdateAvailable) => a.reference.cmp(&b.reference),
+        (Status::UpdateAvailable, Status::UpToDate | Status::Unknown(_)) => {
+            std::cmp::Ordering::Less
         }
-        (Status::UpdateAvailable, Status::UpToDate | Status::Unknown(_)) => std::cmp::Ordering::Less,
         (Status::UpToDate, Status::UpdateAvailable) => std::cmp::Ordering::Greater,
-        (Status::UpToDate, Status::UpToDate) => {
-            a.reference.cmp(&b.reference)
-        },
+        (Status::UpToDate, Status::UpToDate) => a.reference.cmp(&b.reference),
         (Status::UpToDate, Status::Unknown(_)) => std::cmp::Ordering::Less,
-        (Status::Unknown(_), Status::UpdateAvailable | Status::UpToDate) => std::cmp::Ordering::Greater,
-        (Status::Unknown(_), Status::Unknown(_)) => {
-            a.reference.cmp(&b.reference)
+        (Status::Unknown(_), Status::UpdateAvailable | Status::UpToDate) => {
+            std::cmp::Ordering::Greater
         }
+        (Status::Unknown(_), Status::Unknown(_)) => a.reference.cmp(&b.reference),
     });
     sorted_updates.to_vec()
 }
 
-/// Takes a slice of `Image` objects and returns a `JsonValue` of update info. The output doesn't contain much detail
-pub fn to_simple_json(updates: &[Image]) -> JsonValue {
-    let mut json_data: JsonValue = object! {
-        metrics: object! {},
-        images: object! {}
-    };
+/// Helper function to get metrics used in JSON output
+pub fn get_metrics(updates: &[Image]) -> JsonValue {
     let mut up_to_date = 0;
     let mut update_available = 0;
     let mut unknown = 0;
@@ -39,21 +34,41 @@ pub fn to_simple_json(updates: &[Image]) -> JsonValue {
         match has_update {
             Status::UpdateAvailable => {
                 update_available += 1;
-            },
+            }
             Status::UpToDate => {
                 up_to_date += 1;
-            },
+            }
             Status::Unknown(_) => {
                 unknown += 1;
             }
         };
-        let _ = json_data["images"].insert(&image.reference, has_update.to_option_bool());
     });
-    let _ = json_data["metrics"].insert("monitored_images", updates.len());
-    let _ = json_data["metrics"].insert("up_to_date", up_to_date);
-    let _ = json_data["metrics"].insert("update_available", update_available);
-    let _ = json_data["metrics"].insert("unknown", unknown);
+    object! {
+        monitored_images: updates.len(),
+        up_to_date: up_to_date,
+        update_available: update_available,
+        unknown: unknown
+    }
+}
+
+/// Takes a slice of `Image` objects and returns a `JsonValue` of update info. The output doesn't contain much detail
+pub fn to_simple_json(updates: &[Image]) -> JsonValue {
+    let mut json_data: JsonValue = object! {
+        metrics: get_metrics(updates),
+        images: object! {}
+    };
+    updates.iter().for_each(|image| {
+        let _ = json_data["images"].insert(&image.reference, image.has_update().to_option_bool());
+    });
     json_data
+}
+
+/// Takes a slice of `Image` objects and returns a `JsonValue` of update info. All image data is included, useful for debugging.
+pub fn to_full_json(updates: &[Image]) -> JsonValue {
+    object! {
+        metrics: get_metrics(updates),
+        images: updates.iter().map(|image| image.to_json()).collect::<Vec<JsonValue>>(),
+    }
 }
 
 // Logging
@@ -89,12 +104,17 @@ macro_rules! debug {
     })
 }
 
+/// Creates a new reqwest client with automatic retries
 pub fn new_reqwest_client() -> ClientWithMiddleware {
     ClientBuilder::new(reqwest::Client::new())
         .with(RetryTransientMiddleware::new_with_policy(
             ExponentialBackoff::builder().build_with_max_retries(3),
         ))
         .build()
+}
+
+pub fn timestamp() -> i64 {
+    Local::now().timestamp_millis()
 }
 
 #[cfg(test)]
@@ -107,25 +127,39 @@ mod tests {
         // Create test objects
         let update_available_1 = Image {
             reference: "busybox".to_string(),
-            local_digests: Some(vec!["some_digest".to_string(), "some_other_digest".to_string()]),
+            local_digests: Some(vec![
+                "some_digest".to_string(),
+                "some_other_digest".to_string(),
+            ]),
             remote_digest: Some("latest_digest".to_string()),
             ..Default::default()
         };
         let update_available_2 = Image {
             reference: "library/alpine".to_string(),
-            local_digests: Some(vec!["some_digest".to_string(), "some_other_digest".to_string()]), // We don't need to mock real data, as this is a generic function
+            local_digests: Some(vec![
+                "some_digest".to_string(),
+                "some_other_digest".to_string(),
+            ]), // We don't need to mock real data, as this is a generic function
             remote_digest: Some("latest_digest".to_string()),
             ..Default::default()
         };
         let up_to_date_1 = Image {
             reference: "docker:dind".to_string(),
-            local_digests: Some(vec!["some_digest".to_string(), "some_other_digest".to_string(), "latest_digest".to_string()]),
+            local_digests: Some(vec![
+                "some_digest".to_string(),
+                "some_other_digest".to_string(),
+                "latest_digest".to_string(),
+            ]),
             remote_digest: Some("latest_digest".to_string()),
             ..Default::default()
         };
         let up_to_date_2 = Image {
             reference: "ghcr.io/sergi0g/cup".to_string(),
-            local_digests: Some(vec!["some_digest".to_string(), "some_other_digest".to_string(), "latest_digest".to_string()]),
+            local_digests: Some(vec![
+                "some_digest".to_string(),
+                "some_other_digest".to_string(),
+                "latest_digest".to_string(),
+            ]),
             remote_digest: Some("latest_digest".to_string()),
             ..Default::default()
         };
@@ -139,8 +173,22 @@ mod tests {
             error: Some("whoops".to_string()),
             ..Default::default()
         };
-        let input_vec = vec![unknown_2.clone(), up_to_date_1.clone(), unknown_1.clone(), update_available_2.clone(), update_available_1.clone(), up_to_date_2.clone()];
-        let expected_vec = vec![update_available_1, update_available_2, up_to_date_1, up_to_date_2, unknown_1, unknown_2];
+        let input_vec = vec![
+            unknown_2.clone(),
+            up_to_date_1.clone(),
+            unknown_1.clone(),
+            update_available_2.clone(),
+            update_available_1.clone(),
+            up_to_date_2.clone(),
+        ];
+        let expected_vec = vec![
+            update_available_1,
+            update_available_2,
+            up_to_date_1,
+            up_to_date_2,
+            unknown_1,
+            unknown_2,
+        ];
 
         // Sort the vec
         let sorted_vec = sort_image_vec(&input_vec);

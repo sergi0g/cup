@@ -2,7 +2,7 @@ use bollard::{models::ImageInspect, ClientVersion, Docker};
 
 use futures::future::join_all;
 
-use crate::{error, image::Image, config::Config};
+use crate::{config::Config, error, image::Image};
 
 fn create_docker_client(socket: Option<String>) -> Docker {
     let client: Result<Docker, bollard::errors::Error> = match socket {

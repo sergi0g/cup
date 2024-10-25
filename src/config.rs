@@ -28,7 +28,7 @@ impl Config {
             authentication: FxHashMap::default(),
             theme: Theme::Default,
             insecure_registries: Vec::with_capacity(0),
-            socket: None
+            socket: None,
         }
     }
     /// Reads the config from the file path provided and returns the parsed result.

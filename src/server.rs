@@ -14,7 +14,12 @@ use xitca_web::{
 };
 
 use crate::{
-    check::get_updates, config::{Config, Theme}, docker::get_images_from_docker_daemon, image::Image, info, utils::{sort_image_vec, to_simple_json}
+    check::get_updates,
+    config::{Config, Theme},
+    docker::get_images_from_docker_daemon,
+    image::Image,
+    info,
+    utils::{sort_image_vec, timestamp, to_full_json, to_simple_json},
 };
 
 const HTML: &str = include_str!("static/index.html");
@@ -31,7 +36,8 @@ pub async fn serve(port: &u16, config: &Config) -> std::io::Result<()> {
     App::new()
         .with_state(Arc::new(Mutex::new(data)))
         .at("/", get(handler_service(_static)))
-        .at("/json", get(handler_service(json)))
+        .at("/api/v1/simple", get(handler_service(api_simple)))
+        .at("/api/v1/full", get(handler_service(api_full)))
         .at("/refresh", get(handler_service(refresh)))
         .at("/*", get(handler_service(_static)))
         .enclosed(Logger::new())
@@ -77,9 +83,15 @@ async fn _static(data: StateRef<'_, Arc<Mutex<ServerData>>>, path: PathRef<'_>) 
     }
 }
 
-async fn json(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
+async fn api_simple(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
     WebResponse::new(ResponseBody::from(json::stringify(
-        data.lock().await.json.clone(),
+        data.lock().await.simple_json.clone(),
+    )))
+}
+
+async fn api_full(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
+    WebResponse::new(ResponseBody::from(json::stringify(
+        data.lock().await.full_json.clone(),
     )))
 }
 
@@ -91,7 +103,8 @@ async fn refresh(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
 struct ServerData {
     template: String,
     raw_updates: Vec<Image>,
-    json: JsonValue,
+    simple_json: JsonValue,
+    full_json: JsonValue,
     config: Config,
     theme: &'static str,
 }
@@ -101,10 +114,8 @@ impl ServerData {
         let mut s = Self {
             config: config.clone(),
             template: String::new(),
-            json: json::object! {
-                metrics: json::object! {},
-                images: json::object! {},
-            },
+            simple_json: JsonValue::Null,
+            full_json: JsonValue::Null,
             raw_updates: Vec::new(),
             theme: "neutral",
         };
@@ -112,13 +123,13 @@ impl ServerData {
         s
     }
     async fn refresh(&mut self) {
-        let start = Local::now().timestamp_millis();
+        let start = timestamp();
         if !self.raw_updates.is_empty() {
             info!("Refreshing data");
         }
         let images = get_images_from_docker_daemon(&self.config, &None).await;
         let updates = sort_image_vec(&get_updates(&images, &self.config).await);
-        let end = Local::now().timestamp_millis();
+        let end = timestamp();
         info!("✨ Checked {} images in {}ms", updates.len(), end - start);
         self.raw_updates = updates;
         let template = liquid::ParserBuilder::with_stdlib()
@@ -131,18 +142,23 @@ impl ServerData {
             .iter()
             .map(|image| object!({"name": image.reference, "has_update": image.has_update().to_option_bool().to_value()}),)
             .collect::<Vec<Object>>();
-        self.json = to_simple_json(&self.raw_updates);
+        self.simple_json = to_simple_json(&self.raw_updates);
+        self.full_json = to_full_json(&self.raw_updates);
         let last_updated = Local::now();
-        self.json["last_updated"] = last_updated
+        self.simple_json["last_updated"] = last_updated
+            .to_rfc3339_opts(chrono::SecondsFormat::Secs, true)
+            .to_string()
+            .into();
+        self.full_json["last_updated"] = last_updated
             .to_rfc3339_opts(chrono::SecondsFormat::Secs, true)
             .to_string()
             .into();
         self.theme = match &self.config.theme {
             Theme::Default => "neutral",
-            Theme::Blue => "gray"
+            Theme::Blue => "gray",
         };
         let globals = object!({
-            "metrics": [{"name": "Monitored images", "value": self.json["metrics"]["monitored_images"].as_usize()}, {"name": "Up to date", "value": self.json["metrics"]["up_to_date"].as_usize()}, {"name": "Updates available", "value": self.json["metrics"]["update_available"].as_usize()}, {"name": "Unknown", "value": self.json["metrics"]["unknown"].as_usize()}],
+            "metrics": [{"name": "Monitored images", "value": self.simple_json["metrics"]["monitored_images"].as_usize()}, {"name": "Up to date", "value": self.simple_json["metrics"]["up_to_date"].as_usize()}, {"name": "Updates available", "value": self.simple_json["metrics"]["update_available"].as_usize()}, {"name": "Unknown", "value": self.simple_json["metrics"]["unknown"].as_usize()}],
             "images": images,
             "last_updated": last_updated.format("%Y-%m-%d %H:%M:%S").to_string(),
             "theme": &self.theme

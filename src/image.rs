@@ -1,4 +1,7 @@
+use std::fmt::Display;
+
 use bollard::models::{ImageInspect, ImageSummary};
+use json::{object, JsonValue};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
@@ -6,7 +9,7 @@ use crate::error;
 
 /// Image struct that contains all information that may be needed by a function.
 /// It's designed to be passed around between functions
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct Image {
     pub reference: String,
     pub registry: Option<String>,
@@ -14,7 +17,8 @@ pub struct Image {
     pub tag: Option<String>,
     pub local_digests: Option<Vec<String>>,
     pub remote_digest: Option<String>,
-    pub error: Option<String>
+    pub error: Option<String>,
+    pub time_ms: i64
 }
 
 impl Image {
@@ -108,24 +112,38 @@ impl Image {
     pub fn has_update(&self) -> Status {
         if self.error.is_some() {
             Status::Unknown(self.error.clone().unwrap())
-        } else if self.local_digests.as_ref().unwrap().contains(&self.remote_digest.as_ref().unwrap()) {
+        } else if self
+            .local_digests
+            .as_ref()
+            .unwrap()
+            .contains(self.remote_digest.as_ref().unwrap())
+        {
             Status::UpToDate
         } else {
             Status::UpdateAvailable
         }
     }
-}
 
-impl Default for Image {
-    fn default() -> Self {
-        Self {
-            reference: String::new(),
-            registry: None,
-            repository: None,
-            tag: None,
-            local_digests: None,
-            remote_digest: None,
-            error: None
+    /// Converts image data into a `JsonValue`
+    pub fn to_json(&self) -> JsonValue {
+        let has_update = self.has_update();
+        object! {
+            reference: self.reference.clone(),
+            parts: object! {
+                registry: self.registry.clone(),
+                repository: self.repository.clone(),
+                tag: self.tag.clone()
+            },
+            local_digests: self.local_digests.clone(),
+            remote_digest: self.remote_digest.clone(),
+            result: object! { // API here will have to change for semver
+                has_update: has_update.to_option_bool(),
+                error: match has_update {
+                    Status::Unknown(e) => Some(e),
+                    _ => None
+                }
+            },
+            time: self.time_ms
         }
     }
 }
@@ -142,16 +160,16 @@ static RE: Lazy<Regex> = Lazy::new(|| {
 pub enum Status {
     UpToDate,
     UpdateAvailable,
-    Unknown(String)
+    Unknown(String),
 }
 
-impl ToString for Status {
-    fn to_string(&self) -> String {
-        match &self {
+impl Display for Status {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match &self {
             Self::UpToDate => "Up to date",
             Self::UpdateAvailable => "Update available",
-            Self::Unknown(_) => "Unknown"
-        }.to_string()
+            Self::Unknown(_) => "Unknown",
+        })
     }
 }
 
@@ -161,7 +179,7 @@ impl Status {
         match &self {
             Self::UpdateAvailable => Some(true),
             Self::UpToDate => Some(false),
-            Self::Unknown(_) => None
+            Self::Unknown(_) => None,
         }
     }
 }

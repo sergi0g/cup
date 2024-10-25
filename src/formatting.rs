@@ -2,7 +2,10 @@ use std::time::Duration;
 
 use indicatif::{ProgressBar, ProgressStyle};
 
-use crate::{image::{Image, Status}, utils::{sort_image_vec, to_simple_json}};
+use crate::{
+    image::{Image, Status},
+    utils::{sort_image_vec, to_simple_json},
+};
 
 pub fn print_updates(updates: &[Image], icons: &bool) {
     let sorted_images = sort_image_vec(updates);

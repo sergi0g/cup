@@ -2,7 +2,10 @@ use futures::future::join_all;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
-    config::Config, image::Image, registry::{check_auth, get_token}, utils::new_reqwest_client
+    config::Config,
+    image::Image,
+    registry::{check_auth, get_token},
+    utils::new_reqwest_client,
 };
 
 use crate::registry::get_latest_digest;
@@ -78,7 +81,5 @@ pub async fn get_updates(images: &[Image], config: &Config) -> Vec<Image> {
         handles.push(future);
     }
     // Await all the futures
-    let final_images = join_all(handles).await;
-
-    final_images
+    join_all(handles).await
 }

@@ -3,7 +3,7 @@ use json::JsonValue;
 use http_auth::parse_challenges;
 use reqwest_middleware::ClientWithMiddleware;
 
-use crate::{config::Config, error, image::Image, warn};
+use crate::{config::Config, error, image::Image, utils::timestamp, warn};
 
 pub async fn check_auth(
     registry: &str,
@@ -58,7 +58,10 @@ pub async fn get_latest_digest(
     config: &Config,
     client: &ClientWithMiddleware,
 ) -> Image {
-    let protocol = if config.insecure_registries.contains(&image.registry.clone().unwrap())
+    let start = timestamp();
+    let protocol = if config
+        .insecure_registries
+        .contains(&image.registry.clone().unwrap())
     {
         "http"
     } else {
@@ -83,14 +86,14 @@ pub async fn get_latest_digest(
             if status == 401 {
                 if token.is_some() {
                     warn!("Failed to authenticate to registry {} with token provided!\n{}", &image.registry.as_ref().unwrap(), token.unwrap());
-                    return Image { remote_digest: None, error: Some(format!("Authentication token \"{}\" was not accepted", token.unwrap())), ..image.clone() }
+                    return Image { remote_digest: None, error: Some(format!("Authentication token \"{}\" was not accepted", token.unwrap())), time_ms: timestamp() - start, ..image.clone() }
                 } else {
                     warn!("Registry requires authentication");
-                    return Image { remote_digest: None, error: Some("Registry requires authentication".to_string()), ..image.clone() }
+                    return Image { remote_digest: None, error: Some("Registry requires authentication".to_string()), time_ms: timestamp() - start, ..image.clone() }
                 }
             } else if status == 404 {
                 warn!("Image {:?} not found", &image);
-                return Image { remote_digest: None, error: Some("Image not found".to_string()), ..image.clone() }
+                return Image { remote_digest: None, error: Some("Image not found".to_string()), time_ms: timestamp() - start, ..image.clone() }
             } else {
                 response
             }
@@ -98,7 +101,7 @@ pub async fn get_latest_digest(
         Err(e) => {
             if e.is_connect() {
                 warn!("Connection to registry failed.");
-                return Image { remote_digest: None, error: Some("Connection to registry failed".to_string()), ..image.clone() }
+                return Image { remote_digest: None, error: Some("Connection to registry failed".to_string()), time_ms: timestamp() - start, ..image.clone() }
             } else {
                 error!("Unexpected error: {}", e.to_string())
             }
@@ -107,6 +110,7 @@ pub async fn get_latest_digest(
     match raw_response.headers().get("docker-content-digest") {
         Some(digest) => Image {
             remote_digest: Some(digest.to_str().unwrap().to_string()),
+            time_ms: timestamp() - start,
             ..image.clone()
         },
         None => error!(
