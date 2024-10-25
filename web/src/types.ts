@@ -7,20 +7,20 @@ export interface Data {
   };
   images: Image[];
   last_updated: string;
-};
+}
 
 export interface Image {
-  reference: string,
+  reference: string;
   parts: {
-    registry: string,
-    repository: string,
-    tag: string,
-  },
-  local_digests: string[],
-  remote_digest: string,
+    registry: string;
+    repository: string;
+    tag: string;
+  };
+  local_digests: string[];
+  remote_digest: string;
   result: {
-    has_update: boolean | null,
-    error: string | null
-  },
-  time: number
+    has_update: boolean | null;
+    error: string | null;
+  };
+  time: number;
 }

@@ -14,10 +14,10 @@
       <div
         class="flex justify-center items-center min-h-screen bg-{{ theme }}-50 dark:bg-{{ theme }}-950"
       >
-        <div class="lg:px-8 sm:px-6 px-4 max-w-[80rem] mx-auto h-full w-full">
-          <div class="max-w-[48rem] mx-auto h-full my-8">
+        <div class="mx-auto h-full w-full max-w-[80rem] px-4 sm:px-6 lg:px-8">
+          <div class="mx-auto my-8 h-full max-w-[48rem]">
             <div class="flex items-center gap-1">
-              <h1 class="text-5xl lg:text-6xl font-bold dark:text-white">
+              <h1 class="text-5xl font-bold lg:text-6xl dark:text-white">
                 Cup
               </h1>
               <svg
@@ -86,21 +86,23 @@
               class="shadow-sm bg-white dark:bg-{{ theme }}-900 rounded-md my-8"
             >
               <dl
-                class="lg:grid-cols-4 grid-cols-2 gap-1 grid overflow-hidden *:relative"
+                class="grid grid-cols-2 gap-1 overflow-hidden *:relative lg:grid-cols-4"
               >
                 {% for metric in metrics %}
-                <div class="before:bg-{{ theme }}-200 before:dark:bg-{{ theme }}-800 after:bg-{{ theme }}-200 after:dark:bg-{{ theme }}-800 gi">
+                <div
+                  class="before:bg-{{ theme }}-200 before:dark:bg-{{ theme }}-800 after:bg-{{ theme }}-200 after:dark:bg-{{ theme }}-800 gi"
+                >
                   <div
-                    class="xl:px-8 px-6 py-4 gap-y-2 gap-x-4 justify-between align-baseline flex flex-col h-full"
+                    class="flex h-full flex-col justify-between gap-x-4 gap-y-2 px-6 py-4 align-baseline xl:px-8"
                   >
                     <dt
                       class="text-{{ theme }}-500 dark:text-{{ theme }}-400 leading-6 font-medium"
                     >
                       {{ metric.name }}
                     </dt>
-                    <div class="flex gap-1 justify-between items-center">
+                    <div class="flex items-center justify-between gap-1">
                       <dd
-                        class="text-black dark:text-white tracking-tight leading-10 font-medium text-3xl w-full"
+                        class="w-full text-3xl font-medium leading-10 tracking-tight text-black dark:text-white"
                       >
                         {{ metric.value }}
                       </dd>
@@ -111,7 +113,7 @@
                         height="24"
                         viewBox="0 0 24 24"
                         fill="currentColor"
-                        class="size-6 text-black dark:text-white shrink-0"
+                        class="size-6 shrink-0 text-black dark:text-white"
                       >
                         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                         <path
@@ -125,7 +127,7 @@
                         height="24"
                         viewBox="0 0 24 24"
                         fill="currentColor"
-                        class="size-6 text-green-500 shrink-0"
+                        class="size-6 shrink-0 text-green-500"
                       >
                         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                         <path
@@ -139,7 +141,7 @@
                         height="24"
                         viewBox="0 0 24 24"
                         fill="currentColor"
-                        class="size-6 text-blue-500 shrink-0"
+                        class="size-6 shrink-0 text-blue-500"
                       >
                         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                         <path
@@ -224,7 +226,7 @@
                     height="24"
                     viewBox="0 0 24 24"
                     fill="currentColor"
-                    class="text-green-500 ml-auto"
+                    class="ml-auto text-green-500"
                   >
                     <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                     <path
@@ -238,7 +240,7 @@
                     height="24"
                     viewBox="0 0 24 24"
                     fill="currentColor"
-                    class="text-blue-500 ml-auto"
+                    class="ml-auto text-blue-500"
                   >
                     <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                     <path

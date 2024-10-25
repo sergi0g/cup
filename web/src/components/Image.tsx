@@ -62,7 +62,7 @@ export default function Image({ data }: { data: Image }) {
     <>
       <button
         onClick={handleOpen}
-        className={`*:py-4 *:px-6 *:flex *:items-center *:gap-3 w-full`}
+        className={`w-full *:flex *:items-center *:gap-3 *:px-6 *:py-4`}
       >
         <li className="break-all">
           <IconCube className="size-6 shrink-0" />
@@ -70,7 +70,7 @@ export default function Image({ data }: { data: Image }) {
           {data.result.has_update == false && (
             <WithTooltip
               text="Up to date"
-              className="text-green-500 ml-auto size-6 shrink-0"
+              className="ml-auto size-6 shrink-0 text-green-500"
             >
               <IconCircleCheckFilled />
             </WithTooltip>
@@ -78,7 +78,7 @@ export default function Image({ data }: { data: Image }) {
           {data.result.has_update == true && (
             <WithTooltip
               text="Update available"
-              className="text-blue-500 ml-auto size-6 shrink-0"
+              className="ml-auto size-6 shrink-0 text-blue-500"
             >
               <IconCircleArrowUpFilled />
             </WithTooltip>
@@ -86,7 +86,7 @@ export default function Image({ data }: { data: Image }) {
           {data.result.has_update == null && (
             <WithTooltip
               text="Unknown"
-              className="text-gray-500 ml-auto size-6 shrink-0"
+              className="ml-auto size-6 shrink-0 text-gray-500"
             >
               <IconHelpCircleFilled />
             </WithTooltip>
@@ -102,12 +102,12 @@ export default function Image({ data }: { data: Image }) {
           <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
             <DialogPanel
               transition
-              className={`relative transform overflow-hidden rounded-lg bg-white dark:bg-${theme}-900 dark:text-white text-left shadow-xl transition-all data-[closed]:translate-y-4 data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in sm:my-8 sm:w-full sm:max-w-lg md:max-w-xl lg:max-w-2xl data-[closed]:sm:translate-y-0 data-[closed]:sm:scale-95`}
+              className={`relative transform overflow-hidden rounded-lg bg-white dark:bg-${theme}-900 text-left shadow-xl transition-all data-[closed]:translate-y-4 data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in sm:my-8 sm:w-full sm:max-w-lg data-[closed]:sm:translate-y-0 data-[closed]:sm:scale-95 md:max-w-xl lg:max-w-2xl dark:text-white`}
             >
               <div
-                className={`py-4 px-6 flex flex-col gap-3 text-${theme}-400 dark:text-${theme}-600`}
+                className={`flex flex-col gap-3 px-6 py-4 text-${theme}-400 dark:text-${theme}-600`}
               >
-                <div className="flex items-center gap-3 mb-4">
+                <div className="mb-4 flex items-center gap-3">
                   <IconCube className="size-6 shrink-0 text-black dark:text-white" />
                   <DialogTitle className="text-black dark:text-white">
                     {url ? (
@@ -116,7 +116,7 @@ export default function Image({ data }: { data: Image }) {
                           href={url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-block after:bg-white after:h-[2px] after:bottom-[4px] after:left-0 after:scale-x-0 after:block after:relative after:w-full after:transition-transform after:duration-300 hover:after:scale-x-100"
+                          className="inline-block after:relative after:bottom-[1px] after:left-0 after:block after:h-[2px] after:w-full after:scale-x-0 after:bg-black after:dark:bg-white after:transition-transform after:duration-300 hover:after:scale-x-100"
                         >
                           {data.reference}
                         </a>
@@ -133,30 +133,30 @@ export default function Image({ data }: { data: Image }) {
                 <div className="flex items-center gap-3">
                   {data.result.has_update == false && (
                     <>
-                      <IconCircleCheckFilled className="text-green-500 size-6 shrink-0" />
+                      <IconCircleCheckFilled className="size-6 shrink-0 text-green-500" />
                       Up to date
                     </>
                   )}
                   {data.result.has_update == true && (
                     <>
-                      <IconCircleArrowUpFilled className="text-blue-500 size-6 shrink-0" />
+                      <IconCircleArrowUpFilled className="size-6 shrink-0 text-blue-500" />
                       Update available
                     </>
                   )}
                   {data.result.has_update == null && (
                     <>
-                      <IconHelpCircleFilled className="text-gray-500 size-6 shrink-0" />
+                      <IconHelpCircleFilled className="size-6 shrink-0 text-gray-500" />
                       Unknown
                     </>
                   )}
                 </div>
-                <div className="flex items-center gap-3 mb-4">
-                  <IconStopwatch className="text-gray-500 size-6 shrink-0" />
+                <div className="mb-4 flex items-center gap-3">
+                  <IconStopwatch className="size-6 shrink-0 text-gray-500" />
                   Checked in {data.time} ms
                 </div>
                 {data.result.error && (
-                  <div className="bg-yellow-400/10 flex items-center gap-3 overflow-hidden break-all rounded-md px-3 py-2 mb-4">
-                    <IconAlertTriangleFilled className="text-yellow-500 size-5 shrink-0" />
+                  <div className="mb-4 flex items-center gap-3 overflow-hidden break-all rounded-md bg-yellow-400/10 px-3 py-2">
+                    <IconAlertTriangleFilled className="size-5 shrink-0 text-yellow-500" />
                     {data.result.error}
                   </div>
                 )}
@@ -164,7 +164,7 @@ export default function Image({ data }: { data: Image }) {
                   <div className="flex flex-col gap-1">
                     Pull command
                     <div
-                      className={`bg-${theme}-50 dark:bg-${theme}-950 text-gray-500 flex items-center rounded-md px-3 py-2 font-mono mb-4 group relative`}
+                      className={`bg-${theme}-100 dark:bg-${theme}-950 group relative mb-4 flex items-center rounded-md px-3 py-2 font-mono text-gray-500`}
                     >
                       <p className="overflow-scroll">
                         docker pull {data.reference}
@@ -174,9 +174,9 @@ export default function Image({ data }: { data: Image }) {
                           <IconCheck className="absolute right-3" />
                         ) : (
                           <button
-                            className="absolute right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-50"
+                            className="duration-50 absolute right-3 opacity-0 transition-opacity group-hover:opacity-100"
                             onClick={handleCopy(
-                              `docker pull ${data.reference}`
+                              `docker pull ${data.reference}`,
                             )}
                           >
                             <IconCopy />
@@ -188,7 +188,7 @@ export default function Image({ data }: { data: Image }) {
                 <div className="flex flex-col gap-1">
                   Local digests
                   <div
-                    className={`bg-${theme}-50 dark:bg-${theme}-950 text-gray-500 rounded-md px-3 py-2 font-mono scrollable`}
+                    className={`bg-${theme}-100 dark:bg-${theme}-950 scrollable rounded-md px-3 py-2 font-mono text-gray-500`}
                   >
                     <p className="overflow-x-scroll">
                       {data.local_digests.join("\n")}
@@ -199,7 +199,7 @@ export default function Image({ data }: { data: Image }) {
                   <div className="flex flex-col gap-1">
                     Remote digest
                     <div
-                      className={`bg-${theme}-50 dark:bg-${theme}-950 text-gray-500 rounded-md px-3 py-2 font-mono`}
+                      className={`bg-${theme}-100 dark:bg-${theme}-950 rounded-md px-3 py-2 font-mono text-gray-500`}
                     >
                       <p className="overflow-x-scroll">{data.remote_digest}</p>
                     </div>
