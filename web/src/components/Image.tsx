@@ -8,8 +8,10 @@ import {
 import {
   IconAlertTriangleFilled,
   IconArrowUpRight,
+  IconCheck,
   IconCircleArrowUpFilled,
   IconCircleCheckFilled,
+  IconCopy,
   IconCube,
   IconHelpCircleFilled,
   IconStopwatch,
@@ -28,11 +30,22 @@ const clickable_registries = [
 
 export default function Image({ data }: { data: Image }) {
   const [open, setOpen] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
   const handleOpen = () => {
     setOpen(true);
   };
   const handleClose = () => {
     setOpen(false);
+  };
+  const handleCopy = (text: string) => {
+    return () => {
+      navigator.clipboard.writeText(text).then(() => {
+        setCopySuccess(true);
+        setTimeout(() => {
+          setCopySuccess(false);
+        }, 3000);
+      });
+    };
   };
   var url: string | null = null;
   if (clickable_registries.includes(data.parts.registry)) {
@@ -142,9 +155,34 @@ export default function Image({ data }: { data: Image }) {
                   Checked in {data.time} ms
                 </div>
                 {data.result.error && (
-                  <div className="bg-yellow-400/10 flex items-center gap-3 overflow-hidden break-all rounded-md px-3 py-2">
+                  <div className="bg-yellow-400/10 flex items-center gap-3 overflow-hidden break-all rounded-md px-3 py-2 mb-4">
                     <IconAlertTriangleFilled className="text-yellow-500 size-5 shrink-0" />
                     {data.result.error}
+                  </div>
+                )}
+                {data.result.has_update && (
+                  <div className="flex flex-col gap-1">
+                    Pull command
+                    <div
+                      className={`bg-${theme}-50 dark:bg-${theme}-950 text-gray-500 flex items-center rounded-md px-3 py-2 font-mono mb-4 group relative`}
+                    >
+                      <p className="overflow-scroll">
+                        docker pull {data.reference}
+                      </p>
+                      {navigator.clipboard &&
+                        (copySuccess ? (
+                          <IconCheck className="absolute right-3" />
+                        ) : (
+                          <button
+                            className="absolute right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-50"
+                            onClick={handleCopy(
+                              `docker pull ${data.reference}`
+                            )}
+                          >
+                            <IconCopy />
+                          </button>
+                        ))}
+                    </div>
                   </div>
                 )}
                 <div className="flex flex-col gap-1">
