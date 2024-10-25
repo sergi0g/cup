@@ -6,7 +6,7 @@ use crate::error;
 
 /// Image struct that contains all information that may be needed by a function.
 /// It's designed to be passed around between functions
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Image {
     pub reference: String,
     pub registry: Option<String>,
@@ -14,6 +14,7 @@ pub struct Image {
     pub tag: Option<String>,
     pub local_digests: Option<Vec<String>>,
     pub remote_digest: Option<String>,
+    pub error: Option<String>
 }
 
 impl Image {
@@ -22,9 +23,6 @@ impl Image {
         if !image.repo_tags.is_empty() && !image.repo_digests.is_empty() {
             let mut image = Image {
                 reference: image.repo_tags[0].clone(),
-                registry: None,
-                repository: None,
-                tag: None,
                 local_digests: Some(
                     image
                         .repo_digests
@@ -33,7 +31,7 @@ impl Image {
                         .map(|digest| digest.split('@').collect::<Vec<&str>>()[1].to_string())
                         .collect(),
                 ),
-                remote_digest: None,
+                ..Default::default()
             };
             let (registry, repository, tag) = image.split();
             image.registry = Some(registry);
@@ -53,9 +51,6 @@ impl Image {
         {
             let mut image = Image {
                 reference: image.repo_tags.as_ref().unwrap()[0].clone(),
-                registry: None,
-                repository: None,
-                tag: None,
                 local_digests: Some(
                     image
                         .repo_digests
@@ -65,7 +60,7 @@ impl Image {
                         .map(|digest| digest.split('@').collect::<Vec<&str>>()[1].to_string())
                         .collect(),
                 ),
-                remote_digest: None,
+                ..Default::default()
             };
             let (registry, repository, tag) = image.split();
             image.registry = Some(registry);
@@ -108,6 +103,31 @@ impl Image {
             None => error!("Failed to parse image {}", &self.reference),
         }
     }
+
+    /// Compares remote digest of the image with its local digests to determine if it has an update or not
+    pub fn has_update(&self) -> Status {
+        if self.error.is_some() {
+            Status::Unknown(self.error.clone().unwrap())
+        } else if self.local_digests.as_ref().unwrap().contains(&self.remote_digest.as_ref().unwrap()) {
+            Status::UpToDate
+        } else {
+            Status::UpdateAvailable
+        }
+    }
+}
+
+impl Default for Image {
+    fn default() -> Self {
+        Self {
+            reference: String::new(),
+            registry: None,
+            repository: None,
+            tag: None,
+            local_digests: None,
+            remote_digest: None,
+            error: None
+        }
+    }
 }
 
 /// Regex to match Docker image references against, so registry, repository and tag can be extracted.
@@ -117,3 +137,31 @@ static RE: Lazy<Regex> = Lazy::new(|| {
     )
     .unwrap()
 });
+
+/// Enum for image status
+pub enum Status {
+    UpToDate,
+    UpdateAvailable,
+    Unknown(String)
+}
+
+impl ToString for Status {
+    fn to_string(&self) -> String {
+        match &self {
+            Self::UpToDate => "Up to date",
+            Self::UpdateAvailable => "Update available",
+            Self::Unknown(_) => "Unknown"
+        }.to_string()
+    }
+}
+
+impl Status {
+    // Converts the Status into an Option<bool> (useful for JSON serialization)
+    pub fn to_option_bool(&self) -> Option<bool> {
+        match &self {
+            Self::UpdateAvailable => Some(true),
+            Self::UpToDate => Some(false),
+            Self::Unknown(_) => None
+        }
+    }
+}

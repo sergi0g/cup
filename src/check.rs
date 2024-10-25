@@ -26,7 +26,7 @@ where
 }
 
 /// Returns a list of updates for all images passed in.
-pub async fn get_updates(images: &[Image], config: &Config) -> Vec<(String, Option<bool>)> {
+pub async fn get_updates(images: &[Image], config: &Config) -> Vec<Image> {
     // Get a list of unique registries our images belong to. We are unwrapping the registry because it's guaranteed to be there.
     let registries: Vec<&String> = images
         .iter()
@@ -80,16 +80,5 @@ pub async fn get_updates(images: &[Image], config: &Config) -> Vec<(String, Opti
     // Await all the futures
     let final_images = join_all(handles).await;
 
-    let mut result: Vec<(String, Option<bool>)> = Vec::with_capacity(images.len());
     final_images
-        .iter()
-        .for_each(|image| match &image.remote_digest {
-            Some(digest) => {
-                let has_update = !image.local_digests.as_ref().unwrap().contains(digest);
-                result.push((image.reference.clone(), Some(has_update)))
-            }
-            None => result.push((image.reference.clone(), None)),
-        });
-
-    result
 }

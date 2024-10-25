@@ -82,14 +82,15 @@ pub async fn get_latest_digest(
             let status = response.status();
             if status == 401 {
                 if token.is_some() {
-                    warn!("Failed to authenticate to registry {} with given token!\n{}", &image.registry.as_ref().unwrap(), token.unwrap());
+                    warn!("Failed to authenticate to registry {} with token provided!\n{}", &image.registry.as_ref().unwrap(), token.unwrap());
+                    return Image { remote_digest: None, error: Some(format!("Authentication token \"{}\" was not accepted", token.unwrap())), ..image.clone() }
                 } else {
                     warn!("Registry requires authentication");
+                    return Image { remote_digest: None, error: Some("Registry requires authentication".to_string()), ..image.clone() }
                 }
-                return Image { remote_digest: None, ..image.clone() }
             } else if status == 404 {
                 warn!("Image {:?} not found", &image);
-                return Image { remote_digest: None, ..image.clone() }
+                return Image { remote_digest: None, error: Some("Image not found".to_string()), ..image.clone() }
             } else {
                 response
             }
@@ -97,7 +98,7 @@ pub async fn get_latest_digest(
         Err(e) => {
             if e.is_connect() {
                 warn!("Connection to registry failed.");
-                return Image { remote_digest: None, ..image.clone() }
+                return Image { remote_digest: None, error: Some("Connection to registry failed".to_string()), ..image.clone() }
             } else {
                 error!("Unexpected error: {}", e.to_string())
             }
@@ -140,7 +141,7 @@ pub async fn get_token(
         Ok(response) => match response.text().await {
             Ok(res) => res,
             Err(e) => {
-                error!("Failed to parse response into string!\n{}", e)
+                error!("Failed to parse registry response into string!\n{}", e)
             }
         },
         Err(e) => {

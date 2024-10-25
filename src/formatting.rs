@@ -2,44 +2,41 @@ use std::time::Duration;
 
 use indicatif::{ProgressBar, ProgressStyle};
 
-use crate::utils::{sort_update_vec, to_json};
+use crate::{image::{Image, Status}, utils::{sort_image_vec, to_simple_json}};
 
-pub fn print_updates(updates: &[(String, Option<bool>)], icons: &bool) {
-    let sorted_updates = sort_update_vec(updates);
+pub fn print_updates(updates: &[Image], icons: &bool) {
+    let sorted_images = sort_image_vec(updates);
     let term_width: usize = termsize::get()
         .unwrap_or(termsize::Size { rows: 24, cols: 80 })
         .cols as usize;
-    for update in sorted_updates {
-        let description = match update.1 {
-            Some(true) => "Update available",
-            Some(false) => "Up to date",
-            None => "Unknown",
-        };
+    for image in sorted_images {
+        let has_update = image.has_update();
+        let description = has_update.to_string();
         let icon = if *icons {
-            match update.1 {
-                Some(true) => "\u{f0aa} ",
-                Some(false) => "\u{f058} ",
-                None => "\u{f059} ",
+            match has_update {
+                Status::UpdateAvailable => "\u{f0aa} ",
+                Status::UpToDate => "\u{f058} ",
+                Status::Unknown(_) => "\u{f059} ",
             }
         } else {
             ""
         };
-        let color = match update.1 {
-            Some(true) => "\u{001b}[38;5;12m",
-            Some(false) => "\u{001b}[38;5;2m",
-            None => "\u{001b}[38;5;8m",
+        let color = match has_update {
+            Status::UpdateAvailable => "\u{001b}[38;5;12m",
+            Status::UpToDate => "\u{001b}[38;5;2m",
+            Status::Unknown(_) => "\u{001b}[38;5;8m",
         };
         let dynamic_space =
-            " ".repeat(term_width - description.len() - icon.len() - update.0.len());
+            " ".repeat(term_width - description.len() - icon.len() - image.reference.len());
         println!(
             "{}{}{}{}{}\u{001b}[0m",
-            color, icon, update.0, dynamic_space, description
+            color, icon, image.reference, dynamic_space, description
         );
     }
 }
 
-pub fn print_raw_updates(updates: &[(String, Option<bool>)]) {
-    println!("{}", json::stringify(to_json(updates)));
+pub fn print_raw_updates(updates: &[Image]) {
+    println!("{}", json::stringify(to_simple_json(updates)));
 }
 
 pub struct Spinner {

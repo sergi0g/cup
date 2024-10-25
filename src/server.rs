@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use chrono::Local;
 use json::JsonValue;
-use liquid::{object, Object};
+use liquid::{object, Object, ValueView};
 use tokio::sync::Mutex;
 use xitca_web::{
     body::ResponseBody,
@@ -14,7 +14,7 @@ use xitca_web::{
 };
 
 use crate::{
-    check::get_updates, config::{Config, Theme}, docker::get_images_from_docker_daemon, info, utils::{sort_update_vec, to_json}
+    check::get_updates, config::{Config, Theme}, docker::get_images_from_docker_daemon, image::Image, info, utils::{sort_image_vec, to_simple_json}
 };
 
 const HTML: &str = include_str!("static/index.html");
@@ -90,7 +90,7 @@ async fn refresh(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
 
 struct ServerData {
     template: String,
-    raw_updates: Vec<(String, Option<bool>)>,
+    raw_updates: Vec<Image>,
     json: JsonValue,
     config: Config,
     theme: &'static str,
@@ -117,7 +117,7 @@ impl ServerData {
             info!("Refreshing data");
         }
         let images = get_images_from_docker_daemon(&self.config, &None).await;
-        let updates = sort_update_vec(&get_updates(&images, &self.config).await);
+        let updates = sort_image_vec(&get_updates(&images, &self.config).await);
         let end = Local::now().timestamp_millis();
         info!("✨ Checked {} images in {}ms", updates.len(), end - start);
         self.raw_updates = updates;
@@ -129,12 +129,9 @@ impl ServerData {
         let images = self
             .raw_updates
             .iter()
-            .map(|(name, has_update)| match has_update {
-                Some(v) => object!({"name": name, "has_update": v.to_string()}), // Liquid kinda thinks false == nil, so we'll be comparing strings from now on
-                None => object!({"name": name, "has_update": "null"}),
-            })
+            .map(|image| object!({"name": image.reference, "has_update": image.has_update().to_option_bool().to_value()}),)
             .collect::<Vec<Object>>();
-        self.json = to_json(&self.raw_updates);
+        self.json = to_simple_json(&self.raw_updates);
         let last_updated = Local::now();
         self.json["last_updated"] = last_updated
             .to_rfc3339_opts(chrono::SecondsFormat::Secs, true)
