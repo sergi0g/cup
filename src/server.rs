@@ -84,15 +84,21 @@ async fn _static(data: StateRef<'_, Arc<Mutex<ServerData>>>, path: PathRef<'_>) 
 }
 
 async fn api_simple(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
-    WebResponse::new(ResponseBody::from(json::stringify(
-        data.lock().await.simple_json.clone(),
-    )))
+    WebResponse::builder()
+        .header("Content-Type", "application/json")
+        .body(ResponseBody::from(json::stringify(
+            data.lock().await.simple_json.clone(),
+        )))
+        .unwrap()
 }
 
 async fn api_full(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
-    WebResponse::new(ResponseBody::from(json::stringify(
-        data.lock().await.full_json.clone(),
-    )))
+    WebResponse::builder()
+        .header("Content-Type", "application/json")
+        .body(ResponseBody::from(json::stringify(
+            data.lock().await.full_json.clone(),
+        )))
+        .unwrap()
 }
 
 async fn refresh(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
