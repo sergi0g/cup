@@ -63,13 +63,23 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Get Docker image tag
+        id: tag
+        run: |
+          if [ "${GITHUB_REF_NAME}" == "main" ]; then
+            TAG="nightly"
+          else
+            TAG="${GITHUB_REF_NAME}-nightly"
+          fi
+          echo "tag=$TAG" >> $GITHUB_ENV
+
       - name: Build and push image
         uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64, linux/arm64
           push: true
-          tags: ghcr.io/sergi0g/cup:nightly
+          tags: ghcr.io/sergi0g/cup:${{ steps.tag.outputs.tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
