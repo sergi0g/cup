@@ -6,8 +6,8 @@ use docker::get_images_from_docker_daemon;
 use formatting::{print_raw_updates, print_updates, Spinner};
 #[cfg(feature = "server")]
 use server::serve;
-use utils::timestamp;
 use std::path::PathBuf;
+use utils::timestamp;
 
 pub mod check;
 pub mod config;

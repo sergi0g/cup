@@ -18,7 +18,7 @@ pub struct Image {
     pub local_digests: Option<Vec<String>>,
     pub remote_digest: Option<String>,
     pub error: Option<String>,
-    pub time_ms: i64
+    pub time_ms: i64,
 }
 
 impl Image {
