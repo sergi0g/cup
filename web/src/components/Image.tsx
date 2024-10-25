@@ -64,7 +64,7 @@ export default function Image({ data }: { data: Image }) {
         onClick={handleOpen}
         className={`w-full *:flex *:items-center *:gap-3 *:px-6 *:py-4`}
       >
-        <li className="break-all">
+        <li className="break-all text-start">
           <IconCube className="size-6 shrink-0" />
           {data.reference}
           {data.result.has_update == false && (
@@ -99,10 +99,10 @@ export default function Image({ data }: { data: Image }) {
           className={`fixed inset-0 bg-${theme}-500 dark:bg-${theme}-950 !bg-opacity-75 transition-opacity data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in`}
         />
         <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
-          <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+          <div className="flex min-h-full items-end justify-center text-center sm:items-center sm:p-0">
             <DialogPanel
               transition
-              className={`relative transform overflow-hidden rounded-lg bg-white dark:bg-${theme}-900 text-left shadow-xl transition-all data-[closed]:translate-y-4 data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in sm:my-8 sm:w-full sm:max-w-lg data-[closed]:sm:translate-y-0 data-[closed]:sm:scale-95 md:max-w-xl lg:max-w-2xl dark:text-white`}
+              className={`relative transform overflow-hidden rounded-t-lg bg-white md:rounded-lg dark:bg-${theme}-900 text-left shadow-xl transition-all data-[closed]:translate-y-4 data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in sm:my-8 sm:w-full sm:max-w-lg data-[closed]:sm:translate-y-0 data-[closed]:sm:scale-95 md:max-w-xl lg:max-w-2xl dark:text-white`}
             >
               <div
                 className={`flex flex-col gap-3 px-6 py-4 text-${theme}-400 dark:text-${theme}-600`}
@@ -116,11 +116,13 @@ export default function Image({ data }: { data: Image }) {
                           href={url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-block after:relative after:bottom-[1px] after:left-0 after:block after:h-[2px] after:w-full after:scale-x-0 after:bg-black after:dark:bg-white after:transition-transform after:duration-300 hover:after:scale-x-100"
+                          className="after:relative after:bottom-[1px] after:left-0 after:block after:h-[2px] after:w-full after:scale-x-0 after:bg-black after:transition-transform after:duration-300 hover:after:scale-x-100 after:dark:bg-white"
                         >
                           {data.reference}
+                          <span className="inline-flex align-text-top">
+                            <IconArrowUpRight className="size-3 shrink-0" />
+                          </span>
                         </a>
-                        <IconArrowUpRight className="inline-block size-3" />
                       </>
                     ) : (
                       data.reference
@@ -152,7 +154,9 @@ export default function Image({ data }: { data: Image }) {
                 </div>
                 <div className="mb-4 flex items-center gap-3">
                   <IconStopwatch className="size-6 shrink-0 text-gray-500" />
-                  Checked in {data.time} ms
+                  <span>
+                    Checked in <b>{data.time}</b> ms
+                  </span>
                 </div>
                 {data.result.error && (
                   <div className="mb-4 flex items-center gap-3 overflow-hidden break-all rounded-md bg-yellow-400/10 px-3 py-2">
@@ -186,7 +190,7 @@ export default function Image({ data }: { data: Image }) {
                   </div>
                 )}
                 <div className="flex flex-col gap-1">
-                  Local digests
+                  {data.local_digests.length > 1 ? "Local digests" : "Local digest"}
                   <div
                     className={`bg-${theme}-100 dark:bg-${theme}-950 scrollable rounded-md px-3 py-2 font-mono text-gray-500`}
                   >
