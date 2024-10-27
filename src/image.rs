@@ -146,6 +146,55 @@ impl Image {
             time: self.time_ms
         }
     }
+
+    /// Tries to parse the tag into semver parts
+    pub fn get_version(&self) -> Option<SemVer> {
+        get_version(self.tag.as_ref().unwrap())
+    }
+}
+
+/// Tries to parse the tag into semver parts. Should have been included in impl Image, but that would make the tests more complicated
+pub fn get_version(tag: &str) -> Option<SemVer> {
+    let captures = SEMVER.captures_iter(tag);
+    // And now... terrible best match selection for everyone!
+    let mut max_matches = 0;
+    let mut best_match = None;
+    for capture in captures {
+        let mut count = 0;
+        for idx in 1..capture.len() {
+            if capture.get(idx).is_some() {
+                count += 1
+            } else {
+                break;
+            }
+        }
+        if count > max_matches {
+            max_matches = count;
+            best_match = Some(capture);
+        }
+    }
+    match best_match {
+        Some(c) => {
+            let major: i32 = match c.name("major") {
+                Some(major) => major.as_str().parse().unwrap(),
+                None => return None,
+            };
+            let minor: i32 = match c.name("minor") {
+                Some(minor) => minor.as_str().parse().unwrap(),
+                None => 0,
+            };
+            let patch: i32 = match c.name("patch") {
+                Some(patch) => patch.as_str().parse().unwrap(),
+                None => 0,
+            };
+            Some(SemVer {
+                major,
+                minor,
+                patch,
+            })
+        }
+        None => None,
+    }
 }
 
 /// Regex to match Docker image references against, so registry, repository and tag can be extracted.
@@ -154,6 +203,12 @@ static RE: Lazy<Regex> = Lazy::new(|| {
         r#"^(?P<name>(?:(?P<registry>(?:(?:localhost|[\w-]+(?:\.[\w-]+)+)(?::\d+)?)|[\w]+:\d+)/)?(?P<repository>[a-z0-9_.-]+(?:/[a-z0-9_.-]+)*))(?::(?P<tag>[\w][\w.-]{0,127}))?$"#, // From https://regex101.com/r/nmSDPA/1
     )
     .unwrap()
+});
+
+/// Heavily modified version of the official semver regex based on common tagging schemes for container images. Sometimes it matches more than once, but we'll try to select the best match. Yes, there _will_ be errors.
+static SEMVER: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r#"(?P<major>0|[1-9]\d*)(?:\.(?P<minor>0|[1-9]\d*))?(?:\.(?P<patch>0|[1-9]\d*)+)?"#)
+        .unwrap()
 });
 
 /// Enum for image status
@@ -181,5 +236,38 @@ impl Status {
             Self::UpToDate => Some(false),
             Self::Unknown(_) => None,
         }
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct SemVer {
+    major: i32,
+    minor: i32,
+    patch: i32,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[rustfmt::skip]
+    fn semver() {
+        assert_eq!(get_version("5.3.2"                   ).unwrap(), SemVer { major: 5,  minor: 3,   patch: 2  });
+        assert_eq!(get_version("14"                      ).unwrap(), SemVer { major: 14, minor: 0,   patch: 0  });
+        assert_eq!(get_version("v0.107.53"               ).unwrap(), SemVer { major: 0,  minor: 107, patch: 53 });
+        assert_eq!(get_version("12-alpine"               ).unwrap(), SemVer { major: 12, minor: 0,   patch: 0  });
+        assert_eq!(get_version("0.9.5-nginx"             ).unwrap(), SemVer { major: 0,  minor: 9,   patch: 5  });
+        assert_eq!(get_version("v27.0"                   ).unwrap(), SemVer { major: 27, minor: 0,   patch: 0  });
+        assert_eq!(get_version("16.1"                    ).unwrap(), SemVer { major: 16, minor: 1,   patch: 0  });
+        assert_eq!(get_version("version-1.5.6"           ).unwrap(), SemVer { major: 1,  minor: 5,   patch: 6  });
+        assert_eq!(get_version("15.4-alpine"             ).unwrap(), SemVer { major: 15, minor: 4,   patch: 0  });
+        assert_eq!(get_version("pg14-v0.2.0"             ).unwrap(), SemVer { major: 0,  minor: 2,   patch: 0  });
+        assert_eq!(get_version("18-jammy-full.s6-v0.88.0").unwrap(), SemVer { major: 0,  minor: 88,  patch: 0  });
+        assert_eq!(get_version("fpm-2.1.0-prod"          ).unwrap(), SemVer { major: 2,  minor: 1,   patch: 0  });
+        assert_eq!(get_version("7.3.3.50"                ).unwrap(), SemVer { major: 7,  minor: 3,   patch: 3  });
+        assert_eq!(get_version("1.21.11-0"               ).unwrap(), SemVer { major: 1,  minor: 21,  patch: 11 });
+        assert_eq!(get_version("4.1.2.1-full"            ).unwrap(), SemVer { major: 4,  minor: 1,   patch: 2  });
+        assert_eq!(get_version("v4.0.3-ls215"            ).unwrap(), SemVer { major: 4,  minor: 0,   patch: 3  });
     }
 }
