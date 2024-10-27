@@ -18,7 +18,8 @@ jobs:
           else
             TAG="${GITHUB_REF_NAME}-nightly"
           fi
-          echo "tag=$TAG" >> $GITHUB_ENV
+          echo "Using tag $TAG"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
   build-binaries:
     runs-on: ubuntu-latest
     steps:
