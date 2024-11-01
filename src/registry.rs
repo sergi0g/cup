@@ -3,7 +3,13 @@ use json::JsonValue;
 use http_auth::parse_challenges;
 use reqwest_middleware::ClientWithMiddleware;
 
-use crate::{config::Config, error, image::Image, utils::timestamp, warn};
+use crate::{
+    config::Config,
+    error,
+    image::{get_version, Image, SemVer},
+    utils::timestamp,
+    warn,
+};
 
 pub async fn check_auth(
     registry: &str,
@@ -85,23 +91,23 @@ pub async fn get_latest_digest(
             let status = response.status();
             if status == 401 {
                 if token.is_some() {
-                    warn!("Failed to authenticate to registry {} with token provided!\n{}", &image.registry.as_ref().unwrap(), token.unwrap());
-                    return Image { remote_digest: None, error: Some(format!("Authentication token \"{}\" was not accepted", token.unwrap())), time_ms: timestamp() - start, ..image.clone() }
+                    warn!("Failed to authenticate to registry {} with token provided!\n{}", image.registry.as_ref().unwrap(), token.unwrap());
+                    return Image { error: Some(format!("Authentication token \"{}\" was not accepted", token.unwrap())), time_ms: timestamp() - start, ..image.clone() }
                 } else {
-                    warn!("Registry requires authentication");
-                    return Image { remote_digest: None, error: Some("Registry requires authentication".to_string()), time_ms: timestamp() - start, ..image.clone() }
+                    warn!("Registry {} requires authentication", image.registry.as_ref().unwrap());
+                    return Image { error: Some("Registry requires authentication".to_string()), time_ms: timestamp() - start, ..image.clone() }
                 }
             } else if status == 404 {
                 warn!("Image {:?} not found", &image);
-                return Image { remote_digest: None, error: Some("Image not found".to_string()), time_ms: timestamp() - start, ..image.clone() }
+                return Image { error: Some("Image not found".to_string()), time_ms: timestamp() - start, ..image.clone() }
             } else {
                 response
             }
         },
         Err(e) => {
             if e.is_connect() {
-                warn!("Connection to registry failed.");
-                return Image { remote_digest: None, error: Some("Connection to registry failed".to_string()), time_ms: timestamp() - start, ..image.clone() }
+                warn!("Connection to registry {} failed.", image.registry.as_ref().unwrap());
+                return Image { error: Some("Connection to registry failed".to_string()), time_ms: timestamp() - start, ..image.clone() }
             } else {
                 error!("Unexpected error: {}", e.to_string())
             }
@@ -134,9 +140,7 @@ pub async fn get_token(
             image.repository.as_ref().unwrap()
         );
     }
-    let mut base_request = client
-        .get(&final_url)
-        .header("Accept", "application/vnd.oci.image.index.v1+json"); // Seems to be unnecessary. Will probably remove in the future
+    let mut base_request = client.get(&final_url);
     base_request = match credentials {
         Some(creds) => base_request.header("Authorization", &format!("Basic {}", creds)),
         None => base_request,
@@ -163,6 +167,129 @@ pub async fn get_token(
         }
     };
     parsed_token_response["token"].to_string()
+}
+
+pub async fn get_latest_tag(
+    image: &Image,
+    base: &SemVer,
+    token: Option<&String>,
+    config: &Config,
+    client: &ClientWithMiddleware,
+) -> Image {
+    let start = timestamp();
+
+    // Start creating request
+    let protocol = if config
+        .insecure_registries
+        .contains(&image.registry.clone().unwrap())
+    {
+        "http"
+    } else {
+        "https"
+    };
+    let mut request = client.get(format!(
+        "{}://{}/v2/{}/tags/list",
+        protocol,
+        &image.registry.as_ref().unwrap(),
+        &image.repository.as_ref().unwrap(),
+    ));
+    if let Some(t) = token {
+        request = request.header("Authorization", &format!("Bearer {}", t));
+    }
+
+    // Send request
+    let raw_response = match request.header("Accept", "application/json").send().await {
+        Ok(response) => {
+            let status = response.status();
+            if status == 401 {
+                if token.is_some() {
+                    warn!(
+                        "Failed to authenticate to registry {} with token provided!\n{}",
+                        image.registry.as_ref().unwrap(),
+                        token.unwrap()
+                    );
+                    return Image {
+                        error: Some(format!(
+                            "Authentication token \"{}\" was not accepted",
+                            token.unwrap()
+                        )),
+                        time_ms: timestamp() - start,
+                        ..image.clone()
+                    };
+                } else {
+                    warn!(
+                        "Registry {} requires authentication",
+                        image.registry.as_ref().unwrap()
+                    );
+                    return Image {
+                        error: Some("Registry requires authentication".to_string()),
+                        time_ms: timestamp() - start,
+                        ..image.clone()
+                    };
+                }
+            } else if status == 404 {
+                warn!("Image {:?} not found", &image);
+                return Image {
+                    error: Some("Image not found".to_string()),
+                    time_ms: timestamp() - start,
+                    ..image.clone()
+                };
+            } else {
+                match response.text().await {
+                    Ok(res) => res,
+                    Err(e) => {
+                        error!("Failed to parse registry response into string!\n{}", e)
+                    }
+                }
+            }
+        }
+        Err(e) => {
+            if e.is_connect() {
+                warn!(
+                    "Connection to registry {} failed.",
+                    image.registry.as_ref().unwrap()
+                );
+                return Image {
+                    error: Some("Connection to registry failed".to_string()),
+                    time_ms: timestamp() - start,
+                    ..image.clone()
+                };
+            } else {
+                error!("Unexpected error: {}", e.to_string())
+            }
+        }
+    };
+    let parsed_response: JsonValue = match json::parse(&raw_response) {
+        Ok(parsed) => parsed,
+        Err(e) => {
+            error!("Failed to parse server response\n{}", e)
+        }
+    };
+    let tag = parsed_response["tags"]
+        .members()
+        .filter_map(|tag| get_version(&tag.to_string()))
+        .filter(|tag| match (base.minor, tag.minor) {
+            (Some(_), Some(_)) | (None, None) => {
+                matches!((base.patch, tag.patch), (Some(_), Some(_)) | (None, None))
+            }
+            _ => false,
+        })
+        .max();
+    match tag {
+        Some(t) => {
+            if t == *base {
+                // Tags are equal so we'll compare digests
+                get_latest_digest(image, token, config, client).await
+            } else {
+                Image {
+                    latest_remote_tag: Some(t),
+                    time_ms: timestamp() - start,
+                    ..image.clone()
+                }
+            }
+        }
+        None => unreachable!(),
+    }
 }
 
 fn parse_www_authenticate(www_auth: &str) -> String {

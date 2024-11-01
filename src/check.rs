@@ -8,8 +8,6 @@ use crate::{
     utils::new_reqwest_client,
 };
 
-use crate::registry::get_latest_digest;
-
 /// Trait for a type that implements a function `unique` that removes any duplicates.
 /// In this case, it will be used for a Vec.
 pub trait Unique<T> {
@@ -77,7 +75,7 @@ pub async fn get_updates(images: &[Image], config: &Config) -> Vec<Image> {
     // Loop through images and get the latest digest for each
     for image in images {
         let token = tokens.get(&image.registry.as_ref().unwrap()).unwrap();
-        let future = get_latest_digest(image, token.as_ref(), config, &client);
+        let future = image.check(token.as_ref(), config, &client);
         handles.push(future);
     }
     // Await all the futures

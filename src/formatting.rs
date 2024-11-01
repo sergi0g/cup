@@ -17,15 +17,17 @@ pub fn print_updates(updates: &[Image], icons: &bool) {
         let description = has_update.to_string();
         let icon = if *icons {
             match has_update {
-                Status::UpdateAvailable => "\u{f0aa} ",
                 Status::UpToDate => "\u{f058} ",
                 Status::Unknown(_) => "\u{f059} ",
+                _ => "\u{f0aa} ",
             }
         } else {
             ""
         };
         let color = match has_update {
-            Status::UpdateAvailable => "\u{001b}[38;5;12m",
+            Status::UpdateAvailable | Status::UpdatePatch => "\u{001b}[38;5;12m",
+            Status::UpdateMinor => "\u{001b}[38;5;3m",
+            Status::UpdateMajor => "\u{001b}[38;5;1m",
             Status::UpToDate => "\u{001b}[38;5;2m",
             Status::Unknown(_) => "\u{001b}[38;5;8m",
         };

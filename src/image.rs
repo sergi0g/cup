@@ -1,11 +1,16 @@
-use std::fmt::Display;
+use std::{cmp::Ordering, fmt::Display};
 
 use bollard::models::{ImageInspect, ImageSummary};
 use json::{object, JsonValue};
 use once_cell::sync::Lazy;
 use regex::Regex;
+use reqwest_middleware::ClientWithMiddleware;
 
-use crate::error;
+use crate::{
+    config::Config,
+    error,
+    registry::{get_latest_digest, get_latest_tag},
+};
 
 /// Image struct that contains all information that may be needed by a function.
 /// It's designed to be passed around between functions
@@ -17,6 +22,8 @@ pub struct Image {
     pub tag: Option<String>,
     pub local_digests: Option<Vec<String>>,
     pub remote_digest: Option<String>,
+    pub semver_tag: Option<SemVer>,
+    pub latest_remote_tag: Option<SemVer>,
     pub error: Option<String>,
     pub time_ms: i64,
 }
@@ -41,6 +48,7 @@ impl Image {
             image.registry = Some(registry);
             image.repository = Some(repository);
             image.tag = Some(tag);
+            image.semver_tag = image.get_version();
 
             return Some(image);
         }
@@ -70,6 +78,7 @@ impl Image {
             image.registry = Some(registry);
             image.repository = Some(repository);
             image.tag = Some(tag);
+            image.semver_tag = image.get_version();
 
             return Some(image);
         }
@@ -112,6 +121,11 @@ impl Image {
     pub fn has_update(&self) -> Status {
         if self.error.is_some() {
             Status::Unknown(self.error.clone().unwrap())
+        } else if self.latest_remote_tag.is_some() {
+            self.latest_remote_tag
+                .as_ref()
+                .unwrap()
+                .to_status(self.semver_tag.as_ref().unwrap())
         } else if self
             .local_digests
             .as_ref()
@@ -151,6 +165,19 @@ impl Image {
     pub fn get_version(&self) -> Option<SemVer> {
         get_version(self.tag.as_ref().unwrap())
     }
+
+    /// Checks if the image has an update
+    pub async fn check(
+        &self,
+        token: Option<&String>,
+        config: &Config,
+        client: &ClientWithMiddleware,
+    ) -> Self {
+        match &self.semver_tag {
+            Some(version) => get_latest_tag(self, version, token, config, client).await,
+            None => get_latest_digest(self, token, config, client).await,
+        }
+    }
 }
 
 /// Tries to parse the tag into semver parts. Should have been included in impl Image, but that would make the tests more complicated
@@ -179,14 +206,8 @@ pub fn get_version(tag: &str) -> Option<SemVer> {
                 Some(major) => major.as_str().parse().unwrap(),
                 None => return None,
             };
-            let minor: i32 = match c.name("minor") {
-                Some(minor) => minor.as_str().parse().unwrap(),
-                None => 0,
-            };
-            let patch: i32 = match c.name("patch") {
-                Some(patch) => patch.as_str().parse().unwrap(),
-                None => 0,
-            };
+            let minor: Option<i32> = c.name("minor").map(|minor| minor.as_str().parse().unwrap());
+            let patch: Option<i32> = c.name("patch").map(|patch| patch.as_str().parse().unwrap());
             Some(SemVer {
                 major,
                 minor,
@@ -212,9 +233,13 @@ static SEMVER: Lazy<Regex> = Lazy::new(|| {
 });
 
 /// Enum for image status
+#[derive(Ord, Eq, PartialEq, PartialOrd)]
 pub enum Status {
-    UpToDate,
+    UpdateMajor,
+    UpdateMinor,
+    UpdatePatch,
     UpdateAvailable,
+    UpToDate,
     Unknown(String),
 }
 
@@ -223,6 +248,9 @@ impl Display for Status {
         f.write_str(match &self {
             Self::UpToDate => "Up to date",
             Self::UpdateAvailable => "Update available",
+            Self::UpdateMajor => "Major update",
+            Self::UpdateMinor => "Minor update",
+            Self::UpdatePatch => "Patch update",
             Self::Unknown(_) => "Unknown",
         })
     }
@@ -232,18 +260,74 @@ impl Status {
     // Converts the Status into an Option<bool> (useful for JSON serialization)
     pub fn to_option_bool(&self) -> Option<bool> {
         match &self {
-            Self::UpdateAvailable => Some(true),
             Self::UpToDate => Some(false),
             Self::Unknown(_) => None,
+            _ => Some(true),
         }
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SemVer {
-    major: i32,
-    minor: i32,
-    patch: i32,
+    pub major: i32,
+    pub minor: Option<i32>,
+    pub patch: Option<i32>,
+}
+
+impl SemVer {
+    fn to_status(&self, base: &Self) -> Status {
+        if self.major == base.major {
+            match (self.minor, base.minor) {
+                (Some(a_minor), Some(b_minor)) => {
+                    if a_minor == b_minor {
+                        match (self.patch, base.patch) {
+                            (Some(a_patch), Some(b_patch)) => {
+                                if a_patch == b_patch {
+                                    unreachable!()
+                                } else {
+                                    Status::UpdatePatch
+                                }
+                            }
+                            _ => unreachable!(),
+                        }
+                    } else {
+                        Status::UpdateMinor
+                    }
+                }
+                _ => unreachable!(),
+            }
+        } else {
+            Status::UpdateMajor
+        }
+    }
+}
+
+impl Ord for SemVer {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let major_ordering = self.major.cmp(&other.major);
+        match major_ordering {
+            Ordering::Equal => match (self.minor, other.minor) {
+                (Some(self_minor), Some(other_minor)) => {
+                    let minor_ordering = self_minor.cmp(&other_minor);
+                    match minor_ordering {
+                        Ordering::Equal => match (self.patch, other.patch) {
+                            (Some(self_patch), Some(other_patch)) => self_patch.cmp(&other_patch),
+                            _ => Ordering::Equal,
+                        },
+                        _ => minor_ordering,
+                    }
+                }
+                _ => Ordering::Equal,
+            },
+            _ => major_ordering,
+        }
+    }
+}
+
+impl PartialOrd for SemVer {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 #[cfg(test)]
@@ -253,21 +337,21 @@ mod tests {
     #[test]
     #[rustfmt::skip]
     fn semver() {
-        assert_eq!(get_version("5.3.2"                   ).unwrap(), SemVer { major: 5,  minor: 3,   patch: 2  });
-        assert_eq!(get_version("14"                      ).unwrap(), SemVer { major: 14, minor: 0,   patch: 0  });
-        assert_eq!(get_version("v0.107.53"               ).unwrap(), SemVer { major: 0,  minor: 107, patch: 53 });
-        assert_eq!(get_version("12-alpine"               ).unwrap(), SemVer { major: 12, minor: 0,   patch: 0  });
-        assert_eq!(get_version("0.9.5-nginx"             ).unwrap(), SemVer { major: 0,  minor: 9,   patch: 5  });
-        assert_eq!(get_version("v27.0"                   ).unwrap(), SemVer { major: 27, minor: 0,   patch: 0  });
-        assert_eq!(get_version("16.1"                    ).unwrap(), SemVer { major: 16, minor: 1,   patch: 0  });
-        assert_eq!(get_version("version-1.5.6"           ).unwrap(), SemVer { major: 1,  minor: 5,   patch: 6  });
-        assert_eq!(get_version("15.4-alpine"             ).unwrap(), SemVer { major: 15, minor: 4,   patch: 0  });
-        assert_eq!(get_version("pg14-v0.2.0"             ).unwrap(), SemVer { major: 0,  minor: 2,   patch: 0  });
-        assert_eq!(get_version("18-jammy-full.s6-v0.88.0").unwrap(), SemVer { major: 0,  minor: 88,  patch: 0  });
-        assert_eq!(get_version("fpm-2.1.0-prod"          ).unwrap(), SemVer { major: 2,  minor: 1,   patch: 0  });
-        assert_eq!(get_version("7.3.3.50"                ).unwrap(), SemVer { major: 7,  minor: 3,   patch: 3  });
-        assert_eq!(get_version("1.21.11-0"               ).unwrap(), SemVer { major: 1,  minor: 21,  patch: 11 });
-        assert_eq!(get_version("4.1.2.1-full"            ).unwrap(), SemVer { major: 4,  minor: 1,   patch: 2  });
-        assert_eq!(get_version("v4.0.3-ls215"            ).unwrap(), SemVer { major: 4,  minor: 0,   patch: 3  });
+        assert_eq!(get_version("5.3.2"                   ), Some(SemVer { major: 5,  minor: Some(3),   patch: Some(2)  }));
+        assert_eq!(get_version("14"                      ), Some(SemVer { major: 14, minor: Some(0),   patch: Some(0)  }));
+        assert_eq!(get_version("v0.107.53"               ), Some(SemVer { major: 0,  minor: Some(107), patch: Some(53) }));
+        assert_eq!(get_version("12-alpine"               ), Some(SemVer { major: 12, minor: Some(0),   patch: Some(0)  }));
+        assert_eq!(get_version("0.9.5-nginx"             ), Some(SemVer { major: 0,  minor: Some(9),   patch: Some(5)  }));
+        assert_eq!(get_version("v27.0"                   ), Some(SemVer { major: 27, minor: Some(0),   patch: Some(0)  }));
+        assert_eq!(get_version("16.1"                    ), Some(SemVer { major: 16, minor: Some(1),   patch: Some(0)  }));
+        assert_eq!(get_version("version-1.5.6"           ), Some(SemVer { major: 1,  minor: Some(5),   patch: Some(6)  }));
+        assert_eq!(get_version("15.4-alpine"             ), Some(SemVer { major: 15, minor: Some(4),   patch: Some(0)  }));
+        assert_eq!(get_version("pg14-v0.2.0"             ), Some(SemVer { major: 0,  minor: Some(2),   patch: Some(0)  }));
+        assert_eq!(get_version("18-jammy-full.s6-v0.88.0"), Some(SemVer { major: 0,  minor: Some(88),  patch: Some(0)  }));
+        assert_eq!(get_version("fpm-2.1.0-prod"          ), Some(SemVer { major: 2,  minor: Some(1),   patch: Some(0)  }));
+        assert_eq!(get_version("7.3.3.50"                ), Some(SemVer { major: 7,  minor: Some(3),   patch: Some(3)  }));
+        assert_eq!(get_version("1.21.11-0"               ), Some(SemVer { major: 1,  minor: Some(21),  patch: Some(11) }));
+        assert_eq!(get_version("4.1.2.1-full"            ), Some(SemVer { major: 4,  minor: Some(1),   patch: Some(2)  }));
+        assert_eq!(get_version("v4.0.3-ls215"            ), Some(SemVer { major: 4,  minor: Some(0),   patch: Some(3)  }));
     }
 }
