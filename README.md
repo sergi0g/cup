@@ -4,7 +4,7 @@ Cup is the easiest way to check for container image updates.
 
 ![Cup web in dark mode](screenshots/web_dark.png)
 
-_If you like this project and/or use Cup, please consider starring the project ⭐. It motivates me to continue working on it and imrpoving it. Plus, you get updates for new releases!_
+_If you like this project and/or use Cup, please consider starring the project ⭐. It motivates me to continue working on it and improving it. Plus, you get updates for new releases!_
 
 ## Screenshots 📷
 
