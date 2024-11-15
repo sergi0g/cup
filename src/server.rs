@@ -17,9 +17,13 @@ use crate::{
     check::get_updates,
     config::{Config, Theme},
     docker::get_images_from_docker_daemon,
-    image::Image,
     info,
-    utils::{sort_image_vec, timestamp, to_full_json, to_simple_json},
+    structs::image::Image,
+    utils::{
+        json::{to_full_json, to_simple_json},
+        misc::timestamp,
+        sort_update_vec::sort_image_vec,
+    },
 };
 
 const HTML: &str = include_str!("static/index.html");

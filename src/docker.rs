@@ -2,7 +2,7 @@ use bollard::{models::ImageInspect, ClientVersion, Docker};
 
 use futures::future::join_all;
 
-use crate::{config::Config, error, image::Image};
+use crate::{config::Config, error, structs::image::Image};
 
 fn create_docker_client(socket: Option<String>) -> Docker {
     let client: Result<Docker, bollard::errors::Error> = match socket {
@@ -29,7 +29,7 @@ pub async fn get_images_from_docker_daemon(
     references: &Option<Vec<String>>,
 ) -> Vec<Image> {
     let client: Docker = create_docker_client(config.socket.clone());
-    // If https://github.com/moby/moby/issues/48612 is fixed, this code should be faster. For now a workaround will be used.
+    // If https://github.com/moby/moby/issues/48612 is fixed, this code should be faster (if it works, it may also be entirely stupid). For now a workaround will be used.
     // let mut filters = HashMap::with_capacity(1);
     // match references {
     //     Some(refs) => {
@@ -72,7 +72,7 @@ pub async fn get_images_from_docker_daemon(
                 .collect();
             let mut image_handles = Vec::with_capacity(inspects.len());
             for inspect in inspects {
-                image_handles.push(Image::from_inspect(inspect.clone()));
+                image_handles.push(Image::from_inspect_data(inspect.clone()));
             }
             join_all(image_handles)
                 .await
@@ -89,7 +89,7 @@ pub async fn get_images_from_docker_daemon(
             };
             let mut handles = Vec::new();
             for image in images {
-                handles.push(Image::from_summary(image))
+                handles.push(Image::from_inspect_data(image))
             }
             join_all(handles)
                 .await

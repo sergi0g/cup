@@ -2,7 +2,11 @@ export interface Data {
   metrics: {
     monitored_images: number;
     up_to_date: number;
-    update_available: number;
+    updates_available: number;
+    major_updates: number;
+    minor_updates: number;
+    patch_updates: number;
+    other_updates: number;
     unknown: number;
   };
   images: Image[];
@@ -16,11 +20,22 @@ export interface Image {
     repository: string;
     tag: string;
   };
-  local_digests: string[];
-  remote_digest: string;
   result: {
     has_update: boolean | null;
+    info: VersionInfo | DigestInfo | null;
     error: string | null;
   };
   time: number;
+}
+
+interface VersionInfo {
+  "type": "version",
+  version_update_type: "major" | "minor" | "patch",
+  new_version: string
+}
+
+interface DigestInfo {
+  "type": "digest",
+  local_digests: string[],
+  remote_digest: string
 }

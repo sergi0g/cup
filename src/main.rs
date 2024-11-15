@@ -2,22 +2,24 @@ use check::get_updates;
 use clap::{Parser, Subcommand};
 use config::Config;
 use docker::get_images_from_docker_daemon;
+use formatting::spinner::Spinner;
 #[cfg(feature = "cli")]
-use formatting::{print_raw_updates, print_updates, Spinner};
+use formatting::{print_raw_updates, print_updates};
 #[cfg(feature = "server")]
 use server::serve;
 use std::path::PathBuf;
-use utils::timestamp;
+use utils::misc::timestamp;
 
 pub mod check;
 pub mod config;
 pub mod docker;
 #[cfg(feature = "cli")]
 pub mod formatting;
-pub mod image;
+pub mod http;
 pub mod registry;
 #[cfg(feature = "server")]
 pub mod server;
+pub mod structs;
 pub mod utils;
 
 #[derive(Parser)]

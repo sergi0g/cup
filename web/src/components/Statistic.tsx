@@ -5,16 +5,25 @@ import {
   IconHelpCircleFilled,
 } from "@tabler/icons-react";
 import { theme } from "../theme";
+import { Data } from "../types";
+
+const metricsToShow = [
+  "monitored_images",
+  "up_to_date",
+  "updates_available",
+  "unknown",
+];
 
 export default function Statistic({
   name,
-  value,
+  metrics,
 }: {
-  name: string;
-  value: number;
+  name: keyof Data["metrics"];
+  metrics: Data["metrics"];
 }) {
-  name = name.replaceAll("_", " ");
-  name = name.slice(0, 1).toUpperCase() + name.slice(1); // Capitalize name
+  if (!metricsToShow.includes(name)) return null;
+  let displayName = name.replaceAll("_", " ");
+  displayName = displayName.slice(0, 1).toUpperCase() + displayName.slice(1); // Capitalize name
   return (
     <div
       className={`before:bg-${theme}-200 before:dark:bg-${theme}-800 after:bg-${theme}-200 after:dark:bg-${theme}-800 gi`}
@@ -23,26 +32,48 @@ export default function Statistic({
         <dt
           className={`text-${theme}-500 dark:text-${theme}-400 font-medium leading-6`}
         >
-          {name}
+          {displayName}
         </dt>
         <div className="flex items-center justify-between gap-1">
           <dd className="w-full text-3xl font-medium leading-10 tracking-tight text-black dark:text-white">
-            {value}
+            {metrics[name]}
           </dd>
-          {name == "Monitored images" && (
+          {name === "monitored_images" && (
             <IconEyeFilled className="size-6 shrink-0 text-black dark:text-white" />
           )}
-          {name == "Up to date" && (
+          {name === "up_to_date" && (
             <IconCircleCheckFilled className="size-6 shrink-0 text-green-500" />
           )}
-          {name == "Update available" && (
-            <IconCircleArrowUpFilled className="size-6 shrink-0 text-blue-500" />
-          )}
-          {name == "Unknown" && (
+          {name === "updates_available" && getUpdatesAvailableIcon(metrics)}
+          {name === "unknown" && (
             <IconHelpCircleFilled className="size-6 shrink-0 text-gray-500" />
           )}
         </div>
       </div>
     </div>
   );
+}
+
+function getUpdatesAvailableIcon(metrics: Data["metrics"]) {
+  const filteredMetrics = Object.entries(metrics).filter(
+    ([key]) => !metricsToShow.includes(key),
+  );
+  const maxMetric = filteredMetrics.reduce((max, current) => {
+    if (Number(current[1]) > Number(max[1])) {
+      return current;
+    }
+    return max;
+  }, filteredMetrics[0])[0];
+  let color = "";
+  switch (maxMetric) {
+    case "major_updates":
+      color = "text-red-500";
+      break;
+    case "minor_updates":
+      color = "text-yellow-500";
+      break;
+    default:
+      color = "text-blue-500";
+  }
+  return <IconCircleArrowUpFilled className={`size-6 shrink-0 ${color}`} />;
 }

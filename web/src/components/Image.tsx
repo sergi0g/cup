@@ -67,30 +67,7 @@ export default function Image({ data }: { data: Image }) {
         <li className="break-all text-start">
           <IconCube className="size-6 shrink-0" />
           {data.reference}
-          {data.result.has_update == false && (
-            <WithTooltip
-              text="Up to date"
-              className="ml-auto size-6 shrink-0 text-green-500"
-            >
-              <IconCircleCheckFilled />
-            </WithTooltip>
-          )}
-          {data.result.has_update == true && (
-            <WithTooltip
-              text="Update available"
-              className="ml-auto size-6 shrink-0 text-blue-500"
-            >
-              <IconCircleArrowUpFilled />
-            </WithTooltip>
-          )}
-          {data.result.has_update == null && (
-            <WithTooltip
-              text="Unknown"
-              className="ml-auto size-6 shrink-0 text-gray-500"
-            >
-              <IconHelpCircleFilled />
-            </WithTooltip>
-          )}
+          <Icon data={data} />
         </li>
       </button>
       <Dialog open={open} onClose={setOpen} className="relative z-10">
@@ -133,24 +110,7 @@ export default function Image({ data }: { data: Image }) {
                   </button>
                 </div>
                 <div className="flex items-center gap-3">
-                  {data.result.has_update == false && (
-                    <>
-                      <IconCircleCheckFilled className="size-6 shrink-0 text-green-500" />
-                      Up to date
-                    </>
-                  )}
-                  {data.result.has_update == true && (
-                    <>
-                      <IconCircleArrowUpFilled className="size-6 shrink-0 text-blue-500" />
-                      Update available
-                    </>
-                  )}
-                  {data.result.has_update == null && (
-                    <>
-                      <IconHelpCircleFilled className="size-6 shrink-0 text-gray-500" />
-                      Unknown
-                    </>
-                  )}
+                  <DialogIcon data={data} />
                 </div>
                 <div className="mb-4 flex items-center gap-3">
                   <IconStopwatch className="size-6 shrink-0 text-gray-500" />
@@ -171,7 +131,7 @@ export default function Image({ data }: { data: Image }) {
                       className={`bg-${theme}-100 dark:bg-${theme}-950 group relative mb-4 flex items-center rounded-md px-3 py-2 font-mono text-gray-500`}
                     >
                       <p className="overflow-scroll">
-                        docker pull {data.reference}
+                      docker pull {data.result.info?.type == "version" ? data.reference.replace(data.parts.tag, data.result.info.new_version) : data.reference}
                       </p>
                       {navigator.clipboard &&
                         (copySuccess ? (
@@ -180,7 +140,7 @@ export default function Image({ data }: { data: Image }) {
                           <button
                             className="duration-50 absolute right-3 opacity-0 transition-opacity group-hover:opacity-100"
                             onClick={handleCopy(
-                              `docker pull ${data.reference}`,
+                              `docker pull ${data.result.info?.type == "version" ? data.reference.replace(data.parts.tag, data.result.info.new_version) : data.reference}`,
                             )}
                           >
                             <IconCopy />
@@ -190,25 +150,33 @@ export default function Image({ data }: { data: Image }) {
                   </div>
                 )}
                 <div className="flex flex-col gap-1">
-                  {data.local_digests.length > 1 ? "Local digests" : "Local digest"}
-                  <div
-                    className={`bg-${theme}-100 dark:bg-${theme}-950 scrollable rounded-md px-3 py-2 font-mono text-gray-500`}
-                  >
-                    <p className="overflow-x-scroll">
-                      {data.local_digests.join("\n")}
-                    </p>
-                  </div>
+                  {data.result.info?.type == "digest" && (
+                    <>
+                      {data.result.info.local_digests.length > 1
+                        ? "Local digests"
+                        : "Local digest"}
+                      <div
+                        className={`bg-${theme}-100 dark:bg-${theme}-950 scrollable rounded-md px-3 py-2 font-mono text-gray-500`}
+                      >
+                        <p className="overflow-x-scroll">
+                          {data.result.info.local_digests.join("\n")}
+                        </p>
+                      </div>
+                      {data.result.info.remote_digest && (
+                        <div className="flex flex-col gap-1">
+                          Remote digest
+                          <div
+                            className={`bg-${theme}-100 dark:bg-${theme}-950 rounded-md px-3 py-2 font-mono text-gray-500`}
+                          >
+                            <p className="overflow-x-scroll">
+                              {data.result.info.remote_digest}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
-                {data.remote_digest && (
-                  <div className="flex flex-col gap-1">
-                    Remote digest
-                    <div
-                      className={`bg-${theme}-100 dark:bg-${theme}-950 rounded-md px-3 py-2 font-mono text-gray-500`}
-                    >
-                      <p className="overflow-x-scroll">{data.remote_digest}</p>
-                    </div>
-                  </div>
-                )}
               </div>
             </DialogPanel>
           </div>
@@ -216,4 +184,120 @@ export default function Image({ data }: { data: Image }) {
       </Dialog>
     </>
   );
+}
+
+function Icon({ data }: { data: Image }) {
+  switch (data.result.has_update) {
+    case null:
+      return (
+        <WithTooltip
+          text="Unknown"
+          className="ml-auto size-6 shrink-0 text-gray-500"
+        >
+          <IconHelpCircleFilled />
+        </WithTooltip>
+      );
+    case false:
+      return (
+        <WithTooltip
+          text="Up to date"
+          className="ml-auto size-6 shrink-0 text-green-500"
+        >
+          <IconCircleCheckFilled />
+        </WithTooltip>
+      );
+    case true:
+      if (data.result.info?.type === "version") {
+        switch (data.result.info.version_update_type) {
+          case "major":
+            return (
+              <WithTooltip
+                text="Major Update"
+                className="ml-auto size-6 shrink-0 text-red-500"
+              >
+                <IconCircleArrowUpFilled />
+              </WithTooltip>
+            );
+          case "minor":
+            return (
+              <WithTooltip
+                text="Minor Update"
+                className="ml-auto size-6 shrink-0 text-yellow-500"
+              >
+                <IconCircleArrowUpFilled />
+              </WithTooltip>
+            );
+          case "patch":
+            return (
+              <WithTooltip
+                text="Patch Update"
+                className="ml-auto size-6 shrink-0 text-blue-500"
+              >
+                <IconCircleArrowUpFilled />
+              </WithTooltip>
+            );
+        }
+      } else if (data.result.info?.type === "digest") {
+        return (
+          <WithTooltip
+            text="Update available"
+            className="ml-auto size-6 shrink-0 text-blue-500"
+          >
+            <IconCircleArrowUpFilled />
+          </WithTooltip>
+        );
+      }
+  }
+}
+
+function DialogIcon({ data }: { data: Image }) {
+  switch (data.result.has_update) {
+    case null:
+      return (
+        <>
+          <IconHelpCircleFilled className="size-6 shrink-0 text-gray-500" />
+          Unknown
+        </>
+      );
+    case false:
+      return (
+        <>
+          <IconCircleCheckFilled className="size-6 shrink-0 text-green-500" />
+          Up to date
+        </>
+      );
+    case true:
+      if (data.result.info?.type === "version") {
+        switch (data.result.info.version_update_type) {
+          case "major":
+            return (
+              <>
+                <IconCircleArrowUpFilled className="size-6 shrink-0 text-red-500" />
+                Major update
+              </>
+            );
+          case "minor":
+            return (
+              <>
+                <IconCircleArrowUpFilled className="size-6 shrink-0 text-yellow-500" />
+                Minor update
+              </>
+            );
+          case "patch":
+            return (
+              <>
+                <IconCircleArrowUpFilled className="size-6 shrink-0 text-blue-500" />
+                Patch update
+              </>
+            );
+        }
+      } else if (data.result.info?.type === "digest") {
+        return (
+          <>
+            <IconCircleArrowUpFilled className="size-6 shrink-0 text-blue-500" />
+            Update available
+          </>
+        );
+      }
+  }
 }

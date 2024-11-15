@@ -28,7 +28,6 @@ Take a look at https://sergi0g.github.io/cup/docs!
 
 Cup is a work in progress. It might not have as many features as other alternatives. If one of these features is really important for you, please consider using another tool.
 
-- Cup (currently) does not support semver.
 - Cup cannot directly trigger your integrations. If you want that to happen automatically, please use What's up Docker instead. Cup was created to be simple. The data is there, and it's up to you to retrieve it (e.g. by running `cup check -r` with a cronjob or periodically requesting the `/json` url from the server).
 
 ## Roadmap
