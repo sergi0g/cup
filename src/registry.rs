@@ -129,6 +129,7 @@ pub async fn get_latest_tag(
     let mut next_url = Some(url);
 
     while next_url.is_some() {
+        #[allow(unused_assignments)]
         let mut new_tags = Vec::new();
         (new_tags, next_url) =
             match get_extra_tags(&next_url.unwrap(), headers.clone(), base, client).await {
@@ -143,9 +144,7 @@ pub async fn get_latest_tag(
             };
         tags.append(&mut new_tags);
     }
-    let tag = tags
-        .iter()
-        .max();
+    let tag = tags.iter().max();
     let current_tag = match &image.version_info {
         Some(data) => data.current_tag.clone(),
         _ => unreachable!(),
@@ -189,14 +188,14 @@ pub async fn get_extra_tags(
     base: &Version,
     client: &Client,
 ) -> Result<(Vec<Version>, Option<String>), String> {
-    let response = client.get(&url, headers, false).await;
+    let response = client.get(url, headers, false).await;
 
     match response {
         Ok(res) => {
-            let next_url = match res.headers().get("Link") {
-                Some(link) => Some(parse_link(link.to_str().unwrap(), &url)),
-                None => None,
-            };
+            let next_url = res
+                .headers()
+                .get("Link")
+                .map(|link| parse_link(link.to_str().unwrap(), url));
             let response_json = parse_json(&get_response_body(res).await);
             let result = response_json["tags"]
                 .members()

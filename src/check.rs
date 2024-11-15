@@ -1,6 +1,6 @@
 use futures::future::join_all;
-use rustc_hash::FxHashMap;
 use itertools::Itertools;
+use rustc_hash::FxHashMap;
 
 use crate::{
     config::Config,
