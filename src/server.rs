@@ -16,7 +16,6 @@ use xitca_web::{
 use crate::{
     check::get_updates,
     config::{Config, Theme},
-    docker::get_images_from_docker_daemon,
     info,
     structs::image::Image,
     utils::{
@@ -137,8 +136,7 @@ impl ServerData {
         if !self.raw_updates.is_empty() {
             info!("Refreshing data");
         }
-        let images = get_images_from_docker_daemon(&self.config, &None).await;
-        let updates = sort_image_vec(&get_updates(&images, &self.config).await);
+        let updates = sort_image_vec(&get_updates(&None, &self.config).await);
         let end = timestamp();
         info!("✨ Checked {} images in {}ms", updates.len(), end - start);
         self.raw_updates = updates;

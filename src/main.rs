@@ -1,7 +1,6 @@
 use check::get_updates;
 use clap::{Parser, Subcommand};
 use config::Config;
-use docker::get_images_from_docker_daemon;
 use formatting::spinner::Spinner;
 #[cfg(feature = "cli")]
 use formatting::{print_raw_updates, print_updates};
@@ -80,15 +79,14 @@ async fn main() {
             raw,
         }) => {
             let start = timestamp();
-            let images = get_images_from_docker_daemon(&config, references).await;
             match raw {
                 true => {
-                    let updates = get_updates(&images, &config).await;
+                    let updates = get_updates(references, &config).await;
                     print_raw_updates(&updates);
                 }
                 false => {
                     let spinner = Spinner::new();
-                    let updates = get_updates(&images, &config).await;
+                    let updates = get_updates(references, &config).await;
                     spinner.succeed();
                     let end = timestamp();
                     print_updates(&updates, icons);

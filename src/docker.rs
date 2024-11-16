@@ -29,35 +29,6 @@ pub async fn get_images_from_docker_daemon(
     references: &Option<Vec<String>>,
 ) -> Vec<Image> {
     let client: Docker = create_docker_client(config.socket.clone());
-    // If https://github.com/moby/moby/issues/48612 is fixed, this code should be faster (if it works, it may also be entirely stupid). For now a workaround will be used.
-    // let mut filters = HashMap::with_capacity(1);
-    // match references {
-    //     Some(refs) => {
-    //         filters.insert("reference".to_string(), refs.clone());
-    //     }
-    //     None => (),
-    // }
-    // let images: Vec<ImageSummary> = match client
-    //     .list_images::<String>(Some(ListImagesOptions {
-    //         filters,
-    //         ..Default::default()
-    //     }))
-    //     .await
-    // {
-    //     Ok(images) => images,
-    //     Err(e) => {
-    //         error!("Failed to retrieve list of images available!\n{}", e)
-    //     }
-    // };
-    // let mut handles = Vec::new();
-    // for image in images {
-    //     handles.push(Image::from(image, options))
-    // }
-    // join_all(handles)
-    //     .await
-    //     .iter()
-    //     .filter_map(|img| img.clone())
-    //     .collect()
     match references {
         Some(refs) => {
             let mut inspect_handles = Vec::with_capacity(refs.len());
