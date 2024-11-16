@@ -1,6 +1,6 @@
 use futures::future::join_all;
 use itertools::Itertools;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
     config::Config,
@@ -13,7 +13,24 @@ use crate::{
 /// Returns a list of updates for all images passed in.
 pub async fn get_updates(references: &Option<Vec<String>>, config: &Config) -> Vec<Image> {
     // Get images
-    let images = get_images_from_docker_daemon(config, references).await;
+    let mut images = get_images_from_docker_daemon(config, references).await;
+    let extra_images = match references {
+        Some(refs) => {
+            let image_refs: FxHashSet<&String> = images.iter().map(|image| &image.reference).collect();
+            let extra = refs.iter().filter(|&reference| !image_refs.contains(reference)).collect::<Vec<&String>>();
+            let mut handles = Vec::with_capacity(extra.len());
+
+            for reference in extra {
+                let future = Image::from_reference(reference);
+                handles.push(future)
+            }
+            Some(join_all(handles).await)
+        },
+        None => None
+    };
+    if let Some(extra_imgs) = extra_images {
+        images.extend_from_slice(&extra_imgs);
+    }
 
     // Get a list of unique registries our images belong to. We are unwrapping the registry because it's guaranteed to be there.
     let registries: Vec<&String> = images
@@ -55,7 +72,7 @@ pub async fn get_updates(references: &Option<Vec<String>>, config: &Config) -> V
     }
 
     // Create a Vec to store futures so we can await them all at once.
-    let mut handles = Vec::new();
+    let mut handles = Vec::with_capacity(images.len());
     // Loop through images and get the latest digest for each
     for image in &images {
         let token = tokens.get(image.registry.as_str()).unwrap();

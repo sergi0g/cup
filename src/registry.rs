@@ -150,7 +150,7 @@ pub async fn get_latest_tag(
     };
     match tag {
         Some(t) => {
-            if t == base {
+            if t == base && image.digest_info.is_some() {
                 // Tags are equal so we'll compare digests
                 get_latest_digest(
                     &Image {

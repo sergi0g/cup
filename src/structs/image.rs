@@ -2,6 +2,7 @@ use json::{object, JsonValue};
 
 use crate::{
     config::Config,
+    error,
     http::Client,
     registry::{get_latest_digest, get_latest_tag},
     structs::{status::Status, version::Version},
@@ -40,7 +41,7 @@ pub struct Image {
 }
 
 impl Image {
-    /// Creates an populates the fields of an Image object based on the ImageSummary from the Docker daemon
+    /// Creates and populates the fields of an Image object based on the ImageSummary from the Docker daemon
     pub async fn from_inspect_data<T: InspectData>(image: T) -> Option<Self> {
         let tags = image.tags().unwrap();
         let digests = image.digests().unwrap();
@@ -61,14 +62,37 @@ impl Image {
                     local_digests,
                     remote_digest: None,
                 }),
-                version_info: version_tag.map(|stag| VersionInfo {
-                    current_tag: stag,
+                version_info: version_tag.map(|vtag| VersionInfo {
+                    current_tag: vtag,
                     latest_remote_tag: None,
                 }),
                 ..Default::default()
             })
         } else {
             None
+        }
+    }
+
+    /// Creates and populates the fields of an Image object based on a reference. If the tag is not recognized as a version string, exits the program with an error.
+    pub async fn from_reference(reference: &str) -> Self {
+        let (registry, repository, tag) = split(&reference);
+        let version_tag = Version::from_tag(&tag);
+        match version_tag {
+            Some(version) => Self {
+                reference: reference.to_string(),
+                registry,
+                repository,
+                tag,
+                version_info: Some(VersionInfo {
+                    current_tag: version,
+                    latest_remote_tag: None,
+                }),
+                ..Default::default()
+            },
+            None => error!(
+                "Image {} is not available locally and does not have a recognizable tag format!",
+                reference
+            ),
         }
     }
 
