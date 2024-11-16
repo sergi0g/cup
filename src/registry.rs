@@ -129,9 +129,7 @@ pub async fn get_latest_tag(
     let mut next_url = Some(url);
 
     while next_url.is_some() {
-        #[allow(unused_assignments)]
-        let mut new_tags = Vec::new();
-        (new_tags, next_url) =
+        let (new_tags, next) =
             match get_extra_tags(&next_url.unwrap(), headers.clone(), base, client).await {
                 Ok(t) => t,
                 Err(message) => {
@@ -142,7 +140,8 @@ pub async fn get_latest_tag(
                     }
                 }
             };
-        tags.append(&mut new_tags);
+        tags.extend_from_slice(&new_tags);
+        next_url = next;
     }
     let tag = tags.iter().max();
     let current_tag = match &image.version_info {
