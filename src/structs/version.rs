@@ -145,14 +145,14 @@ mod tests {
     #[rustfmt::skip]
     fn version() {
         assert_eq!(Version::from_tag("5.3.2"                   ), Some(Version { major: 5,  minor: Some(3),   patch: Some(2)  }));
-        assert_eq!(Version::from_tag("14"                      ), Some(Version { major: 14, minor: Some(0),   patch: Some(0)  }));
+        assert_eq!(Version::from_tag("14"                      ), Some(Version { major: 14, minor: None,   patch: None  }));
         assert_eq!(Version::from_tag("v0.107.53"               ), Some(Version { major: 0,  minor: Some(107), patch: Some(53) }));
-        assert_eq!(Version::from_tag("12-alpine"               ), Some(Version { major: 12, minor: Some(0),   patch: Some(0)  }));
+        assert_eq!(Version::from_tag("12-alpine"               ), Some(Version { major: 12, minor: None,   patch: None  }));
         assert_eq!(Version::from_tag("0.9.5-nginx"             ), Some(Version { major: 0,  minor: Some(9),   patch: Some(5)  }));
-        assert_eq!(Version::from_tag("v27.0"                   ), Some(Version { major: 27, minor: Some(0),   patch: Some(0)  }));
-        assert_eq!(Version::from_tag("16.1"                    ), Some(Version { major: 16, minor: Some(1),   patch: Some(0)  }));
+        assert_eq!(Version::from_tag("v27.0"                   ), Some(Version { major: 27, minor: Some(0),   patch: None  }));
+        assert_eq!(Version::from_tag("16.1"                    ), Some(Version { major: 16, minor: Some(1),   patch: None  }));
         assert_eq!(Version::from_tag("version-1.5.6"           ), Some(Version { major: 1,  minor: Some(5),   patch: Some(6)  }));
-        assert_eq!(Version::from_tag("15.4-alpine"             ), Some(Version { major: 15, minor: Some(4),   patch: Some(0)  }));
+        assert_eq!(Version::from_tag("15.4-alpine"             ), Some(Version { major: 15, minor: Some(4),   patch: None  }));
         assert_eq!(Version::from_tag("pg14-v0.2.0"             ), Some(Version { major: 0,  minor: Some(2),   patch: Some(0)  }));
         assert_eq!(Version::from_tag("18-jammy-full.s6-v0.88.0"), Some(Version { major: 0,  minor: Some(88),  patch: Some(0)  }));
         assert_eq!(Version::from_tag("fpm-2.1.0-prod"          ), Some(Version { major: 2,  minor: Some(1),   patch: Some(0)  }));

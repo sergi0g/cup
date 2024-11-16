@@ -1,9 +1,18 @@
+use std::cmp::Ordering;
+
 use crate::structs::image::Image;
 
 /// Sorts the update vector alphabetically and where Some(true) > Some(false) > None
 pub fn sort_image_vec(updates: &[Image]) -> Vec<Image> {
     let mut sorted_updates = updates.to_vec();
-    sorted_updates.sort_unstable_by_key(|img| img.has_update());
+    sorted_updates.sort_by(|a, b| {
+        let cmp = a.has_update().cmp(&b.has_update());
+        if cmp == Ordering::Equal {
+            a.reference.cmp(&b.reference)
+        } else {
+            cmp
+        }
+    });
     sorted_updates.to_vec()
 }
 
@@ -14,7 +23,7 @@ mod tests {
     use super::*;
 
     /// Test the `sort_update_vec` function
-    /// TODO: test semver as well
+    /// TODO: test versioning as well
     #[test]
     fn test_ordering() {
         // Create test objects
