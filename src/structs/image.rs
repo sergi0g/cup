@@ -75,7 +75,7 @@ impl Image {
 
     /// Creates and populates the fields of an Image object based on a reference. If the tag is not recognized as a version string, exits the program with an error.
     pub async fn from_reference(reference: &str) -> Self {
-        let (registry, repository, tag) = split(&reference);
+        let (registry, repository, tag) = split(reference);
         let version_tag = Version::from_tag(&tag);
         match version_tag {
             Some(version) => Self {

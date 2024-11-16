@@ -16,8 +16,12 @@ pub async fn get_updates(references: &Option<Vec<String>>, config: &Config) -> V
     let mut images = get_images_from_docker_daemon(config, references).await;
     let extra_images = match references {
         Some(refs) => {
-            let image_refs: FxHashSet<&String> = images.iter().map(|image| &image.reference).collect();
-            let extra = refs.iter().filter(|&reference| !image_refs.contains(reference)).collect::<Vec<&String>>();
+            let image_refs: FxHashSet<&String> =
+                images.iter().map(|image| &image.reference).collect();
+            let extra = refs
+                .iter()
+                .filter(|&reference| !image_refs.contains(reference))
+                .collect::<Vec<&String>>();
             let mut handles = Vec::with_capacity(extra.len());
 
             for reference in extra {
@@ -25,8 +29,8 @@ pub async fn get_updates(references: &Option<Vec<String>>, config: &Config) -> V
                 handles.push(future)
             }
             Some(join_all(handles).await)
-        },
-        None => None
+        }
+        None => None,
     };
     if let Some(extra_imgs) = extra_images {
         images.extend_from_slice(&extra_imgs);
