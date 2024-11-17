@@ -38,7 +38,7 @@ impl Config {
             None => Ok(String::from("{}")), // Empty config
         };
         if raw_config.is_err() {
-            panic!(
+            error!(
                 "Failed to read config file from {}. Are you sure the file exists?",
                 &path.unwrap().to_str().unwrap()
             )
@@ -50,7 +50,7 @@ impl Config {
     pub fn parse(&self, raw_config: &str) -> Self {
         let json = match json::parse(raw_config) {
             Ok(v) => v,
-            Err(e) => panic!("Failed to parse config!\n{}", e),
+            Err(e) => error!("Failed to parse config!\n{}", e),
         };
         // In the code, raw_<key> means the JsonValue from the parsed config, before it's validated.
 
