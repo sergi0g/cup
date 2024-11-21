@@ -44,3 +44,25 @@ static REFERENCE_REGEX: Lazy<Regex> = Lazy::new(|| {
     )
     .unwrap()
 });
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[rustfmt::skip]
+    fn reference() {
+        assert_eq!(split("alpine"),                                                                                                                  (String::from(DEFAULT_REGISTRY),          String::from("library/alpine"),         String::from("latest")));
+        assert_eq!(split("alpine:latest"),                                                                                                           (String::from(DEFAULT_REGISTRY),          String::from("library/alpine"),         String::from("latest")));
+        assert_eq!(split("library/alpine"),                                                                                                          (String::from(DEFAULT_REGISTRY),          String::from("library/alpine"),         String::from("latest")));
+        assert_eq!(split("localhost/test"),                                                                                                          (String::from("localhost"),               String::from("test"),                   String::from("latest")));
+        assert_eq!(split("localhost:1234/test"),                                                                                                     (String::from("localhost:1234"),          String::from("test"),                   String::from("latest")));
+        assert_eq!(split("test:1234/idk"),                                                                                                           (String::from("test:1234"),               String::from("idk"),                    String::from("latest")));
+        assert_eq!(split("alpine:3.7"),                                                                                                              (String::from(DEFAULT_REGISTRY),          String::from("library/alpine"),         String::from("3.7")));
+        assert_eq!(split("docker.example.com/examplerepo/alpine:3.7"),                                                                                       (String::from("docker.example.com"),      String::from("examplerepo/alpine"),             String::from("3.7")));
+        assert_eq!(split("docker.example.com/examplerepo/alpine/test2:3.7"),                                                                                 (String::from("docker.example.com"),      String::from("examplerepo/alpine/test2"),       String::from("3.7")));
+        assert_eq!(split("docker.example.com/examplerepo/alpine/test2/test3:3.7"),                                                                           (String::from("docker.example.com"),      String::from("examplerepo/alpine/test2/test3"), String::from("3.7")));
+        assert_eq!(split("docker.example.com:5000/examplerepo/alpine:latest"),                                                                               (String::from("docker.example.com:5000"), String::from("examplerepo/alpine"),             String::from("latest")));
+        assert_eq!(split("portainer/portainer:latest"),                                                                                              (String::from(DEFAULT_REGISTRY),          String::from("portainer/portainer"),    String::from("latest")));
+    }
+}
