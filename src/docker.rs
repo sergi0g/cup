@@ -43,7 +43,7 @@ pub async fn get_images_from_docker_daemon(
                 .collect();
             let mut image_handles = Vec::with_capacity(inspects.len());
             for inspect in inspects {
-                image_handles.push(Image::from_inspect_data(inspect.clone()));
+                image_handles.push(Image::from_inspect_data(inspect));
             }
             join_all(image_handles)
                 .await
