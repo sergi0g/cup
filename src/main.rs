@@ -98,6 +98,6 @@ async fn main() {
         Some(Commands::Serve { port }) => {
             let _ = serve(port, &config).await;
         }
-        None => (),
+        None => error!("Whoops! It looks like you haven't specified a command to run! Try `cup help` to see available options."),
     }
 }
