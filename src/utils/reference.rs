@@ -14,12 +14,13 @@ pub fn split(reference: &str) -> (String, String, String) {
                 Some(registry) => registry.as_str().to_owned(),
                 None => String::from(DEFAULT_REGISTRY),
             };
+            let is_default_registry = registry == DEFAULT_REGISTRY;
             return (
-                registry.clone(),
+                registry,
                 match c.name("repository") {
                     Some(repository) => {
                         let repo = repository.as_str().to_owned();
-                        if !repo.contains('/') && registry == DEFAULT_REGISTRY {
+                        if !repo.contains('/') && is_default_registry {
                             format!("library/{}", repo)
                         } else {
                             repo
