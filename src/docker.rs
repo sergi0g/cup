@@ -4,10 +4,10 @@ use futures::future::join_all;
 
 use crate::{config::Config, error, structs::image::Image};
 
-fn create_docker_client(socket: Option<String>) -> Docker {
+fn create_docker_client(socket: Option<&String>) -> Docker {
     let client: Result<Docker, bollard::errors::Error> = match socket {
         Some(sock) => Docker::connect_with_local(
-            &sock,
+            sock,
             120,
             &ClientVersion {
                 major_version: 1,
@@ -28,7 +28,7 @@ pub async fn get_images_from_docker_daemon(
     config: &Config,
     references: &Option<Vec<String>>,
 ) -> Vec<Image> {
-    let client: Docker = create_docker_client(config.socket.clone());
+    let client: Docker = create_docker_client(config.socket.as_ref());
     match references {
         Some(refs) => {
             let mut inspect_handles = Vec::with_capacity(refs.len());
