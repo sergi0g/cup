@@ -18,6 +18,7 @@ pub struct Config {
     pub theme: Theme,
     pub insecure_registries: Vec<String>,
     pub socket: Option<String>,
+    pub debug: bool,
 }
 
 impl Config {
@@ -29,6 +30,7 @@ impl Config {
             theme: Theme::Default,
             insecure_registries: Vec::with_capacity(0),
             socket: None,
+            debug: false,
         }
     }
     /// Reads the config from the file path provided and returns the parsed result.
@@ -125,6 +127,7 @@ impl Config {
             theme,
             insecure_registries,
             socket,
+            debug: false,
         }
     }
 }

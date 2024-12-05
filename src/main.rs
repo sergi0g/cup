@@ -30,13 +30,15 @@ struct Cli {
     config_path: String,
     #[command(subcommand)]
     command: Option<Commands>,
+    #[arg(short, long)]
+    debug: bool,
 }
 
 #[derive(Subcommand)]
 enum Commands {
     #[cfg(feature = "cli")]
     Check {
-        #[arg(name = "Images", default_value = None)]
+        #[arg(name = "images", default_value = None)]
         references: Option<Vec<String>>,
         #[arg(short, long, default_value_t = false, help = "Enable icons")]
         icons: bool,
@@ -71,6 +73,7 @@ async fn main() {
     if let Some(socket) = cli.socket {
         config.socket = Some(socket)
     }
+    config.debug = cli.debug;
     match &cli.command {
         #[cfg(feature = "cli")]
         Some(Commands::Check {
@@ -79,7 +82,7 @@ async fn main() {
             raw,
         }) => {
             let start = timestamp();
-            match raw {
+            match *raw || config.debug {
                 true => {
                     let updates = get_updates(references, &config).await;
                     print_raw_updates(&updates);

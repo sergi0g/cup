@@ -2,7 +2,7 @@ use itertools::Itertools;
 
 use crate::{
     config::Config,
-    error,
+    debug, error,
     http::Client,
     structs::{
         image::{DigestInfo, Image, VersionInfo},
@@ -46,6 +46,10 @@ pub async fn get_latest_digest(
     config: &Config,
     client: &Client,
 ) -> Image {
+    debug!(
+        config.debug,
+        "Checking for digest update to {}", image.reference
+    );
     let start = timestamp();
     let protocol = get_protocol(&image.registry, &config.insecure_registries);
     let url = format!(
@@ -56,6 +60,11 @@ pub async fn get_latest_digest(
     let headers = vec![("Accept", Some("application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.docker.distribution.manifest.v2+json, application/vnd.oci.image.index.v1+json")), ("Authorization", authorization.as_deref())];
 
     let response = client.head(&url, headers).await;
+    let time = timestamp() - start;
+    debug!(
+        config.debug,
+        "Checked for digest update to {} in {}ms", image.reference, time
+    );
     match response {
         Ok(res) => match res.headers().get("docker-content-digest") {
             Some(digest) => {
@@ -68,7 +77,7 @@ pub async fn get_latest_digest(
                         remote_digest: Some(digest.to_str().unwrap().to_string()),
                         local_digests,
                     }),
-                    time_ms: image.time_ms + (timestamp() - start),
+                    time_ms: image.time_ms + time,
                     ..image.clone()
                 }
             }
@@ -79,7 +88,7 @@ pub async fn get_latest_digest(
         },
         Err(error) => Image {
             error: Some(error),
-            time_ms: image.time_ms + (timestamp() - start),
+            time_ms: image.time_ms + time,
             ..image.clone()
         },
     }
@@ -113,6 +122,10 @@ pub async fn get_latest_tag(
     config: &Config,
     client: &Client,
 ) -> Image {
+    debug!(
+        config.debug,
+        "Checking for tag update to {}", image.reference
+    );
     let start = timestamp();
     let protocol = get_protocol(&image.registry, &config.insecure_registries);
     let url = format!(
@@ -129,6 +142,12 @@ pub async fn get_latest_tag(
     let mut next_url = Some(url);
 
     while next_url.is_some() {
+        debug!(
+            config.debug,
+            "{} has extra tags! Current number of valid tags: {}",
+            image.reference,
+            tags.len()
+        );
         let (new_tags, next) =
             match get_extra_tags(&next_url.unwrap(), headers.clone(), base, client).await {
                 Ok(t) => t,
@@ -148,6 +167,11 @@ pub async fn get_latest_tag(
         Some(data) => data.current_tag.clone(),
         _ => unreachable!(),
     };
+    let time = timestamp() - start;
+    debug!(
+        config.debug,
+        "Checked for tag update to {} in {}ms", image.reference, time
+    );
     match tag {
         Some(t) => {
             if t == base && image.digest_info.is_some() {
@@ -158,7 +182,7 @@ pub async fn get_latest_tag(
                             current_tag,
                             latest_remote_tag: Some(t.clone()),
                         }),
-                        time_ms: image.time_ms + (timestamp() - start),
+                        time_ms: image.time_ms + time,
                         ..image.clone()
                     },
                     token,
@@ -172,7 +196,7 @@ pub async fn get_latest_tag(
                         current_tag,
                         latest_remote_tag: Some(t.clone()),
                     }),
-                    time_ms: image.time_ms + (timestamp() - start),
+                    time_ms: image.time_ms + time,
                     ..image.clone()
                 }
             }

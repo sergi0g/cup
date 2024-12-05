@@ -4,6 +4,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
     config::Config,
+    debug,
     docker::get_images_from_docker_daemon,
     http::Client,
     registry::{check_auth, get_token},
@@ -13,6 +14,7 @@ use crate::{
 /// Returns a list of updates for all images passed in.
 pub async fn get_updates(references: &Option<Vec<String>>, config: &Config) -> Vec<Image> {
     // Get images
+    debug!(config.debug, "Retrieving images to be checked");
     let mut images = get_images_from_docker_daemon(config, references).await;
     let extra_images = match references {
         Some(refs) => {
@@ -35,6 +37,11 @@ pub async fn get_updates(references: &Option<Vec<String>>, config: &Config) -> V
     if let Some(extra_imgs) = extra_images {
         images.extend_from_slice(&extra_imgs);
     }
+    debug!(
+        config.debug,
+        "Checking {:?}",
+        images.iter().map(|image| &image.reference).collect_vec()
+    );
 
     // Get a list of unique registries our images belong to. We are unwrapping the registry because it's guaranteed to be there.
     let registries: Vec<&String> = images
@@ -74,6 +81,8 @@ pub async fn get_updates(references: &Option<Vec<String>>, config: &Config) -> V
             }
         }
     }
+
+    debug!(config.debug, "Tokens: {:?}", tokens);
 
     // Create a Vec to store futures so we can await them all at once.
     let mut handles = Vec::with_capacity(images.len());
