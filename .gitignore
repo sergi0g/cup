@@ -6,3 +6,6 @@
 
 # In case I accidentally commit mine...
 cup.json
+
+# Profiling results don't need to be present in the repo
+profile.json
