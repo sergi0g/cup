@@ -24,13 +24,12 @@ pub async fn get_updates(references: &Option<Vec<String>>, config: &Config) -> V
                 .iter()
                 .filter(|&reference| !image_refs.contains(reference))
                 .collect::<Vec<&String>>();
-            let mut handles = Vec::with_capacity(extra.len());
-
-            for reference in extra {
-                let future = Image::from_reference(reference);
-                handles.push(future)
-            }
-            Some(join_all(handles).await)
+            Some(
+                extra
+                    .iter()
+                    .map(|reference| Image::from_reference(reference))
+                    .collect::<Vec<Image>>(),
+            )
         }
         None => None,
     };

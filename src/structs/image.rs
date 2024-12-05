@@ -42,7 +42,7 @@ pub struct Image {
 
 impl Image {
     /// Creates and populates the fields of an Image object based on the ImageSummary from the Docker daemon
-    pub async fn from_inspect_data<T: InspectData>(image: T) -> Option<Self> {
+    pub fn from_inspect_data<T: InspectData>(image: T) -> Option<Self> {
         let tags = image.tags().unwrap();
         let digests = image.digests().unwrap();
         if !tags.is_empty() && !digests.is_empty() {
@@ -74,7 +74,7 @@ impl Image {
     }
 
     /// Creates and populates the fields of an Image object based on a reference. If the tag is not recognized as a version string, exits the program with an error.
-    pub async fn from_reference(reference: &str) -> Self {
+    pub fn from_reference(reference: &str) -> Self {
         let (registry, repository, tag) = split(reference);
         let version_tag = Version::from_tag(&tag);
         match version_tag {

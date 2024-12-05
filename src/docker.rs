@@ -41,14 +41,9 @@ pub async fn get_images_from_docker_daemon(
                 .filter(|inspect| inspect.is_ok())
                 .map(|inspect| inspect.as_ref().unwrap().clone())
                 .collect();
-            let mut image_handles = Vec::with_capacity(inspects.len());
-            for inspect in inspects {
-                image_handles.push(Image::from_inspect_data(inspect));
-            }
-            join_all(image_handles)
-                .await
+            inspects
                 .iter()
-                .filter_map(|img| img.clone())
+                .filter_map(|inspect| Image::from_inspect_data(inspect.clone()))
                 .collect()
         }
         None => {
@@ -58,14 +53,9 @@ pub async fn get_images_from_docker_daemon(
                     error!("Failed to retrieve list of images available!\n{}", e)
                 }
             };
-            let mut handles = Vec::new();
-            for image in images {
-                handles.push(Image::from_inspect_data(image))
-            }
-            join_all(handles)
-                .await
+            images
                 .iter()
-                .filter_map(|img| img.clone())
+                .filter_map(|image| Image::from_inspect_data(image.clone()))
                 .collect()
         }
     }
