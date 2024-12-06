@@ -5,12 +5,6 @@ use regex::Regex;
 
 use super::status::Status;
 
-/// Heavily modified version of the official semver regex based on common tagging schemes for container images. Sometimes it matches more than once, but we'll try to select the best match.
-static SEMVER_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r#"(?P<major>0|[1-9]\d*)(?:\.(?P<minor>0|[1-9]\d*))?(?:\.(?P<patch>0|[1-9]\d*)+)?"#)
-        .unwrap()
-});
-
 /// Semver-like version struct
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Version {
@@ -22,7 +16,14 @@ pub struct Version {
 impl Version {
     /// Tries to parse the tag into semver-like parts.
     pub fn from_tag(tag: &str) -> Option<Self> {
-        let captures = SEMVER_REGEX.captures_iter(tag);
+        /// Heavily modified version of the official semver regex based on common tagging schemes for container images. Sometimes it matches more than once, but we'll try to select the best match.
+        static VERSION_REGEX: Lazy<Regex> = Lazy::new(|| {
+            Regex::new(
+                r"(?P<major>0|[1-9][0-9]*)(?:\.(?P<minor>0|[1-9][0-9]*))?(?:\.(?P<patch>0|[1-9][0-9]*))?",
+            )
+            .unwrap()
+        });
+        let captures = VERSION_REGEX.captures_iter(tag);
         // And now... terrible best match selection for everyone!
         let mut max_matches = 0;
         let mut best_match = None;
