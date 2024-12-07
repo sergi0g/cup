@@ -15,8 +15,8 @@ export default function RefreshButton() {
     request.open(
       "GET",
       process.env.NODE_ENV === "production"
-        ? "/api/v1/refresh"
-        : `http://${window.location.hostname}:8000/api/v1/refresh`,
+        ? "/api/v3/refresh"
+        : `http://${window.location.hostname}:8000/api/v3/refresh`,
     );
     request.send();
   };
