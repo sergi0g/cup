@@ -65,7 +65,18 @@
             "description": "The path to the unix socket you would like Cup to use for communication with the Docker daemon. Useful if you're trying to use Cup with Podman.",
             "type": "string",
             "minLength": 1
+        },
+        "servers": {
+            "type": "array",
+            "description": "Additional servers to connect to and fetch update data from",
+            "minItems": 1,
+            "items": {
+                "type": "string",
+                "minLength": 1
+            }
         }
     },
-    "required": ["version"]
+    "required": [
+        "version"
+    ]
 }

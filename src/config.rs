@@ -44,6 +44,7 @@ pub struct Config {
     pub images: ImageConfig,
     pub theme: Theme,
     pub socket: Option<String>,
+    pub servers: Vec<String>,
     #[serde(skip_deserializing)]
     pub debug: bool,
 }
@@ -57,6 +58,7 @@ impl Config {
             images: ImageConfig::default(),
             theme: Theme::Default,
             socket: None,
+            servers: Vec::new(),
             debug: false,
         }
     }
