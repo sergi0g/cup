@@ -19,32 +19,44 @@ impl Default for Theme {
     }
 }
 
-#[derive(Clone, Deserialize)]
+#[derive(Clone, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
+#[serde(default)]
+pub struct RegistryConfig {
+    pub authentication: Option<String>,
+    pub insecure: bool,
+    pub ignore: bool,
+}
+
+#[derive(Clone, Deserialize, Default)]
+#[serde(default)]
+pub struct ImageConfig {
+    pub extra: Vec<String>,
+    pub exclude: Vec<String>
+}
+
+#[derive(Clone, Deserialize)]
+#[serde(default)]
 pub struct Config {
-    #[serde(default = "FxHashMap::default")]
-    pub authentication: FxHashMap<String, String>,
-    #[serde(default = "Theme::default")]
+    pub registries: FxHashMap<String, RegistryConfig>,
+    pub images: ImageConfig,
     pub theme: Theme,
-    #[serde(default = "Vec::default")]
-    pub insecure_registries: Vec<String>,
     pub socket: Option<String>,
     #[serde(skip_deserializing)]
     pub debug: bool,
 }
 
 impl Config {
-    /// A stupid new function that exists just so calling `load` doesn't require a self argument
-    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Self {
-            authentication: FxHashMap::default(),
+            registries: FxHashMap::default(),
+            images: ImageConfig::default(),
             theme: Theme::Default,
-            insecure_registries: Vec::with_capacity(0),
             socket: None,
             debug: false,
         }
     }
+
     /// Reads the config from the file path provided and returns the parsed result.
     pub fn load(&self, path: Option<PathBuf>) -> Self {
         let raw_config = match &path {
@@ -65,5 +77,11 @@ impl Config {
             Ok(config) => config,
             Err(e) => error!("Unexpected error occured while parsing config: {}", e),
         }
+    }
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self::new()
     }
 }

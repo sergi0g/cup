@@ -1,0 +1,61 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://raw.githubusercontent.com/sergi0g/cup/main/cup.schema.json",
+    "title": "Cup",
+    "description": "A schema for Cup's config file",
+    "type": "object",
+    "properties": {
+        "registries": {
+            "type": "object",
+            "description": "Configuration options for specific registries",
+            "additionalProperties": {
+                "authentication": {
+                    "description": "An authentication token provided by the registry",
+                    "type": "string",
+                    "minLength": 1
+                },
+                "insecure": {
+                    "description": "Whether Cup should connect to the registry insecurely (HTTP) or not. Enable this only if you really need to.",
+                    "type": "boolean"
+                },
+                "ignore": {
+                    "description": "Whether or not the registry should be ignored when running Cup",
+                    "type": "boolean"
+                }
+            }
+        },
+        "images": {
+            "type": "object",
+            "description": "Configuration options for specific images",
+            "properties": {
+                "extra": {
+                    "type": "array",
+                    "description": "Extra image references you want Cup to check",
+                    "minItems": 1
+                },
+                "exclude": {
+                    "type": "array",
+                    "description": "Image references that should be excluded from the check",
+                    "minItems": 1,
+                    "items": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                }
+            }
+        },
+        "theme": {
+            "description": "The theme used by the web UI",
+            "type": "string",
+            "enum": [
+                "default",
+                "blue"
+            ]
+        },
+        "socket": {
+            "description": "The path to the unix socket you would like Cup to use for communication with the Docker daemon. Useful if you're trying to use Cup with Podman.",
+            "type": "string",
+            "minLength": 1
+        }
+    }
+}

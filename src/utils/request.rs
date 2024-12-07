@@ -1,8 +1,9 @@
 use http_auth::parse_challenges;
 use json::JsonValue;
 use reqwest::Response;
+use rustc_hash::FxHashMap;
 
-use crate::error;
+use crate::{config::RegistryConfig, error};
 
 /// Parses the www-authenticate header the registry sends into a challenge URL
 pub fn parse_www_authenticate(www_auth: &str) -> String {
@@ -23,13 +24,20 @@ pub fn parse_www_authenticate(www_auth: &str) -> String {
     }
 }
 
-pub fn get_protocol(registry: &String, insecure_registries: &[String]) -> String {
-    if insecure_registries.contains(registry) {
-        "http"
-    } else {
-        "https"
+pub fn get_protocol(
+    registry: &str,
+    registry_config: &FxHashMap<String, RegistryConfig>,
+) -> &'static str {
+    match registry_config.get(registry) {
+        Some(config) => {
+            if config.insecure {
+                "http"
+            } else {
+                "https"
+            }
+        },
+        None => "https"
     }
-    .to_string()
 }
 
 pub fn to_bearer_string(token: &Option<&String>) -> Option<String> {

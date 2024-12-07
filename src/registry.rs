@@ -18,7 +18,7 @@ use crate::{
 };
 
 pub async fn check_auth(registry: &str, config: &Config, client: &Client) -> Option<String> {
-    let protocol = get_protocol(&registry.to_string(), &config.insecure_registries);
+    let protocol = get_protocol(registry, &config.registries);
     let url = format!("{}://{}/v2/", protocol, registry);
     let response = client.get(&url, Vec::new(), true).await;
     match response {
@@ -51,7 +51,7 @@ pub async fn get_latest_digest(
         "Checking for digest update to {}", image.reference
     );
     let start = timestamp();
-    let protocol = get_protocol(&image.registry, &config.insecure_registries);
+    let protocol = get_protocol(&image.registry, &config.registries);
     let url = format!(
         "{}://{}/v2/{}/manifests/{}",
         protocol, &image.registry, &image.repository, &image.tag
@@ -97,7 +97,7 @@ pub async fn get_latest_digest(
 pub async fn get_token(
     images: &Vec<&Image>,
     auth_url: &str,
-    credentials: &Option<&String>,
+    credentials: &Option<String>,
     client: &Client,
 ) -> String {
     let mut url = auth_url.to_owned();
@@ -127,7 +127,7 @@ pub async fn get_latest_tag(
         "Checking for tag update to {}", image.reference
     );
     let start = timestamp();
-    let protocol = get_protocol(&image.registry, &config.insecure_registries);
+    let protocol = get_protocol(&image.registry, &config.registries);
     let url = format!(
         "{}://{}/v2/{}/tags/list",
         protocol, &image.registry, &image.repository,

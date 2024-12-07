@@ -63,7 +63,11 @@ pub async fn get_updates(references: &Option<Vec<String>>, config: &Config) -> V
     // Retrieve an authentication token (if required) for each registry.
     let mut tokens: FxHashMap<&str, Option<String>> = FxHashMap::default();
     for registry in registries {
-        let credentials = config.authentication.get(registry);
+        let credentials = if let Some(registry_config) = config.registries.get(registry) {
+            &registry_config.authentication
+        } else {
+            &None
+        };
         match check_auth(registry, config, &client).await {
             Some(auth_url) => {
                 let token = get_token(
@@ -85,11 +89,27 @@ pub async fn get_updates(references: &Option<Vec<String>>, config: &Config) -> V
 
     // Create a Vec to store futures so we can await them all at once.
     let mut handles = Vec::with_capacity(images.len());
+
+    let ignored_registries = config
+        .registries
+        .iter()
+        .filter_map(|(registry, registry_config)| {
+            if registry_config.ignore {
+                Some(registry)
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<&String>>();
+
     // Loop through images and get the latest digest for each
     for image in &images {
-        let token = tokens.get(image.registry.as_str()).unwrap();
-        let future = image.check(token.as_ref(), config, &client);
-        handles.push(future);
+        let is_ignored = ignored_registries.contains(&&image.registry) || config.images.exclude.iter().any(|item| image.reference.starts_with(item));
+        if !is_ignored {
+            let token = tokens.get(image.registry.as_str()).unwrap();
+            let future = image.check(token.as_ref(), config, &client);
+            handles.push(future);
+        }
     }
     // Await all the futures
     join_all(handles).await
