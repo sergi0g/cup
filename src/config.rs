@@ -32,12 +32,13 @@ pub struct RegistryConfig {
 #[serde(default)]
 pub struct ImageConfig {
     pub extra: Vec<String>,
-    pub exclude: Vec<String>
+    pub exclude: Vec<String>,
 }
 
 #[derive(Clone, Deserialize)]
 #[serde(default)]
 pub struct Config {
+    version: u8,
     pub registries: FxHashMap<String, RegistryConfig>,
     pub images: ImageConfig,
     pub theme: Theme,
@@ -49,6 +50,7 @@ pub struct Config {
 impl Config {
     pub fn new() -> Self {
         Self {
+            version: 3,
             registries: FxHashMap::default(),
             images: ImageConfig::default(),
             theme: Theme::Default,
@@ -73,10 +75,14 @@ impl Config {
     }
     /// Parses and validates the config.
     pub fn parse(&self, raw_config: &str) -> Self {
-        match serde_json::from_str(raw_config) {
+        let config: Self = match serde_json::from_str(raw_config) {
             Ok(config) => config,
             Err(e) => error!("Unexpected error occured while parsing config: {}", e),
+        };
+        if config.version != 2 {
+            error!("You are trying to run Cup with an incompatible config file! Please migrate your config file to the version 3, or if you have already done so, add a `version` key with the value `3`.")
         }
+        config
     }
 }
 

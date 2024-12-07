@@ -5,6 +5,11 @@
     "description": "A schema for Cup's config file",
     "type": "object",
     "properties": {
+        "version": {
+            "type": "integer",
+            "minimum": 3,
+            "maximum": 3
+        },
         "registries": {
             "type": "object",
             "description": "Configuration options for specific registries",
@@ -57,5 +62,6 @@
             "type": "string",
             "minLength": 1
         }
-    }
+    },
+    "required": ["version"]
 }
