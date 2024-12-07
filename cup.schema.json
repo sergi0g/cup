@@ -10,6 +10,10 @@
             "minimum": 3,
             "maximum": 3
         },
+        "agent": {
+            "type": "boolean",
+            "description": "Whether or not to enable agent mode. When agent mode is enabled, the server only exposes the API and the web interface is unavailable."
+        },
         "registries": {
             "type": "object",
             "description": "Configuration options for specific registries",

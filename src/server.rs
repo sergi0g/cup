@@ -36,14 +36,18 @@ pub async fn serve(port: &u16, config: &Config) -> std::io::Result<()> {
     info!("Starting server, please wait...");
     let data = ServerData::new(config).await;
     info!("Ready to start!");
-    App::new()
+    let mut app_builder = App::new()
         .with_state(Arc::new(Mutex::new(data)))
-        .at("/", get(handler_service(_static)))
         .at("/api/v2/json", get(handler_service(api_simple)))
         .at("/api/v3/json", get(handler_service(api_full)))
         .at("/api/v2/refresh", get(handler_service(refresh)))
-        .at("/api/v3/refresh", get(handler_service(refresh)))
-        .at("/*", get(handler_service(_static)))
+        .at("/api/v3/refresh", get(handler_service(refresh)));
+    if !config.agent {
+        app_builder = app_builder
+            .at("/", get(handler_service(_static)))
+            .at("/*", get(handler_service(_static)));
+    }
+    app_builder
         .enclosed(Logger::new())
         .serve()
         .bind(format!("0.0.0.0:{}", port))?

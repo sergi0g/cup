@@ -39,6 +39,7 @@ pub struct ImageConfig {
 #[serde(default)]
 pub struct Config {
     version: u8,
+    pub agent: bool,
     pub registries: FxHashMap<String, RegistryConfig>,
     pub images: ImageConfig,
     pub theme: Theme,
@@ -51,6 +52,7 @@ impl Config {
     pub fn new() -> Self {
         Self {
             version: 3,
+            agent: false,
             registries: FxHashMap::default(),
             images: ImageConfig::default(),
             theme: Theme::Default,
@@ -79,7 +81,7 @@ impl Config {
             Ok(config) => config,
             Err(e) => error!("Unexpected error occured while parsing config: {}", e),
         };
-        if config.version != 2 {
+        if config.version != 3 {
             error!("You are trying to run Cup with an incompatible config file! Please migrate your config file to the version 3, or if you have already done so, add a `version` key with the value `3`.")
         }
         config
