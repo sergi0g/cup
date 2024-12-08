@@ -2,6 +2,13 @@
 <html lang="en">
   <head>
     <meta charset="utf8" />
+    {% if theme == "neutral" %}
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fafafa">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0a0a0a">
+    {% else %}
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f9fafb">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#030712">
+    {% endif %}
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
