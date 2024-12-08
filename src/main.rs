@@ -1,23 +1,24 @@
 use check::get_updates;
-use chrono::Local;
 use clap::{Parser, Subcommand};
 use config::Config;
-use docker::get_images_from_docker_daemon;
+use formatting::spinner::Spinner;
 #[cfg(feature = "cli")]
-use formatting::{print_raw_updates, print_updates, Spinner};
+use formatting::{print_raw_updates, print_updates};
 #[cfg(feature = "server")]
 use server::serve;
 use std::path::PathBuf;
+use utils::misc::timestamp;
 
 pub mod check;
 pub mod config;
 pub mod docker;
 #[cfg(feature = "cli")]
 pub mod formatting;
-pub mod image;
+pub mod http;
 pub mod registry;
 #[cfg(feature = "server")]
 pub mod server;
+pub mod structs;
 pub mod utils;
 
 #[derive(Parser)]
@@ -29,13 +30,15 @@ struct Cli {
     config_path: String,
     #[command(subcommand)]
     command: Option<Commands>,
+    #[arg(short, long)]
+    debug: bool,
 }
 
 #[derive(Subcommand)]
 enum Commands {
     #[cfg(feature = "cli")]
     Check {
-        #[arg(name = "Images", default_value = None)]
+        #[arg(name = "images", default_value = None)]
         references: Option<Vec<String>>,
         #[arg(short, long, default_value_t = false, help = "Enable icons")]
         icons: bool,
@@ -67,10 +70,10 @@ async fn main() {
         path => Some(PathBuf::from(path)),
     };
     let mut config = Config::new().load(cfg_path);
-    match cli.socket {
-        Some(socket) => config.socket = Some(socket),
-        None => ()
+    if let Some(socket) = cli.socket {
+        config.socket = Some(socket)
     }
+    config.debug = cli.debug;
     match &cli.command {
         #[cfg(feature = "cli")]
         Some(Commands::Check {
@@ -78,18 +81,17 @@ async fn main() {
             icons,
             raw,
         }) => {
-            let start = Local::now().timestamp_millis();
-            let images = get_images_from_docker_daemon(&config, references).await;
-            match raw {
+            let start = timestamp();
+            match *raw || config.debug {
                 true => {
-                    let updates = get_updates(&images, &config).await;
+                    let updates = get_updates(references, &config).await;
                     print_raw_updates(&updates);
                 }
                 false => {
                     let spinner = Spinner::new();
-                    let updates = get_updates(&images, &config).await;
+                    let updates = get_updates(references, &config).await;
                     spinner.succeed();
-                    let end = Local::now().timestamp_millis();
+                    let end = timestamp();
                     print_updates(&updates, icons);
                     info!("✨ Checked {} images in {}ms", updates.len(), end - start);
                 }
@@ -99,6 +101,6 @@ async fn main() {
         Some(Commands::Serve { port }) => {
             let _ = serve(port, &config).await;
         }
-        None => (),
+        None => error!("Whoops! It looks like you haven't specified a command to run! Try `cup help` to see available options."),
     }
 }
