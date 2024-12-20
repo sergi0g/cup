@@ -1,8 +1,8 @@
 {
-    "docker": {
-        "title": "With Docker"
-    },
-    "binary": {
-        "title": "As a binary"
-    }
+  "docker": {
+    "title": "With Docker"
+  },
+  "binary": {
+    "title": "As a binary"
+  }
 }

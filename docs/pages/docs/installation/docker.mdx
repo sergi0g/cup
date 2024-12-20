@@ -2,6 +2,7 @@ import { Callout, Card } from "nextra-theme-docs";
 import { IconFileDescription } from "@tabler/icons-react";
 
 # With Docker
+
 ## Introduction
 
 This guide will help you install Cup as a Docker container. It is the easiest installation method and also makes updating Cup very easy.
@@ -9,13 +10,18 @@ This guide will help you install Cup as a Docker container. It is the easiest in
 ## Installation
 
 To get started, open up a terminal and run the following command.
+
 ```bash
 $ docker pull ghcr.io/sergi0g/cup
 ```
+
 <Callout emoji="⚠️">
-If you aren't in the `docker` group, please ensure you run all commands as a user who does. In most cases, you'll just need to prefix the `docker` commands with `sudo`
+  If you aren't in the `docker` group, please ensure you run all commands as a
+  user who does. In most cases, you'll just need to prefix the `docker` commands
+  with `sudo`
 </Callout>
 
 That's it! Cup is ready to be used. Head over to the Usage page to get started.
+
 <br />
 <Card icon={<IconFileDescription />} title="Usage" href="/docs/usage" />

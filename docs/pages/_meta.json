@@ -1,13 +1,14 @@
 {
-    "docs": {
-        "title": "Documentation",
-        "type": "page"
-    },
-    "about": {
-        "title": "About",
-        "type": "page",
-        "theme": {
-            "typesetting": "article"
-        }
+  "docs": {
+    "title": "Documentation",
+    "type": "page"
+  },
+  "index": {
+    "type": "page",
+    "title": "Cup",
+    "display": "hidden",
+    "theme": {
+      "layout": "raw"
     }
+  }
 }

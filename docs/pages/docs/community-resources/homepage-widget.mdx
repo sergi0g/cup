@@ -1,6 +1,6 @@
-import Image from 'next/image';
-import widget1 from '../../../assets/350767810-42eccc89-bdfd-426a-a113-653abe7483d8.png'
-import widget2 from '../../../assets/358304960-e9f26767-51f7-4b5a-8b74-a5811019497b.jpeg'
+import Image from "next/image";
+import widget1 from "../../../assets/350767810-42eccc89-bdfd-426a-a113-653abe7483d8.png";
+import widget2 from "../../../assets/358304960-e9f26767-51f7-4b5a-8b74-a5811019497b.jpeg";
 
 # Homepage Widget
 
@@ -39,8 +39,10 @@ services:
       homepage.widget.mappings[2].field.metrics: update_available
       homepage.widget.mappings[2].format: number
 ```
+
 Preview:
-<Image src={widget1}/>
+
+<Image src={widget1} />
 
 Credit: [@agrmohit](https://github.com/agrmohit)
 
@@ -57,19 +59,21 @@ widget:
         metrics: monitored_images
       label: Monitored images
       format: number
-    - field: 
+    - field:
         metrics: up_to_date
       label: Up to date
       format: number
-    - field: 
+    - field:
         metrics: update_available
       label: Available updates
       format: number
-    - field: 
+    - field:
         metrics: unknown
       label: Unknown
       format: number
 ```
+
 Preview:
-<Image src={widget2}/>
+
+<Image src={widget2} />
 Credit: [@remussamoila](https://github.com/remussamoila)

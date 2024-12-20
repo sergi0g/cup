@@ -1,4 +1,4 @@
-import { Callout } from 'nextra-theme-docs'
+import { Callout } from "nextra-theme-docs";
 
 # Insecure registries
 
@@ -10,11 +10,13 @@ Here's what it looks like:
 
 ```json
 {
-    "insecure_registries": ["<INSECURE_REGISTRY_1>", "<INSECURE_REGISTRY_2>"],
-    // Other options
+  "insecure_registries": ["<INSECURE_REGISTRY_1>", "<INSECURE_REGISTRY_2>"]
+  // Other options
 }
 ```
 
 <Callout emoji="⚠️">
-When configuring an insecure registry that doesn't run on port 80, don't forget to specify it (i.e. use `localhost:5000` instead of `localhost` if your registry is running on port `5000`)
+  When configuring an insecure registry that doesn't run on port 80, don't
+  forget to specify it (i.e. use `localhost:5000` instead of `localhost` if your
+  registry is running on port `5000`)
 </Callout>

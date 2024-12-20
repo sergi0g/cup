@@ -5,6 +5,7 @@ First of all, thanks for taking time to contribute to Cup! This guide will help 
 ## Setting up a development environment
 
 Requirements:
+
 - A computer running Linux
 - Rust (usually installed from https://rustup.rs/)
 - Node.js 22+ and Bun 1+
@@ -27,8 +28,9 @@ All server specific functionality is located in `src/server.rs` and `web/`.
 ## Important notes
 
 - When making any changes, always make sure to write optimize your code for:
-  + Performance: You should always benchmark Cup before making changes and after your changes to make sure there is none (or a very small) difference in time. Profiling old and new code is also good.
-  + Readability: Include comments describing any new functions you create, give descriptive names to variables and when making a design decision or a compromise, ALWAYS include a comment explaining what you did and why.
+
+  - Performance: You should always benchmark Cup before making changes and after your changes to make sure there is none (or a very small) difference in time. Profiling old and new code is also good.
+  - Readability: Include comments describing any new functions you create, give descriptive names to variables and when making a design decision or a compromise, ALWAYS include a comment explaining what you did and why.
 
 - If you plan on developing the frontend without making backend changes, it is highly recommended to run `cup serve` in the background and start the frontend in development mode from `web/` with `bun dev`.
 

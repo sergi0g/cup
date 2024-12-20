@@ -1,5 +1,10 @@
 import { Steps, Callout, Card, Cards } from "nextra-theme-docs";
-import { IconPaint, IconLockOpen, IconKey, IconPlug } from '@tabler/icons-react';
+import {
+  IconPaint,
+  IconLockOpen,
+  IconKey,
+  IconPlug,
+} from "@tabler/icons-react";
 
 # Configuration
 
@@ -14,7 +19,12 @@ $ cup -s /run/user/1000/podman/podman.sock check
 ```
 
 This option is also available in the configuration file and it's best to put it there.
-<Card icon={<IconPlug />} title="Custom Docker socket" href="/docs/configuration/socket" />
+
+<Card
+  icon={<IconPlug />}
+  title="Custom Docker socket"
+  href="/docs/configuration/socket"
+/>
 
 ## Configuration file
 
@@ -26,27 +36,38 @@ Create a `cup.json` file somewhere on your system. For binary installs, a path l
 If you're running with Docker, you can create a `cup.json` in the directory you're running cup and mount it into the container. _In the next section you will need to use the path where you **mounted** the file_
 
 ### Configure Cup from the configuration file
+
 Follow the guides below to customize your `cup.json`
 
 <Cards>
-    <Card icon={<IconKey />} title="Authentication" href="/docs/configuration/authentication" />
-    <Card icon={<IconLockOpen />} title="Insecure registries" href="/docs/configuration/insecure-registries" />
-    <Card icon={<IconPaint />} title="Theme" href="/docs/configuration/theme" />
+  <Card
+    icon={<IconKey />}
+    title="Authentication"
+    href="/docs/configuration/authentication"
+  />
+  <Card
+    icon={<IconLockOpen />}
+    title="Insecure registries"
+    href="/docs/configuration/insecure-registries"
+  />
+  <Card icon={<IconPaint />} title="Theme" href="/docs/configuration/theme" />
 </Cards>
 
 Here's a full example:
+
 ```json
 {
-    "authentication": {
-        "ghcr.io": "<YOUR_TOKEN_HERE>",
-        "registry-1.docker.io": "<YOUR_TOKEN_HERE>"
-    },
-    "theme": "blue",
-    "insecure_registries": ["localhost:5000", "my-insecure-registry.example.com"]
+  "authentication": {
+    "ghcr.io": "<YOUR_TOKEN_HERE>",
+    "registry-1.docker.io": "<YOUR_TOKEN_HERE>"
+  },
+  "theme": "blue",
+  "insecure_registries": ["localhost:5000", "my-insecure-registry.example.com"]
 }
 ```
 
 ### Run Cup with the new configuration file
+
 To let Cup know that you'd like it to use a custom configuration file, you can use the `-c` flag, followed by the _absolute_ path of the file.
 
 ```bash
@@ -56,4 +77,5 @@ $ cup -c /home/sergio/.config/cup.json check
 ```bash
 $ docker run -tv /var/run/docker.sock:/var/run/docker.sock -v /home/sergio/.config/cup.json:/config/cup.json ghcr.io/sergi0g/cup -c /config/cup.json serve
 ```
+
 </Steps>

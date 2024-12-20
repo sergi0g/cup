@@ -8,6 +8,7 @@ Cup's CLI provides the `cup check` command.
 ## Basic Usage
 
 ### Check for all updates
+
 ```ansi
 $ cup check
 [32mnginx:alpine                                      Update available
@@ -24,6 +25,7 @@ rabbitmq:3.11.9-management                              Up to date
 ```
 
 ### Check for updates to specific images
+
 ```ansi
 $ cup check node:latest
 [32mnode:latest                                      Update available
@@ -39,12 +41,14 @@ postgres:14                                           Update available
 ```
 
 ## Enable icons
+
 You can also enable icons if you have a [Nerd Font](https://nerdfonts.com) installed.
 
 <Image src={cup} unoptimized />
 
 ## JSON output
-When integrating Cup with other services (e.g. webhooks or a dashboard), you may find Cup's JSON output functionality useful. 
+
+When integrating Cup with other services (e.g. webhooks or a dashboard), you may find Cup's JSON output functionality useful.
 
 It provides some useful metrics (see [server](/docs/usage/server) for more information), along with a list of images and whether they have an update or not.
 
@@ -57,15 +61,15 @@ Here is how it would look in Typescript:
 
 ```ts
 interface CupData {
-    metrics: {
-        monitored_images: number,
-        up_to_date: number,
-        update_available: number,
-        unknown: number
-    },
-    images: {
-        [image: string]: boolean | null
-    }
+  metrics: {
+    monitored_images: number;
+    up_to_date: number;
+    update_available: number;
+    unknown: number;
+  };
+  images: {
+    [image: string]: boolean | null;
+  };
 }
 ```
 
@@ -74,10 +78,13 @@ interface CupData {
 If you're using the Docker image, just replace all occurences of `cup` in the examples with `docker run -tv /var/run/docker.sock:/var/run/docker.sock ghcr.io/sergi0g/cup`.
 
 For example, this:
+
 ```bash /check node:latest/
 $ cup check node:latest
 ```
+
 becomes:
+
 ```bash /check node:latest/
 $ docker run -tv /var/run/docker.sock:/var/run/docker.sock ghcr.io/sergi0g/cup check node:latest
 ```

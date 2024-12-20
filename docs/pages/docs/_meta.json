@@ -1,23 +1,23 @@
 {
-    "index": {
-        "title": "Introduction"
-    },
-    "installation": {
-        "title": "Installation"
-    },
-    "configuration": {
-        "title": "Configuration"
-    },
-    "usage": {
-        "title": "Usage"
-    },
-    "community-resources": {
-        "title": "Community Resources"
-    },
-    "nightly": {
-        "title": "Using the latest version"
-    },
-    "contributing": {
-        "title": "Contributing"
-    }
+  "index": {
+    "title": "Introduction"
+  },
+  "installation": {
+    "title": "Installation"
+  },
+  "configuration": {
+    "title": "Configuration"
+  },
+  "usage": {
+    "title": "Usage"
+  },
+  "community-resources": {
+    "title": "Community Resources"
+  },
+  "nightly": {
+    "title": "Using the latest version"
+  },
+  "contributing": {
+    "title": "Contributing"
+  }
 }

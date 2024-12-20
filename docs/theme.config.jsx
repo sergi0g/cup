@@ -5,38 +5,39 @@ import { useConfig } from "nextra-theme-docs";
 export default {
   docsRepositoryBase: "https://github.com/sergi0g/cup/tree/main/docs",
   useNextSeoProps() {
-    const { asPath } = useRouter()
-    if (asPath !== '/') {
+    const { asPath } = useRouter();
+    if (asPath !== "/") {
       return {
-        titleTemplate: '%s – Cup'
-      }
+        titleTemplate: "Cup – %s",
+      };
     }
   },
   head: () => {
-    const { asPath } = useRouter()
-    const { frontMatter } = useConfig()
-    const url =
-      'https://sergi0g.github.io/cup/docs/' +
-      (`/${asPath}`);
- 
+    const { asPath } = useRouter();
+    const { frontMatter } = useConfig();
+    const url = "https://sergi0g.github.io/cup/docs/" + `/${asPath}`;
+
     return (
       <>
         <meta property="og:url" content={url} />
-        <meta property="og:title" content={frontMatter.title || 'Cup'} />
+        <meta property="og:title" content={frontMatter.title || "Cup"} />
         <meta
           property="og:description"
-          content={frontMatter.description || 'The easiest way to manage your container updates'}
+          content={
+            frontMatter.description ||
+            "The easiest way to manage your container updates"
+          }
         />
       </>
-    )
+    );
   },
   logo: (
     <div className="flex items-center">
       <Logo />
-      <h1 className="font-bold ml-2">Cup</h1>
+      <h1 className="ml-2 font-bold">Cup</h1>
     </div>
   ),
-  logoLink: "https://sergi0g.github.io/cup/docs/",
+  logoLink: "/",
   project: {
     link: "https://github.com/sergi0g/cup/",
   },
