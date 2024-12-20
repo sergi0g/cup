@@ -171,8 +171,10 @@ impl Image {
                             }
                         },
                         _ => unreachable!()
-                    })
-                }},
+                    }),
+                },
+                error: self.error.clone()
+            },
             time: self.time_ms
         }
     }
