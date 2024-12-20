@@ -10,6 +10,10 @@ export default {
       return {
         titleTemplate: "Cup – %s",
       };
+    } else {
+      return {
+        titleTemplate: "%s"
+      }
     }
   },
   head: () => {

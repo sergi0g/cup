@@ -33,7 +33,7 @@ Cup has an option to be configured from a configuration file named `cup.json`.
 <Steps>
 ### Create the configuration file
 Create a `cup.json` file somewhere on your system. For binary installs, a path like `~/.config/cup.json` is recommended.
-If you're running with Docker, you can create a `cup.json` in the directory you're running cup and mount it into the container. _In the next section you will need to use the path where you **mounted** the file_
+If you're running with Docker, you can create a `cup.json` in the directory you're running Cup and mount it into the container. _In the next section you will need to use the path where you **mounted** the file_
 
 ### Configure Cup from the configuration file
 
@@ -65,6 +65,11 @@ Here's a full example:
   "insecure_registries": ["localhost:5000", "my-insecure-registry.example.com"]
 }
 ```
+
+<Callout>
+If you want autocompletions and error checking for your editor, there is a JSON schema available.
+Use it by adding a `"$schema": "https://raw.githubusercontent.com/sergi0g/cup/main/cup.schema.json"` entry in your `cup.json` file.
+</Callout>
 
 ### Run Cup with the new configuration file
 

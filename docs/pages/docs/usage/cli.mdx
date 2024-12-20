@@ -11,66 +11,53 @@ Cup's CLI provides the `cup check` command.
 
 ```ansi
 $ cup check
-[32mnginx:alpine                                      Update available
-redis:7                                           Update available
+[38;5;1m
+mysql:8.0                                             Major update
+node:20                                               Major update
+postgres:16-alpine                                    Major update[0m[38;5;3m
+rust:1.80.1-alpine                                    Minor update[0m[38;5;12m
+redis:7.4.0                                           Patch update
+nginx:alpine                                      Update available
 redis:alpine                                      Update available
-[0m...
-[34mcentos:7                                                Up to date
-mcr.microsoft.com/devcontainers/go:0-1.19-bullseye      Up to date
-rockylinux:9-minimal                                    Up to date
-rabbitmq:3.11.9-management                              Up to date
-[0m...
-[90msome/deleted:image                                         Unknown
-[38:5:86mINFO  ✨ Checked 58 images in 3772ms
+ubuntu:latest                                     Update available[0m[38;5;2m
+node:iron                                               Up to date
+2fauth/2fauth:latest                                    Up to date
+c1982/sdns:latest                                       Up to date[0m[38;5;8m
+registry.acme.com/acme-server:latest                       Unknown
+[36;1mINFO  [0m✨ Checked 58 images in 3772ms
 ```
 
 ### Check for updates to specific images
 
 ```ansi
-$ cup check node:latest
-[32mnode:latest                                      Update available
-[38:5:86mINFO  ✨ Checked 1 images in 1310ms
+$ cup check node:latest[38;5;12m
+node:latest                                       Update available
+[36;1mINFO  [0m✨ Checked 1 images in 1310ms
 ```
 
 ```ansi
-$ cup check node:latest
-[32mnextcloud:30                                          Update available
-postgres:14                                           Update available
-[34mmysql:8.0                                               Up to date
-[38:5:86mINFO  ✨ Checked 3 images in 1769ms
+$ cup check nextcloud:30 postgres:14 mysql:8.0[38;5;12m
+nextcloud:30                                      Update available
+postgres:14                                       Update available[38;5;2m
+mysql:8.0                                               Up to date
+[36;1mINFO  [0m✨ Checked 3 images in 1769ms
 ```
 
 ## Enable icons
 
 You can also enable icons if you have a [Nerd Font](https://nerdfonts.com) installed.
 
-<Image src={cup} unoptimized />
+<Image src={cup} alt="GIF of Cup's CLI" unoptimized />
 
 ## JSON output
 
 When integrating Cup with other services (e.g. webhooks or a dashboard), you may find Cup's JSON output functionality useful.
 
-It provides some useful metrics (see [server](/docs/usage/server) for more information), along with a list of images and whether they have an update or not.
+It provides some useful metrics (see [server](/docs/usage/server) for more information), along with a list of images and whether they have an update or not. Note that at the moment it does not match the detailed API the server provides.
 
 ```
 $ cup check -r
-{"metrics":{"update_available":4,"monitored_images":25,"unknown":1,"up_to_date":20},"images":{"ghcr.io/immich-app/immich-server:v1.106.4":false,"portainer/portainer-ce:2.20.3-alpine":false,"ghcr.io/runtipi/runtipi:v3.4.1":false,...}}
-```
-
-Here is how it would look in Typescript:
-
-```ts
-interface CupData {
-  metrics: {
-    monitored_images: number;
-    up_to_date: number;
-    update_available: number;
-    unknown: number;
-  };
-  images: {
-    [image: string]: boolean | null;
-  };
-}
+{"metrics":{"monitored_images":26,"up_to_date":2,"updates_available":23,"major_updates":8,"minor_updates":6,"patch_updates":2,"other_updates":7,"unknown":1},"images":{"ghcr.io/immich-app/immich-server:v1.106.4":false,"portainer/portainer-ce:2.20.3-alpine":false,"ghcr.io/runtipi/runtipi:v3.4.1":false,...}}
 ```
 
 ## Usage with Docker
@@ -79,12 +66,12 @@ If you're using the Docker image, just replace all occurences of `cup` in the ex
 
 For example, this:
 
-```bash /check node:latest/
+```bash
 $ cup check node:latest
 ```
 
 becomes:
 
-```bash /check node:latest/
+```bash 
 $ docker run -tv /var/run/docker.sock:/var/run/docker.sock ghcr.io/sergi0g/cup check node:latest
 ```

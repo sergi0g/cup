@@ -20,8 +20,8 @@ class DocumentProMax extends Document {
             sizes="180x180"
             href="/apple-touch-icon.png"
           />
-          <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-          <link rel="icon" type="image/x-icon" href="favicon.ico" />
+          <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+          <link rel="icon" type="image/x-icon" href="/favicon.ico" />
           <meta
             name="theme-color"
             media="(prefers-color-scheme: light)"

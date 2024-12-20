@@ -6,9 +6,15 @@ Some registries (or specific images) may require you to be authenticated. For th
 
 ```json
 {
-  "authentication": {
-    "<YOUR_REGISTRY_DOMAIN_1>": "<YOUR_TOKEN_1>",
-    "<YOUR_REGISTRY_DOMAIN_2>": "<YOUR_TOKEN_2>"
+  "registries": {
+    "<YOUR_REGISTRY_DOMAIN_1>": {
+      "authentication": "<YOUR_TOKEN_1>"
+      // Other options
+    },
+    "<YOUR_REGISTRY_DOMAIN_2>" {
+      "authentication": "<YOUR_TOKEN_2>"
+      // Other options
+    },
     // ...
   }
   // Other options

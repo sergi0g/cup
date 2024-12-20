@@ -57,7 +57,6 @@ export function Home() {
               <div className="*:-0 mt-auto grid w-fit grid-cols-2 gap-4 *:flex *:items-center *:gap-2 *:rounded-lg *:px-3 *:py-2">
                 <a
                   href="/docs"
-                  target="_blank"
                   className="hide-focus group h-full bg-black text-white dark:bg-white dark:text-black"
                 >
                   Get started
