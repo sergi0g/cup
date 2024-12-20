@@ -17,7 +17,7 @@ import {
 import { WithTooltip } from "./Tooltip";
 import type { Image } from "../types";
 import { theme } from "../theme";
-import { PullCommand } from "./PullCommand";
+import { CodeBlock } from "./CodeBlock";
 
 const clickable_registries = [
   "registry-1.docker.io",
@@ -125,7 +125,10 @@ export default function Image({ data }: { data: Image }) {
                   </div>
                 )}
                 {data.result.has_update && (
-                  <PullCommand reference={new_reference} />
+                  <div className="flex flex-col gap-1">
+                    Pull command
+                    <CodeBlock enableCopy>{new_reference}</CodeBlock>
+                  </div>
                 )}
                 <div className="flex flex-col gap-1">
                   {data.result.info?.type == "digest" && (
@@ -133,23 +136,15 @@ export default function Image({ data }: { data: Image }) {
                       {data.result.info.local_digests.length > 1
                         ? "Local digests"
                         : "Local digest"}
-                      <div
-                        className={`bg-${theme}-100 dark:bg-${theme}-950 scrollable rounded-md px-3 py-2 font-mono text-${theme}-500`}
-                      >
-                        <p className="overflow-x-scroll">
-                          {data.result.info.local_digests.join("\n")}
-                        </p>
-                      </div>
+                      <CodeBlock enableCopy>
+                        {data.result.info.local_digests.join("\n")}
+                      </CodeBlock>
                       {data.result.info.remote_digest && (
                         <div className="flex flex-col gap-1">
                           Remote digest
-                          <div
-                            className={`bg-${theme}-100 dark:bg-${theme}-950 rounded-md px-3 py-2 font-mono text-${theme}-500`}
-                          >
-                            <p className="overflow-x-scroll">
-                              {data.result.info.remote_digest}
-                            </p>
-                          </div>
+                          <CodeBlock enableCopy>
+                            {data.result.info.remote_digest}
+                          </CodeBlock>
                         </div>
                       )}
                     </>
