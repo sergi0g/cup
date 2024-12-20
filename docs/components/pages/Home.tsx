@@ -140,8 +140,7 @@ export function Home() {
             <Step title="Open a terminal and run" number={1}>
               <div className="group relative mx-auto flex max-w-screen-xl items-center rounded-lg bg-neutral-100 px-3 py-2 font-mono text-neutral-700 dark:bg-neutral-950 dark:text-neutral-300">
                 <p className="overflow-scroll">
-                  docker run -v /var/run/docker.sock:/var/run/docker.sock -p
-                  8000:8000 -t ghcr.io/sergi0g/cup serve
+                docker run --rm -t -v /var/run/docker.sock:/var/run/docker.sock -p 8000:8000 ghcr.io/sergi0g/cup serve
                 </p>
                 {isBrowser &&
                   navigator.clipboard &&
