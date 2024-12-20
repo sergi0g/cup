@@ -7,11 +7,8 @@ import {
 } from "@headlessui/react";
 import {
   IconAlertTriangleFilled,
-  IconArrowUpRight,
-  IconCheck,
   IconCircleArrowUpFilled,
   IconCircleCheckFilled,
-  IconCopy,
   IconCube,
   IconHelpCircleFilled,
   IconStopwatch,
@@ -20,6 +17,7 @@ import {
 import { WithTooltip } from "./Tooltip";
 import type { Image } from "../types";
 import { theme } from "../theme";
+import { PullCommand } from "./PullCommand";
 
 const clickable_registries = [
   "registry-1.docker.io",
@@ -30,23 +28,16 @@ const clickable_registries = [
 
 export default function Image({ data }: { data: Image }) {
   const [open, setOpen] = useState(false);
-  const [copySuccess, setCopySuccess] = useState(false);
   const handleOpen = () => {
     setOpen(true);
   };
   const handleClose = () => {
     setOpen(false);
   };
-  const handleCopy = (text: string) => {
-    return () => {
-      navigator.clipboard.writeText(text).then(() => {
-        setCopySuccess(true);
-        setTimeout(() => {
-          setCopySuccess(false);
-        }, 3000);
-      });
-    };
-  };
+  const new_reference =
+    data.result.info?.type == "version"
+      ? data.reference.replace(data.parts.tag, data.result.info.new_version)
+      : data.reference;
   var url: string | null = null;
   if (clickable_registries.includes(data.parts.registry)) {
     switch (data.parts.registry) {
@@ -93,12 +84,21 @@ export default function Image({ data }: { data: Image }) {
                           href={url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="after:relative after:bottom-[1px] after:left-0 after:block after:h-[2px] after:w-full after:scale-x-0 after:bg-black after:transition-transform after:duration-300 hover:after:scale-x-100 after:dark:bg-white"
+                          className={`group flex w-fit items-center justify-center gap-1 text-black hover:underline dark:text-white`}
                         >
-                          {data.reference}
-                          <span className="inline-flex align-text-top">
-                            <IconArrowUpRight className="size-3 shrink-0" />
-                          </span>
+                          <span>{data.reference}</span>
+                          <svg
+                            viewBox="0 0 12 12"
+                            fill="none"
+                            width="10px"
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="transition-all duration-100 group-hover:rotate-45"
+                          >
+                            <path
+                              d="M11 9.283V1H2.727v1.44h5.83L1 9.99 2.01 11l7.556-7.55v5.833H11Z"
+                              fill="currentColor"
+                            ></path>
+                          </svg>
                         </a>
                       </>
                     ) : (
@@ -119,35 +119,13 @@ export default function Image({ data }: { data: Image }) {
                   </span>
                 </div>
                 {data.result.error && (
-                  <div className="mb-4 flex items-center gap-3 overflow-hidden break-all rounded-md bg-yellow-400/10 px-3 py-2">
-                    <IconAlertTriangleFilled className="size-5 shrink-0 text-yellow-500" />
+                  <div className="break-before mb-4 flex items-center gap-3 overflow-hidden rounded-md bg-yellow-400/10 px-3 py-2">
+                    <IconAlertTriangleFilled className="size-6 shrink-0 text-yellow-500" />
                     {data.result.error}
                   </div>
                 )}
                 {data.result.has_update && (
-                  <div className="flex flex-col gap-1">
-                    Pull command
-                    <div
-                      className={`bg-${theme}-100 dark:bg-${theme}-950 group relative mb-4 flex items-center rounded-md px-3 py-2 font-mono text-gray-500`}
-                    >
-                      <p className="overflow-scroll">
-                      docker pull {data.result.info?.type == "version" ? data.reference.replace(data.parts.tag, data.result.info.new_version) : data.reference}
-                      </p>
-                      {navigator.clipboard &&
-                        (copySuccess ? (
-                          <IconCheck className="absolute right-3" />
-                        ) : (
-                          <button
-                            className="duration-50 absolute right-3 opacity-0 transition-opacity group-hover:opacity-100"
-                            onClick={handleCopy(
-                              `docker pull ${data.result.info?.type == "version" ? data.reference.replace(data.parts.tag, data.result.info.new_version) : data.reference}`,
-                            )}
-                          >
-                            <IconCopy />
-                          </button>
-                        ))}
-                    </div>
-                  </div>
+                  <PullCommand reference={new_reference} />
                 )}
                 <div className="flex flex-col gap-1">
                   {data.result.info?.type == "digest" && (
@@ -156,7 +134,7 @@ export default function Image({ data }: { data: Image }) {
                         ? "Local digests"
                         : "Local digest"}
                       <div
-                        className={`bg-${theme}-100 dark:bg-${theme}-950 scrollable rounded-md px-3 py-2 font-mono text-gray-500`}
+                        className={`bg-${theme}-100 dark:bg-${theme}-950 scrollable rounded-md px-3 py-2 font-mono text-${theme}-500`}
                       >
                         <p className="overflow-x-scroll">
                           {data.result.info.local_digests.join("\n")}
@@ -166,7 +144,7 @@ export default function Image({ data }: { data: Image }) {
                         <div className="flex flex-col gap-1">
                           Remote digest
                           <div
-                            className={`bg-${theme}-100 dark:bg-${theme}-950 rounded-md px-3 py-2 font-mono text-gray-500`}
+                            className={`bg-${theme}-100 dark:bg-${theme}-950 rounded-md px-3 py-2 font-mono text-${theme}-500`}
                           >
                             <p className="overflow-x-scroll">
                               {data.result.info.remote_digest}
