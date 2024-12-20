@@ -28,7 +28,7 @@ function App() {
           <div
             className={`bg-white shadow-sm dark:bg-${theme}-900 my-8 rounded-md`}
           >
-            <dl className="grid grid-cols-1 gap-1 overflow-hidden *:relative md:grid-cols-2 lg:grid-cols-4">
+            <dl className="grid grid-cols-2 gap-1 overflow-hidden *:relative lg:grid-cols-4">
               {Object.entries(data.metrics).map(([name]) => (
                 <Statistic name={name as keyof typeof data.metrics} metrics={data.metrics} key={name} />
               ))}
