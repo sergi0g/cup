@@ -28,7 +28,7 @@ export default function Statistic({
     <div
       className={`before:bg-${theme}-200 before:dark:bg-${theme}-800 after:bg-${theme}-200 after:dark:bg-${theme}-800 gi`}
     >
-      <div className="flex lg:min-h-32 h-full flex-col justify-between gap-x-4 gap-y-2 px-6 py-4 align-baseline">
+      <div className="flex h-full flex-col justify-between gap-x-4 gap-y-2 px-6 py-4 align-baseline lg:min-h-32">
         <dt
           className={`text-${theme}-500 dark:text-${theme}-400 font-medium leading-6`}
         >

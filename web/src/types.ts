@@ -29,13 +29,13 @@ export interface Image {
 }
 
 interface VersionInfo {
-  "type": "version",
-  version_update_type: "major" | "minor" | "patch",
-  new_version: string
+  type: "version";
+  version_update_type: "major" | "minor" | "patch";
+  new_version: string;
 }
 
 interface DigestInfo {
-  "type": "digest",
-  local_digests: string[],
-  remote_digest: string
+  type: "digest";
+  local_digests: string[];
+  remote_digest: string;
 }

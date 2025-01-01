@@ -32,6 +32,17 @@ const FAVICON_ICO: &[u8] = include_bytes!("static/favicon.ico");
 const FAVICON_SVG: &[u8] = include_bytes!("static/favicon.svg");
 const APPLE_TOUCH_ICON: &[u8] = include_bytes!("static/apple-touch-icon.png");
 
+const SORT_ORDER: [&'static str; 8] = [
+    "monitored_images",
+    "updates_available",
+    "major_updates",
+    "minor_updates",
+    "patch_updates",
+    "other_updates",
+    "up_to_date",
+    "unknown",
+]; // For Liquid rendering
+
 pub async fn serve(port: &u16, config: &Config) -> std::io::Result<()> {
     info!("Starting server, please wait...");
     let data = ServerData::new(config).await;
@@ -153,7 +164,7 @@ impl ServerData {
         let images = self
             .raw_updates
             .iter()
-            .map(|image| object!({"name": image.reference, "has_update": image.has_update().to_option_bool().to_value()}),)
+            .map(|image| object!({"name": image.reference, "status": image.has_update().to_string()}),)
             .collect::<Vec<Object>>();
         self.simple_json = to_simple_json(&self.raw_updates);
         self.full_json = to_full_json(&self.raw_updates);
@@ -170,8 +181,10 @@ impl ServerData {
             Theme::Default => "neutral",
             Theme::Blue => "gray",
         };
+        let mut metrics = self.simple_json["metrics"].entries().map(|(key, value)| liquid::object!({ "name": key, "value": value.as_u16().unwrap()})).collect::<Vec<_>>();
+        metrics.sort_unstable_by(|a, b| {dbg!(a, b); SORT_ORDER.iter().position(|i| i == &a["name"].to_kstr().as_str()).unwrap().cmp(&SORT_ORDER.iter().position(|i| i == &b["name"].to_kstr().as_str()).unwrap())});
         let globals = object!({
-            "metrics": [{"name": "Monitored images", "value": self.simple_json["metrics"]["monitored_images"].as_usize()}, {"name": "Up to date", "value": self.simple_json["metrics"]["up_to_date"].as_usize()}, {"name": "Updates available", "value": self.simple_json["metrics"]["update_available"].as_usize()}, {"name": "Unknown", "value": self.simple_json["metrics"]["unknown"].as_usize()}],
+            "metrics": metrics,
             "images": images,
             "last_updated": last_updated.format("%Y-%m-%d %H:%M:%S").to_string(),
             "theme": &self.theme

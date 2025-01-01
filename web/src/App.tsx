@@ -30,7 +30,11 @@ function App() {
           >
             <dl className="grid grid-cols-2 gap-1 overflow-hidden *:relative lg:grid-cols-4">
               {Object.entries(data.metrics).map(([name]) => (
-                <Statistic name={name as keyof typeof data.metrics} metrics={data.metrics} key={name} />
+                <Statistic
+                  name={name as keyof typeof data.metrics}
+                  metrics={data.metrics}
+                  key={name}
+                />
               ))}
             </dl>
           </div>

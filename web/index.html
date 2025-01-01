@@ -1,31 +1,45 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf8" />
-    {% if theme == "neutral" %}
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fafafa">
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0a0a0a">
+    <meta charset="utf8">
+    {% if theme == 'neutral' %}
+      <meta
+        name="theme-color"
+        media="(prefers-color-scheme: light)"
+        content="#fafafa"
+      >
+      <meta
+        name="theme-color"
+        media="(prefers-color-scheme: dark)"
+        content="#0a0a0a"
+      >
     {% else %}
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f9fafb">
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#030712">
+      <meta
+        name="theme-color"
+        media="(prefers-color-scheme: light)"
+        content="#f9fafb"
+      >
+      <meta
+        name="theme-color"
+        media="(prefers-color-scheme: dark)"
+        content="#030712"
+      >
     {% endif %}
-    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-    <link rel="icon" type="image/x-icon" href="favicon.ico" />
-    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <title>Cup</title>
   </head>
   <body>
     <div id="root">
       <div
-        class="flex justify-center items-center min-h-screen bg-{{ theme }}-50 dark:bg-{{ theme }}-950"
+        class="flex justify-center min-h-screen bg-{{ theme }}-50 dark:bg-{{ theme }}-950"
       >
         <div class="mx-auto h-full w-full max-w-[80rem] px-4 sm:px-6 lg:px-8">
-          <div class="mx-auto my-8 h-full max-w-[48rem]">
+          <div class="mx-auto my-8 h-full max-w-[48rem] flex-col">
             <div class="flex items-center gap-1">
-              <h1 class="text-5xl font-bold lg:text-6xl dark:text-white">
-                Cup
-              </h1>
+              <h1 class="text-5xl font-bold lg:text-6xl dark:text-white">Cup</h1>
               <svg
                 version="1.1"
                 id="Layer_2"
@@ -94,84 +108,108 @@
               <dl
                 class="grid grid-cols-2 gap-1 overflow-hidden *:relative lg:grid-cols-4"
               >
+                {% assign metrics_to_show = 'monitored_images,up_to_date,updates_available,unknown' | split: ',' %}
                 {% for metric in metrics %}
-                <div
-                  class="before:bg-{{ theme }}-200 before:dark:bg-{{ theme }}-800 after:bg-{{ theme }}-200 after:dark:bg-{{ theme }}-800 gi"
-                >
-                  <div
-                    class="flex h-full flex-col justify-between gap-x-4 gap-y-2 px-6 py-4 align-baseline xl:px-8"
-                  >
-                    <dt
-                      class="text-{{ theme }}-500 dark:text-{{ theme }}-400 leading-6 font-medium"
+                  {% if metrics_to_show contains metric.name %}
+                    <div
+                      class="before:bg-{{ theme }}-200 before:dark:bg-{{ theme }}-800 after:bg-{{ theme }}-200 after:dark:bg-{{ theme }}-800 gi"
                     >
-                      {{ metric.name }}
-                    </dt>
-                    <div class="flex items-center justify-between gap-1">
-                      <dd
-                        class="w-full text-3xl font-medium leading-10 tracking-tight text-black dark:text-white"
+                      <div
+                        class="flex h-full flex-col justify-between gap-x-4 gap-y-2 px-6 py-4 align-baseline lg:min-h-32"
                       >
-                        {{ metric.value }}
-                      </dd>
-                      {% if metric.name == 'Monitored images' %}
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                        class="size-6 shrink-0 text-black dark:text-white"
-                      >
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                        <path
-                          d="M12 4c4.29 0 7.863 2.429 10.665 7.154l.22 .379l.045 .1l.03 .083l.014 .055l.014 .082l.011 .1v.11l-.014 .111a.992 .992 0 0 1 -.026 .11l-.039 .108l-.036 .075l-.016 .03c-2.764 4.836 -6.3 7.38 -10.555 7.499l-.313 .004c-4.396 0 -8.037 -2.549 -10.868 -7.504a1 1 0 0 1 0 -.992c2.831 -4.955 6.472 -7.504 10.868 -7.504zm0 5a3 3 0 1 0 0 6a3 3 0 0 0 0 -6z"
-                        />
-                      </svg>
-                      {% elsif metric.name == 'Up to date' %}
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                        class="size-6 shrink-0 text-green-500"
-                      >
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                        <path
-                          d="M17 3.34a10 10 0 1 1 -14.995 8.984l-.005 -.324l.005 -.324a10 10 0 0 1 14.995 -8.336zm-1.293 5.953a1 1 0 0 0 -1.32 -.083l-.094 .083l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.403 1.403l.083 .094l2 2l.094 .083a1 1 0 0 0 1.226 0l.094 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z"
-                        />
-                      </svg>
-                      {% elsif metric.name == 'Updates available' %}
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                        class="size-6 shrink-0 text-blue-500"
-                      >
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                        <path
-                          d="M17 3.34a10 10 0 1 1 -14.995 8.984l-.005 -.324l.005 -.324a10 10 0 0 1 14.995 -8.336zm-4.98 3.66l-.163 .01l-.086 .016l-.142 .045l-.113 .054l-.07 .043l-.095 .071l-.058 .054l-4 4l-.083 .094a1 1 0 0 0 1.497 1.32l2.293 -2.293v5.586l.007 .117a1 1 0 0 0 1.993 -.117v-5.585l2.293 2.292l.094 .083a1 1 0 0 0 1.32 -1.497l-4 -4l-.082 -.073l-.089 -.064l-.113 -.062l-.081 -.034l-.113 -.034l-.112 -.02l-.098 -.006z"
-                        />
-                      </svg>
-                      {% elsif metric.name == 'Unknown' %}
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                        class="size-6 text-{{ theme }}-500 shrink-0"
-                      >
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                        <path
-                          d="M12 2c5.523 0 10 4.477 10 10a10 10 0 0 1 -19.995 .324l-.005 -.324l.004 -.28c.148 -5.393 4.566 -9.72 9.996 -9.72zm0 13a1 1 0 0 0 -.993 .883l-.007 .117l.007 .127a1 1 0 0 0 1.986 0l.007 -.117l-.007 -.127a1 1 0 0 0 -.993 -.883zm1.368 -6.673a2.98 2.98 0 0 0 -3.631 .728a1 1 0 0 0 1.44 1.383l.171 -.18a.98 .98 0 0 1 1.11 -.15a1 1 0 0 1 -.34 1.886l-.232 .012a1 1 0 0 0 .111 1.994a3 3 0 0 0 1.371 -5.673z"
-                        />
-                      </svg>
-                      {% endif %}
+                        <dt
+                          class="text-{{ theme }}-500 dark:text-{{ theme }}-400 leading-6 font-medium"
+                        >
+                          {{ metric.name | replace: '_', ' ' | capitalize }}
+                        </dt>
+                        <div class="flex items-center justify-between gap-1">
+                          <dd
+                            class="w-full text-3xl font-medium leading-10 tracking-tight text-black dark:text-white"
+                          >
+                            {{ metric.value }}
+                          </dd>
+                          {% case metric.name %}
+                            {% when 'monitored_images' %}
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                                class="size-6 shrink-0 text-black dark:text-white"
+                              >
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path
+                                  d="M12 4c4.29 0 7.863 2.429 10.665 7.154l.22 .379l.045 .1l.03 .083l.014 .055l.014 .082l.011 .1v.11l-.014 .111a.992 .992 0 0 1 -.026 .11l-.039 .108l-.036 .075l-.016 .03c-2.764 4.836 -6.3 7.38 -10.555 7.499l-.313 .004c-4.396 0 -8.037 -2.549 -10.868 -7.504a1 1 0 0 1 0 -.992c2.831 -4.955 6.472 -7.504 10.868 -7.504zm0 5a3 3 0 1 0 0 6a3 3 0 0 0 0 -6z"
+                                />
+                              </svg>
+                            {% when 'up_to_date' %}
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                                class="size-6 shrink-0 text-green-500"
+                              >
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path
+                                  d="M17 3.34a10 10 0 1 1 -14.995 8.984l-.005 -.324l.005 -.324a10 10 0 0 1 14.995 -8.336zm-1.293 5.953a1 1 0 0 0 -1.32 -.083l-.094 .083l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.403 1.403l.083 .094l2 2l.094 .083a1 1 0 0 0 1.226 0l.094 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z"
+                                />
+                              </svg>
+                            {% when 'updates_available' %}
+                              {% assign max_metric = '' %}
+                              {% assign max_value = 0 %}
+
+                              {% for m in metrics %}
+                                {% unless metrics_to_show contains m.name %}
+                                  {% if m.value > max_value %}
+                                    {% assign max_metric = m.name %}
+                                    {% assign max_value = m.value %}
+                                  {% endif %}
+                                {% endunless %}
+                              {% endfor %}
+
+                              {% case max_metric %}
+                                {% when 'major_updates' %}
+                                  {% assign color = 'text-red-500' %}
+                                {% when 'minor_updates' %}
+                                  {% assign color = 'text-yellow-500' %}
+                                {% else %}
+                                  {% assign color = 'text-blue-500' %}
+                              {% endcase %}
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                                class="size-6 shrink-0 {{ color }}"
+                              >
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path
+                                  d="M17 3.34a10 10 0 1 1 -14.995 8.984l-.005 -.324l.005 -.324a10 10 0 0 1 14.995 -8.336zm-4.98 3.66l-.163 .01l-.086 .016l-.142 .045l-.113 .054l-.07 .043l-.095 .071l-.058 .054l-4 4l-.083 .094a1 1 0 0 0 1.497 1.32l2.293 -2.293v5.586l.007 .117a1 1 0 0 0 1.993 -.117v-5.585l2.293 2.292l.094 .083a1 1 0 0 0 1.32 -1.497l-4 -4l-.082 -.073l-.089 -.064l-.113 -.062l-.081 -.034l-.113 -.034l-.112 -.02l-.098 -.006z"
+                                />
+                              </svg>
+                            {% when 'unknown' %}
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                                class="size-6 text-{{ theme }}-500 shrink-0"
+                              >
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path
+                                  d="M12 2c5.523 0 10 4.477 10 10a10 10 0 0 1 -19.995 .324l-.005 -.324l.004 -.28c.148 -5.393 4.566 -9.72 9.996 -9.72zm0 13a1 1 0 0 0 -.993 .883l-.007 .117l.007 .127a1 1 0 0 0 1.986 0l.007 -.117l-.007 -.127a1 1 0 0 0 -.993 -.883zm1.368 -6.673a2.98 2.98 0 0 0 -3.631 .728a1 1 0 0 0 1.44 1.383l.171 -.18a.98 .98 0 0 1 1.11 -.15a1 1 0 0 1 -.34 1.886l-.232 .012a1 1 0 0 0 .111 1.994a3 3 0 0 0 1.371 -5.673z"
+                                />
+                              </svg>
+                          {% endcase %}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  {% endif %}
                 {% endfor %}
               </dl>
             </div>
@@ -205,70 +243,80 @@
                 class="*:py-4 *:px-6 *:flex *:items-center *:gap-3 dark:divide-{{ theme }}-800 divide-y dark:text-white"
               >
                 {% for image in images %}
-                <li>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                    <path
-                      d="M21 16.008v-8.018a1.98 1.98 0 0 0 -1 -1.717l-7 -4.008a2.016 2.016 0 0 0 -2 0l-7 4.008c-.619 .355 -1 1.01 -1 1.718v8.018c0 .709 .381 1.363 1 1.717l7 4.008a2.016 2.016 0 0 0 2 0l7 -4.008c.619 -.355 1 -1.01 1 -1.718z"
-                    />
-                    <path d="M12 22v-10" />
-                    <path d="M12 12l8.73 -5.04" />
-                    <path d="M3.27 6.96l8.73 5.04" />
-                  </svg>
-                  {{ image.name }} {% if image.has_update == 'false' %}
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    class="ml-auto text-green-500"
-                  >
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                    <path
-                      d="M17 3.34a10 10 0 1 1 -14.995 8.984l-.005 -.324l.005 -.324a10 10 0 0 1 14.995 -8.336zm-1.293 5.953a1 1 0 0 0 -1.32 -.083l-.094 .083l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.403 1.403l.083 .094l2 2l.094 .083a1 1 0 0 0 1.226 0l.094 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z"
-                    />
-                  </svg>
-                  {% elsif image.has_update == 'true' %}
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    class="ml-auto text-blue-500"
-                  >
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                    <path
-                      d="M17 3.34a10 10 0 1 1 -14.995 8.984l-.005 -.324l.005 -.324a10 10 0 0 1 14.995 -8.336zm-4.98 3.66l-.163 .01l-.086 .016l-.142 .045l-.113 .054l-.07 .043l-.095 .071l-.058 .054l-4 4l-.083 .094a1 1 0 0 0 1.497 1.32l2.293 -2.293v5.586l.007 .117a1 1 0 0 0 1.993 -.117v-5.585l2.293 2.292l.094 .083a1 1 0 0 0 1.32 -1.497l-4 -4l-.082 -.073l-.089 -.064l-.113 -.062l-.081 -.034l-.113 -.034l-.112 -.02l-.098 -.006z"
-                    />
-                  </svg>
-                  {% elsif image.has_update == 'null' %}
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    class="text-{{ theme }}-500 ml-auto"
-                  >
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                    <path
-                      d="M12 2c5.523 0 10 4.477 10 10a10 10 0 0 1 -19.995 .324l-.005 -.324l.004 -.28c.148 -5.393 4.566 -9.72 9.996 -9.72zm0 13a1 1 0 0 0 -.993 .883l-.007 .117l.007 .127a1 1 0 0 0 1.986 0l.007 -.117l-.007 -.127a1 1 0 0 0 -.993 -.883zm1.368 -6.673a2.98 2.98 0 0 0 -3.631 .728a1 1 0 0 0 1.44 1.383l.171 -.18a.98 .98 0 0 1 1.11 -.15a1 1 0 0 1 -.34 1.886l-.232 .012a1 1 0 0 0 .111 1.994a3 3 0 0 0 1.371 -5.673z"
-                    />
-                  </svg>
-                  {% endif %}
-                </li>
+                  <li>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path
+                        d="M21 16.008v-8.018a1.98 1.98 0 0 0 -1 -1.717l-7 -4.008a2.016 2.016 0 0 0 -2 0l-7 4.008c-.619 .355 -1 1.01 -1 1.718v8.018c0 .709 .381 1.363 1 1.717l7 4.008a2.016 2.016 0 0 0 2 0l7 -4.008c.619 -.355 1 -1.01 1 -1.718z"
+                      />
+                      <path d="M12 22v-10" />
+                      <path d="M12 12l8.73 -5.04" />
+                      <path d="M3.27 6.96l8.73 5.04" />
+                    </svg>
+                    {{ image.name }}
+                    {% case image.status %}
+                      {% when 'Up to date' %}
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          class="ml-auto text-green-500"
+                        >
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path
+                            d="M17 3.34a10 10 0 1 1 -14.995 8.984l-.005 -.324l.005 -.324a10 10 0 0 1 14.995 -8.336zm-1.293 5.953a1 1 0 0 0 -1.32 -.083l-.094 .083l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.403 1.403l.083 .094l2 2l.094 .083a1 1 0 0 0 1.226 0l.094 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z"
+                          />
+                        </svg>
+                      {% when 'Unknown' %}
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          class="text-{{ theme }}-500 ml-auto"
+                        >
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path
+                            d="M12 2c5.523 0 10 4.477 10 10a10 10 0 0 1 -19.995 .324l-.005 -.324l.004 -.28c.148 -5.393 4.566 -9.72 9.996 -9.72zm0 13a1 1 0 0 0 -.993 .883l-.007 .117l.007 .127a1 1 0 0 0 1.986 0l.007 -.117l-.007 -.127a1 1 0 0 0 -.993 -.883zm1.368 -6.673a2.98 2.98 0 0 0 -3.631 .728a1 1 0 0 0 1.44 1.383l.171 -.18a.98 .98 0 0 1 1.11 -.15a1 1 0 0 1 -.34 1.886l-.232 .012a1 1 0 0 0 .111 1.994a3 3 0 0 0 1.371 -5.673z"
+                          />
+                        </svg>
+                      {% else %}
+                        {% case image.status %}
+                          {% when 'Major update' %}
+                            {% assign color = 'text-red-500' %}
+                          {% when 'Minor update' %}
+                            {% assign color = 'text-yellow-500' %}
+                          {% else %}
+                            {% assign color = 'text-blue-500' %}
+                        {% endcase %}
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          class="ml-auto {{ color }}"
+                        >
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path
+                            d="M17 3.34a10 10 0 1 1 -14.995 8.984l-.005 -.324l.005 -.324a10 10 0 0 1 14.995 -8.336zm-4.98 3.66l-.163 .01l-.086 .016l-.142 .045l-.113 .054l-.07 .043l-.095 .071l-.058 .054l-4 4l-.083 .094a1 1 0 0 0 1.497 1.32l2.293 -2.293v5.586l.007 .117a1 1 0 0 0 1.993 -.117v-5.585l2.293 2.292l.094 .083a1 1 0 0 0 1.32 -1.497l-4 -4l-.082 -.073l-.089 -.064l-.113 -.062l-.081 -.034l-.113 -.034l-.112 -.02l-.098 -.006z"
+                          />
+                        </svg>
+                    {% endcase %}
+                  </li>
                 {% endfor %}
               </ul>
             </div>

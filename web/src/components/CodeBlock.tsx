@@ -29,10 +29,12 @@ export function CodeBlock({
       {enableCopy &&
         navigator.clipboard &&
         (copySuccess ? (
-          <IconCheck className={`absolute right-3 size-7 bg-${theme}-100 pl-2 py-1 dark:bg-${theme}-950`} />
+          <IconCheck
+            className={`absolute right-3 size-7 bg-${theme}-100 py-1 pl-2 dark:bg-${theme}-950`}
+          />
         ) : (
           <button
-            className={`duration-50 absolute right-3 bg-${theme}-100 pl-2 py-1 opacity-0 transition-opacity group-hover:opacity-100 dark:bg-${theme}-950`}
+            className={`duration-50 absolute right-3 bg-${theme}-100 py-1 pl-2 opacity-0 transition-opacity group-hover:opacity-100 dark:bg-${theme}-950`}
             onClick={handleCopy(`docker pull ${children}`)}
           >
             <IconClipboard className="size-5" />
