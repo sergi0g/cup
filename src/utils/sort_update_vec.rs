@@ -126,6 +126,7 @@ mod tests {
                     minor: Some(42),
                     patch: Some(1000),
                 }),
+                format_str: String::new()
             }),
             ..Default::default()
         }
@@ -145,6 +146,7 @@ mod tests {
                     minor: Some(47),
                     patch: Some(2),
                 }),
+                format_str: String::new()
             }),
             ..Default::default()
         }
@@ -164,6 +166,7 @@ mod tests {
                     minor: Some(0),
                     patch: None,
                 }),
+                format_str: String::new()
             }),
             ..Default::default()
         }

@@ -14,8 +14,8 @@ pub struct Version {
 }
 
 impl Version {
-    /// Tries to parse the tag into semver-like parts.
-    pub fn from_tag(tag: &str) -> Option<Self> {
+    /// Tries to parse the tag into semver-like parts. Returns a Version object and a string usable in format! with {} in the positions matches were found
+    pub fn from_tag(tag: &str) -> Option<(Self, String)> {
         /// Heavily modified version of the official semver regex based on common tagging schemes for container images. Sometimes it matches more than once, but we'll try to select the best match.
         static VERSION_REGEX: Lazy<Regex> = Lazy::new(|| {
             Regex::new(
@@ -43,19 +43,35 @@ impl Version {
         }
         match best_match {
             Some(c) => {
+                let mut positions = Vec::new();
                 let major: u32 = match c.name("major") {
-                    Some(major) => major.as_str().parse().unwrap(),
+                    Some(major) => {
+                        positions.push((major.start(), major.end()));
+                        major.as_str().parse().unwrap()
+                    }
                     None => return None,
                 };
-                let minor: Option<u32> =
-                    c.name("minor").map(|minor| minor.as_str().parse().unwrap());
-                let patch: Option<u32> =
-                    c.name("patch").map(|patch| patch.as_str().parse().unwrap());
-                Some(Version {
-                    major,
-                    minor,
-                    patch,
-                })
+                let minor: Option<u32> = c.name("minor").map(|minor| {
+                    positions.push((minor.start(), minor.end()));
+                    minor.as_str().parse().unwrap()
+                });
+                let patch: Option<u32> = c.name("patch").map(|patch| {
+                    positions.push((patch.start(), patch.end()));
+                    patch.as_str().parse().unwrap()
+                });
+                let mut format_str = tag.to_string();
+                positions.reverse();
+                positions.iter().for_each(|(start, end)| {
+                    format_str.replace_range(*start..*end, "{}");
+                });
+                Some((
+                    Version {
+                        major,
+                        minor,
+                        patch,
+                    },
+                    format_str,
+                ))
             }
             None => None,
         }
@@ -145,21 +161,21 @@ mod tests {
     #[test]
     #[rustfmt::skip]
     fn version() {
-        assert_eq!(Version::from_tag("5.3.2"                   ), Some(Version { major: 5,  minor: Some(3),   patch: Some(2)  }));
-        assert_eq!(Version::from_tag("14"                      ), Some(Version { major: 14, minor: None,   patch: None  }));
-        assert_eq!(Version::from_tag("v0.107.53"               ), Some(Version { major: 0,  minor: Some(107), patch: Some(53) }));
-        assert_eq!(Version::from_tag("12-alpine"               ), Some(Version { major: 12, minor: None,   patch: None  }));
-        assert_eq!(Version::from_tag("0.9.5-nginx"             ), Some(Version { major: 0,  minor: Some(9),   patch: Some(5)  }));
-        assert_eq!(Version::from_tag("v27.0"                   ), Some(Version { major: 27, minor: Some(0),   patch: None  }));
-        assert_eq!(Version::from_tag("16.1"                    ), Some(Version { major: 16, minor: Some(1),   patch: None  }));
-        assert_eq!(Version::from_tag("version-1.5.6"           ), Some(Version { major: 1,  minor: Some(5),   patch: Some(6)  }));
-        assert_eq!(Version::from_tag("15.4-alpine"             ), Some(Version { major: 15, minor: Some(4),   patch: None  }));
-        assert_eq!(Version::from_tag("pg14-v0.2.0"             ), Some(Version { major: 0,  minor: Some(2),   patch: Some(0)  }));
-        assert_eq!(Version::from_tag("18-jammy-full.s6-v0.88.0"), Some(Version { major: 0,  minor: Some(88),  patch: Some(0)  }));
-        assert_eq!(Version::from_tag("fpm-2.1.0-prod"          ), Some(Version { major: 2,  minor: Some(1),   patch: Some(0)  }));
-        assert_eq!(Version::from_tag("7.3.3.50"                ), Some(Version { major: 7,  minor: Some(3),   patch: Some(3)  }));
-        assert_eq!(Version::from_tag("1.21.11-0"               ), Some(Version { major: 1,  minor: Some(21),  patch: Some(11) }));
-        assert_eq!(Version::from_tag("4.1.2.1-full"            ), Some(Version { major: 4,  minor: Some(1),   patch: Some(2)  }));
-        assert_eq!(Version::from_tag("v4.0.3-ls215"            ), Some(Version { major: 4,  minor: Some(0),   patch: Some(3)  }));
+        assert_eq!(Version::from_tag("5.3.2"                   ), Some((Version { major: 5,  minor: Some(3),   patch: Some(2)  }, String::from("{}.{}.{}"                  ))));
+        assert_eq!(Version::from_tag("14"                      ), Some((Version { major: 14, minor: None,      patch: None     }, String::from("{}"                        ))));
+        assert_eq!(Version::from_tag("v0.107.53"               ), Some((Version { major: 0,  minor: Some(107), patch: Some(53) }, String::from("v{}.{}.{}"                 ))));
+        assert_eq!(Version::from_tag("12-alpine"               ), Some((Version { major: 12, minor: None,      patch: None     }, String::from("{}-alpine"                 ))));
+        assert_eq!(Version::from_tag("0.9.5-nginx"             ), Some((Version { major: 0,  minor: Some(9),   patch: Some(5)  }, String::from("{}.{}.{}-nginx"            ))));
+        assert_eq!(Version::from_tag("v27.0"                   ), Some((Version { major: 27, minor: Some(0),   patch: None     }, String::from("v{}.{}"                    ))));
+        assert_eq!(Version::from_tag("16.1"                    ), Some((Version { major: 16, minor: Some(1),   patch: None     }, String::from("{}.{}"                     ))));
+        assert_eq!(Version::from_tag("version-1.5.6"           ), Some((Version { major: 1,  minor: Some(5),   patch: Some(6)  }, String::from("version-{}.{}.{}"          ))));
+        assert_eq!(Version::from_tag("15.4-alpine"             ), Some((Version { major: 15, minor: Some(4),   patch: None     }, String::from("{}.{}-alpine"              ))));
+        assert_eq!(Version::from_tag("pg14-v0.2.0"             ), Some((Version { major: 0,  minor: Some(2),   patch: Some(0)  }, String::from("pg14-v{}.{}.{}"            ))));
+        assert_eq!(Version::from_tag("18-jammy-full.s6-v0.88.0"), Some((Version { major: 0,  minor: Some(88),  patch: Some(0)  }, String::from("18-jammy-full.s6-v{}.{}.{}"))));
+        assert_eq!(Version::from_tag("fpm-2.1.0-prod"          ), Some((Version { major: 2,  minor: Some(1),   patch: Some(0)  }, String::from("fpm-{}.{}.{}-prod"         ))));
+        assert_eq!(Version::from_tag("7.3.3.50"                ), Some((Version { major: 7,  minor: Some(3),   patch: Some(3)  }, String::from("{}.{}.{}.50"               ))));
+        assert_eq!(Version::from_tag("1.21.11-0"               ), Some((Version { major: 1,  minor: Some(21),  patch: Some(11) }, String::from("{}.{}.{}-0"                ))));
+        assert_eq!(Version::from_tag("4.1.2.1-full"            ), Some((Version { major: 4,  minor: Some(1),   patch: Some(2)  }, String::from("{}.{}.{}.1-full"           ))));
+        assert_eq!(Version::from_tag("v4.0.3-ls215"            ), Some((Version { major: 4,  minor: Some(0),   patch: Some(3)  }, String::from("v{}.{}.{}-ls215"           ))));
     }
 }

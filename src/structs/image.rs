@@ -23,6 +23,7 @@ pub struct DigestInfo {
 pub struct VersionInfo {
     pub current_tag: Version,
     pub latest_remote_tag: Option<Version>,
+    pub format_str: String
 }
 
 /// Image struct that contains all information that may be needed by a function working with an image.
@@ -62,8 +63,9 @@ impl Image {
                     local_digests,
                     remote_digest: None,
                 }),
-                version_info: version_tag.map(|vtag| VersionInfo {
+                version_info: version_tag.map(|(vtag, format_str)| VersionInfo {
                     current_tag: vtag,
+                    format_str,
                     latest_remote_tag: None,
                 }),
                 ..Default::default()
@@ -78,13 +80,14 @@ impl Image {
         let (registry, repository, tag) = split(reference);
         let version_tag = Version::from_tag(&tag);
         match version_tag {
-            Some(version) => Self {
+            Some((version, format_str)) => Self {
                 reference: reference.to_string(),
                 registry,
                 repository,
                 tag,
                 version_info: Some(VersionInfo {
                     current_tag: version,
+                    format_str,
                     latest_remote_tag: None,
                 }),
                 ..Default::default()

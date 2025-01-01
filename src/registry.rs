@@ -149,7 +149,7 @@ pub async fn get_latest_tag(
             tags.len()
         );
         let (new_tags, next) =
-            match get_extra_tags(&next_url.unwrap(), headers.clone(), base, client).await {
+            match get_extra_tags(&next_url.unwrap(), headers.clone(), base, &image.version_info.as_ref().unwrap().format_str, client).await {
                 Ok(t) => t,
                 Err(message) => {
                     return Image {
@@ -163,10 +163,6 @@ pub async fn get_latest_tag(
         next_url = next;
     }
     let tag = tags.iter().max();
-    let current_tag = match &image.version_info {
-        Some(data) => data.current_tag.clone(),
-        _ => unreachable!(),
-    };
     let time = timestamp() - start;
     debug!(
         config.debug,
@@ -179,8 +175,8 @@ pub async fn get_latest_tag(
                 get_latest_digest(
                     &Image {
                         version_info: Some(VersionInfo {
-                            current_tag,
                             latest_remote_tag: Some(t.clone()),
+                            ..image.version_info.as_ref().unwrap().clone()
                         }),
                         time_ms: image.time_ms + time,
                         ..image.clone()
@@ -193,8 +189,8 @@ pub async fn get_latest_tag(
             } else {
                 Image {
                     version_info: Some(VersionInfo {
-                        current_tag,
                         latest_remote_tag: Some(t.clone()),
+                        ..image.version_info.as_ref().unwrap().clone()
                     }),
                     time_ms: image.time_ms + time,
                     ..image.clone()
@@ -209,6 +205,7 @@ pub async fn get_extra_tags(
     url: &str,
     headers: Vec<(&str, Option<&str>)>,
     base: &Version,
+    format_str: &str,
     client: &Client,
 ) -> Result<(Vec<Version>, Option<String>), String> {
     let response = client.get(url, headers, false).await;
@@ -223,12 +220,13 @@ pub async fn get_extra_tags(
             let result = response_json["tags"]
                 .members()
                 .filter_map(|tag| Version::from_tag(&tag.to_string()))
-                .filter(|tag| match (base.minor, tag.minor) {
+                .filter(|(tag, format_string)| match (base.minor, tag.minor) {
                     (Some(_), Some(_)) | (None, None) => {
-                        matches!((base.patch, tag.patch), (Some(_), Some(_)) | (None, None))
+                        matches!((base.patch, tag.patch), (Some(_), Some(_)) | (None, None)) && format_str == *format_string
                     }
                     _ => false,
                 })
+                .map(|(tag, _)| tag)
                 .dedup()
                 .collect();
             Ok((result, next_url))
