@@ -40,7 +40,7 @@ pub fn get_protocol(
     }
 }
 
-pub fn to_bearer_string(token: &Option<&String>) -> Option<String> {
+pub fn to_bearer_string(token: &Option<&str>) -> Option<String> {
     token.as_ref().map(|t| format!("Bearer {}", t))
 }
 

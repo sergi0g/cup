@@ -183,7 +183,7 @@ impl Image {
     }
 
     /// Checks if the image has an update
-    pub async fn check(&self, token: Option<&String>, config: &Config, client: &Client) -> Self {
+    pub async fn check(&self, token: Option<&str>, config: &Config, client: &Client) -> Self {
         match &self.version_info {
             Some(data) => get_latest_tag(self, &data.current_tag, token, config, client).await,
             None => match self.digest_info {

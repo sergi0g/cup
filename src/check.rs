@@ -73,7 +73,7 @@ pub async fn get_updates(references: &Option<Vec<String>>, config: &Config) -> V
                 let token = get_token(
                     image_map.get(registry).unwrap(),
                     &auth_url,
-                    &credentials,
+                    credentials,
                     &client,
                 )
                 .await;
@@ -107,7 +107,7 @@ pub async fn get_updates(references: &Option<Vec<String>>, config: &Config) -> V
         let is_ignored = ignored_registries.contains(&&image.registry) || config.images.exclude.iter().any(|item| image.reference.starts_with(item));
         if !is_ignored {
             let token = tokens.get(image.registry.as_str()).unwrap();
-            let future = image.check(token.as_ref(), config, &client);
+            let future = image.check(token.as_deref(), config, &client);
             handles.push(future);
         }
     }

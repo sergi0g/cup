@@ -43,7 +43,7 @@ pub async fn check_auth(registry: &str, config: &Config, client: &Client) -> Opt
 
 pub async fn get_latest_digest(
     image: &Image,
-    token: Option<&String>,
+    token: Option<&str>,
     config: &Config,
     client: &Client,
 ) -> Image {
@@ -119,7 +119,7 @@ pub async fn get_token(
 pub async fn get_latest_tag(
     image: &Image,
     base: &Version,
-    token: Option<&String>,
+    token: Option<&str>,
     config: &Config,
     client: &Client,
 ) -> Image {

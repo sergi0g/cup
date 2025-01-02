@@ -33,7 +33,7 @@ const FAVICON_ICO: &[u8] = include_bytes!("static/favicon.ico");
 const FAVICON_SVG: &[u8] = include_bytes!("static/favicon.svg");
 const APPLE_TOUCH_ICON: &[u8] = include_bytes!("static/apple-touch-icon.png");
 
-const SORT_ORDER: [&'static str; 8] = [
+const SORT_ORDER: [&str; 8] = [
     "monitored_images",
     "updates_available",
     "major_updates",
