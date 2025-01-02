@@ -1,12 +1,12 @@
 use std::cmp::Ordering;
 
-use crate::structs::image::Image;
+use crate::structs::update::Update;
 
 /// Sorts the update vector alphabetically and by Status
-pub fn sort_image_vec(updates: &[Image]) -> Vec<Image> {
+pub fn sort_update_vec(updates: &[Update]) -> Vec<Update> {
     let mut sorted_updates = updates.to_vec();
     sorted_updates.sort_by(|a, b| {
-        let cmp = a.has_update().cmp(&b.has_update());
+        let cmp = a.get_status().cmp(&b.get_status());
         if cmp == Ordering::Equal {
             a.reference.cmp(&b.reference)
         } else {
@@ -18,10 +18,7 @@ pub fn sort_image_vec(updates: &[Image]) -> Vec<Image> {
 
 #[cfg(test)]
 mod tests {
-    use crate::structs::{
-        image::{DigestInfo, VersionInfo},
-        version::Version,
-    };
+    use crate::structs::{status::Status, update::UpdateResult};
 
     use super::*;
 
@@ -40,8 +37,8 @@ mod tests {
         let digest_update_2 = create_digest_update("library/alpine");
         let up_to_date_1 = create_up_to_date("docker:dind");
         let up_to_date_2 = create_up_to_date("ghcr.io/sergi0g/cup");
-        let unknown_1 = create_unknown("fake_registry.com/fake/image");
-        let unknown_2 = create_unknown("private_registry.io/private/image");
+        let unknown_1 = create_unknown("fake_registry.com/fake/Update");
+        let unknown_2 = create_unknown("private_registry.io/private/Update");
         let input_vec = vec![
             major_update_2.clone(),
             unknown_2.clone(),
@@ -72,102 +69,61 @@ mod tests {
         ];
 
         // Sort the vec
-        let sorted_vec = sort_image_vec(&input_vec);
+        let sorted_vec = sort_update_vec(&input_vec);
 
         // Check results
         assert_eq!(sorted_vec, expected_vec);
     }
 
-    fn create_unknown(reference: &str) -> Image {
-        Image {
+    fn create_unknown(reference: &str) -> Update {
+        Update {
             reference: reference.to_string(),
-            error: Some("whoops".to_string()),
+            status: Status::Unknown("".to_string()),
+            result: UpdateResult {
+                has_update: None,
+                info: Default::default(),
+                error: Some("Error".to_string()),
+            },
             ..Default::default()
         }
     }
 
-    fn create_up_to_date(reference: &str) -> Image {
-        Image {
+    fn create_up_to_date(reference: &str) -> Update {
+        Update {
             reference: reference.to_string(),
-            digest_info: Some(DigestInfo {
-                local_digests: vec![
-                    "some_digest".to_string(),
-                    "some_other_digest".to_string(),
-                    "latest_digest".to_string(),
-                ],
-                remote_digest: Some("latest_digest".to_string()),
-            }),
+            status: Status::UpToDate,
             ..Default::default()
         }
     }
 
-    fn create_digest_update(reference: &str) -> Image {
-        Image {
+    fn create_digest_update(reference: &str) -> Update {
+        Update {
             reference: reference.to_string(),
-            digest_info: Some(DigestInfo {
-                local_digests: vec!["some_digest".to_string(), "some_other_digest".to_string()],
-                remote_digest: Some("latest_digest".to_string()),
-            }),
+            status: Status::UpdateAvailable,
             ..Default::default()
         }
     }
 
-    fn create_patch_update(reference: &str) -> Image {
-        Image {
+    fn create_patch_update(reference: &str) -> Update {
+        Update {
             reference: reference.to_string(),
-            version_info: Some(VersionInfo {
-                current_tag: Version {
-                    major: 19,
-                    minor: Some(42),
-                    patch: Some(999),
-                },
-                latest_remote_tag: Some(Version {
-                    major: 19,
-                    minor: Some(42),
-                    patch: Some(1000),
-                }),
-                format_str: String::new()
-            }),
+            status: Status::UpdatePatch,
             ..Default::default()
         }
     }
 
-    fn create_minor_update(reference: &str) -> Image {
-        Image {
+    fn create_minor_update(reference: &str) -> Update {
+        Update {
             reference: reference.to_string(),
-            version_info: Some(VersionInfo {
-                current_tag: Version {
-                    major: 19,
-                    minor: Some(42),
-                    patch: Some(45),
-                },
-                latest_remote_tag: Some(Version {
-                    major: 19,
-                    minor: Some(47),
-                    patch: Some(2),
-                }),
-                format_str: String::new()
-            }),
+            status: Status::UpdateMinor,
             ..Default::default()
         }
     }
 
-    fn create_major_update(reference: &str) -> Image {
-        Image {
+    fn create_major_update(reference: &str) -> Update {
+        Update {
             reference: reference.to_string(),
-            version_info: Some(VersionInfo {
-                current_tag: Version {
-                    major: 17,
-                    minor: Some(42),
-                    patch: None,
-                },
-                latest_remote_tag: Some(Version {
-                    major: 19,
-                    minor: Some(0),
-                    patch: None,
-                }),
-                format_str: String::new()
-            }),
+            status: Status::UpdateMajor,
             ..Default::default()
         }
     }

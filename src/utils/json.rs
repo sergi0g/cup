@@ -2,10 +2,10 @@
 
 use serde_json::{json, Map, Value};
 
-use crate::structs::{image::Image, status::Status};
+use crate::structs::{status::Status, update::Update};
 
 /// Helper function to get metrics used in JSON output
-pub fn get_metrics(updates: &[Image]) -> Value {
+pub fn get_metrics(updates: &[Update]) -> Value {
     let mut up_to_date = 0;
     let mut major_updates = 0;
     let mut minor_updates = 0;
@@ -13,7 +13,7 @@ pub fn get_metrics(updates: &[Image]) -> Value {
     let mut other_updates = 0;
     let mut unknown = 0;
     updates.iter().for_each(|image| {
-        let has_update = image.has_update();
+        let has_update = image.get_status();
         match has_update {
             Status::UpdateMajor => {
                 major_updates += 1;
@@ -37,36 +37,39 @@ pub fn get_metrics(updates: &[Image]) -> Value {
     });
     json!({
         "monitored_images": updates.len(),
-        "up_to_date": up_to_date,
         "updates_available": major_updates + minor_updates + patch_updates + other_updates,
         "major_updates": major_updates,
         "minor_updates": minor_updates,
         "patch_updates": patch_updates,
         "other_updates": other_updates,
+        "up_to_date": up_to_date,
         "unknown": unknown
     })
 }
 
 /// Takes a slice of `Image` objects and returns a `Value` with update info. The output doesn't contain much detail
-pub fn to_simple_json(updates: &[Image]) -> Value {
-    let mut images = Map::new();
-    updates.iter().for_each(|image| {
-        let _ = images.insert(
-            image.reference.clone(),
-            image.has_update().to_option_bool().into(),
+pub fn to_simple_json(updates: &[Update]) -> Value {
+    let mut update_map = Map::new();
+    updates.iter().for_each(|update| {
+        let _ = update_map.insert(
+            update.reference.clone(),
+            match update.result.has_update {
+                Some(has_update) => Value::Bool(has_update),
+                None => Value::Null,
+            },
         );
     });
     let json_data: Value = json!({
         "metrics": get_metrics(updates),
-        "images": images,
+        "images": updates,
     });
     json_data
 }
 
 /// Takes a slice of `Image` objects and returns a `Value` with update info. All image data is included, useful for debugging.
-pub fn to_full_json(updates: &[Image]) -> Value {
+pub fn to_full_json(updates: &[Update]) -> Value {
     json!({
         "metrics": get_metrics(updates),
-        "images": updates.iter().map(|image| image.to_json()).collect::<Vec<Value>>(),
+        "images": updates.iter().map(|update| serde_json::to_value(update).unwrap()).collect::<Vec<Value>>(),
     })
 }

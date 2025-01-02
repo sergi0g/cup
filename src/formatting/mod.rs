@@ -1,17 +1,17 @@
 pub mod spinner;
 
 use crate::{
-    structs::{image::Image, status::Status},
-    utils::{json::to_simple_json, sort_update_vec::sort_image_vec},
+    structs::{status::Status, update::Update},
+    utils::{json::to_simple_json, sort_update_vec::sort_update_vec},
 };
 
-pub fn print_updates(updates: &[Image], icons: &bool) {
-    let sorted_images = sort_image_vec(updates);
+pub fn print_updates(updates: &[Update], icons: &bool) {
+    let sorted_images = sort_update_vec(updates);
     let term_width: usize = termsize::get()
         .unwrap_or(termsize::Size { rows: 24, cols: 80 })
         .cols as usize;
     for image in sorted_images {
-        let has_update = image.has_update();
+        let has_update = image.get_status();
         let description = has_update.to_string();
         let icon = if *icons {
             match has_update {
@@ -38,6 +38,6 @@ pub fn print_updates(updates: &[Image], icons: &bool) {
     }
 }
 
-pub fn print_raw_updates(updates: &[Image]) {
+pub fn print_raw_updates(updates: &[Update]) {
     println!("{}", to_simple_json(updates));
 }

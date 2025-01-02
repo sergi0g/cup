@@ -8,44 +8,93 @@ use crate::{
     docker::get_images_from_docker_daemon,
     http::Client,
     registry::{check_auth, get_token},
-    structs::image::Image,
+    structs::{image::Image, update::Update},
+    utils::request::{get_response_body, parse_json},
 };
 
+/// Fetches image data from other Cup servers
+async fn get_remote_updates(servers: &[String], client: &Client) -> Vec<Update> {
+    let mut remote_images = Vec::new();
+
+    let futures: Vec<_> = servers
+        .iter()
+        .map(|server| async {
+            let url = if server.starts_with("http://") || server.starts_with("https://") {
+                format!("{}/api/v3/json", server.trim_end_matches('/'))
+            } else {
+                format!("https://{}/api/v3/json", server.trim_end_matches('/'))
+            };
+            match client.get(&url, vec![], false).await {
+                Ok(response) => {
+                    let json = parse_json(&get_response_body(response).await);
+                    if let Some(updates) = json["images"].as_array() {
+                        let mut server_updates: Vec<Update> = updates
+                            .iter()
+                            .filter_map(|img| serde_json::from_value(img.clone()).ok())
+                            .collect();
+                        // Add server origin to each image
+                        for update in &mut server_updates {
+                            update.server = Some(server.clone());
+                            update.status = update.get_status();
+                        }
+                        return server_updates;
+                    }
+
+                    Vec::new()
+                }
+                Err(_) => Vec::new(),
+            }
+        })
+        .collect();
+
+    for mut images in join_all(futures).await {
+        remote_images.append(&mut images);
+    }
+
+    remote_images
+}
+
 /// Returns a list of updates for all images passed in.
-pub async fn get_updates(references: &Option<Vec<String>>, config: &Config) -> Vec<Image> {
-    // Get images
+pub async fn get_updates(references: &Option<Vec<String>>, config: &Config) -> Vec<Update> {
+    let client = Client::new();
+
+    // Get local images
     debug!(config.debug, "Retrieving images to be checked");
     let mut images = get_images_from_docker_daemon(config, references).await;
-    let extra_images = match references {
-        Some(refs) => {
-            let image_refs: FxHashSet<&String> =
-                images.iter().map(|image| &image.reference).collect();
-            let extra = refs
-                .iter()
-                .filter(|&reference| !image_refs.contains(reference))
-                .collect::<Vec<&String>>();
-            Some(
-                extra
-                    .iter()
-                    .map(|reference| Image::from_reference(reference))
-                    .collect::<Vec<Image>>(),
-            )
-        }
-        None => None,
-    };
-    if let Some(extra_imgs) = extra_images {
-        images.extend_from_slice(&extra_imgs);
+
+    // Add extra images from references
+    if let Some(refs) = references {
+        let image_refs: FxHashSet<&String> =
+            images.iter().map(|image| &image.reference).collect();
+        let extra = refs
+            .iter()
+            .filter(|&reference| !image_refs.contains(reference))
+            .map(|reference| Image::from_reference(reference))
+            .collect::<Vec<Image>>();
+        images.extend(extra);
     }
+
+    // Get remote images from other servers
+    let remote_updates = if !config.servers.is_empty() {
+        debug!(config.debug, "Fetching updates from remote servers");
+        get_remote_updates(&config.servers, &client).await
+    } else {
+        Vec::new()
+    };
+
     debug!(
         config.debug,
         "Checking {:?}",
-        images.iter().map(|image| &image.reference).collect_vec()
+        images
+            .iter()
+            .map(|image| &image.reference)
+            .collect_vec()
     );
 
     // Get a list of unique registries our images belong to. We are unwrapping the registry because it's guaranteed to be there.
     let registries: Vec<&String> = images
         .iter()
-        .map(|image| &image.registry)
+        .map(|image| &image.parts.registry)
         .unique()
         .collect::<Vec<&String>>();
 
@@ -57,7 +106,7 @@ pub async fn get_updates(references: &Option<Vec<String>>, config: &Config) -> V
     let mut image_map: FxHashMap<&String, Vec<&Image>> = FxHashMap::default();
 
     for image in &images {
-        image_map.entry(&image.registry).or_default().push(image);
+        image_map.entry(&image.parts.registry).or_default().push(image);
     }
 
     // Retrieve an authentication token (if required) for each registry.
@@ -87,9 +136,6 @@ pub async fn get_updates(references: &Option<Vec<String>>, config: &Config) -> V
 
     debug!(config.debug, "Tokens: {:?}", tokens);
 
-    // Create a Vec to store futures so we can await them all at once.
-    let mut handles = Vec::with_capacity(images.len());
-
     let ignored_registries = config
         .registries
         .iter()
@@ -102,15 +148,25 @@ pub async fn get_updates(references: &Option<Vec<String>>, config: &Config) -> V
         })
         .collect::<Vec<&String>>();
 
-    // Loop through images and get the latest digest for each
+    let mut handles = Vec::with_capacity(images.len());
+    
+    // Loop through images check for updates
     for image in &images {
-        let is_ignored = ignored_registries.contains(&&image.registry) || config.images.exclude.iter().any(|item| image.reference.starts_with(item));
+        let is_ignored = ignored_registries.contains(&&image.parts.registry)
+            || config
+                .images
+                .exclude
+                .iter()
+                .any(|item| image.reference.starts_with(item));
         if !is_ignored {
-            let token = tokens.get(image.registry.as_str()).unwrap();
+            let token = tokens.get(image.parts.registry.as_str()).unwrap();
             let future = image.check(token.as_deref(), config, &client);
             handles.push(future);
         }
     }
     // Await all the futures
-    join_all(handles).await
+    let images = join_all(handles).await;
+    let mut updates: Vec<Update> = images.iter().map(|image| image.to_update()).collect();
+    updates.extend_from_slice(&remote_updates);
+    updates
 }

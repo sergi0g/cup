@@ -1,5 +1,3 @@
-use serde_json::{json, Value};
-
 use crate::{
     config::Config,
     error,
@@ -9,7 +7,11 @@ use crate::{
     utils::reference::split,
 };
 
-use super::inspectdata::InspectData;
+use super::{
+    inspectdata::InspectData,
+    parts::Parts,
+    update::{DigestUpdateInfo, Update, UpdateInfo, UpdateResult, VersionUpdateInfo},
+};
 
 #[derive(Clone, PartialEq)]
 #[cfg_attr(test, derive(Debug))]
@@ -23,7 +25,7 @@ pub struct DigestInfo {
 pub struct VersionInfo {
     pub current_tag: Version,
     pub latest_remote_tag: Option<Version>,
-    pub format_str: String
+    pub format_str: String,
 }
 
 /// Image struct that contains all information that may be needed by a function working with an image.
@@ -32,9 +34,7 @@ pub struct VersionInfo {
 #[cfg_attr(test, derive(Debug))]
 pub struct Image {
     pub reference: String,
-    pub registry: String,
-    pub repository: String,
-    pub tag: String,
+    pub parts: Parts,
     pub digest_info: Option<DigestInfo>,
     pub version_info: Option<VersionInfo>,
     pub error: Option<String>,
@@ -56,9 +56,11 @@ impl Image {
                 .collect();
             Some(Self {
                 reference,
-                registry,
-                repository,
-                tag,
+                parts: Parts {
+                    registry,
+                    repository,
+                    tag,
+                },
                 digest_info: Some(DigestInfo {
                     local_digests,
                     remote_digest: None,
@@ -82,9 +84,11 @@ impl Image {
         match version_tag {
             Some((version, format_str)) => Self {
                 reference: reference.to_string(),
-                registry,
-                repository,
-                tag,
+                parts: Parts {
+                    registry,
+                    repository,
+                    tag,
+                },
                 version_info: Some(VersionInfo {
                     current_tag: version,
                     format_str,
@@ -127,59 +131,65 @@ impl Image {
         }
     }
 
-    /// Converts image data into a `Value`
-    pub fn to_json(&self) -> Value {
+    /// Converts image data into an `Update`
+    pub fn to_update(&self) -> Update {
         let has_update = self.has_update();
         let update_type = match has_update {
             Status::UpdateMajor | Status::UpdateMinor | Status::UpdatePatch => "version",
             _ => "digest",
         };
-        json!({
-            "reference": self.reference.clone(),
-            "parts": {
-                "registry": self.registry.clone(),
-                "repository": self.repository.clone(),
-                "tag": self.tag.clone()
-            },
-            "result": {
-                "has_update": has_update.to_option_bool(),
-                "info": match has_update {
-                    Status::Unknown(_) => None,
-                    _ => Some(match update_type {
+        Update {
+            reference: self.reference.clone(),
+            parts: self.parts.clone(),
+            result: UpdateResult {
+                has_update: has_update.to_option_bool(),
+                info: match has_update {
+                    Status::Unknown(_) => UpdateInfo::None,
+                    _ => match update_type {
                         "version" => {
-                            let (version_tag, latest_remote_tag) = match &self.version_info {
-                                Some(data) => (data.current_tag.clone(), data.latest_remote_tag.clone()),
-                                _ => unreachable!()
+                            let (new_tag, format_str) = match &self.version_info {
+                                Some(data) => (
+                                    data.latest_remote_tag.clone().unwrap(),
+                                    data.format_str.clone(),
+                                ),
+                                _ => unreachable!(),
                             };
-                            json!({
-                                "type": update_type,
-                                "version_update_type": match has_update {
+
+                            UpdateInfo::Version(VersionUpdateInfo {
+                                version_update_type: match has_update {
                                     Status::UpdateMajor => "major",
                                     Status::UpdateMinor => "minor",
                                     Status::UpdatePatch => "patch",
-                                    _ => unreachable!()
-                                },
-                                "new_version": self.tag.replace(&version_tag.to_string(), &latest_remote_tag.as_ref().unwrap().to_string())
+                                    _ => unreachable!(),
+                                }
+                                .to_string(),
+                                new_version: format_str
+                                    .replacen("{}", &new_tag.major.to_string(), 1)
+                                    .replacen("{}", &new_tag.minor.unwrap_or(0).to_string(), 1)
+                                    .replacen("{}", &new_tag.patch.unwrap_or(0).to_string(), 1),
                             })
-                        },
+                        }
                         "digest" => {
                             let (local_digests, remote_digest) = match &self.digest_info {
-                                Some(data) => (data.local_digests.clone(), data.remote_digest.clone()),
-                                _ => unreachable!()
+                                Some(data) => {
+                                    (data.local_digests.clone(), data.remote_digest.clone())
+                                }
+                                _ => unreachable!(),
                             };
-                            json!({
-                                "type": update_type,
-                                "local_digests": local_digests,
-                                "remote_digest": remote_digest,
+                            UpdateInfo::Digest(DigestUpdateInfo {
+                                local_digests,
+                                remote_digest,
                             })
-                        },
-                        _ => unreachable!()
-                    }),
+                        }
+                        _ => unreachable!(),
+                    },
                 },
-                "error": self.error.clone()
+                error: self.error.clone(),
             },
-            "time": self.time_ms
-        })
+            time: self.time_ms,
+            server: None,
+            status: Status::Unknown(String::new())
+        }
     }
 
     /// Checks if the image has an update

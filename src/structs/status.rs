@@ -1,7 +1,8 @@
 use std::fmt::Display;
 
 /// Enum for image status
-#[derive(Ord, Eq, PartialEq, PartialOrd)]
+#[derive(Ord, Eq, PartialEq, PartialOrd, Clone)]
+#[cfg_attr(test, derive(Debug))]
 pub enum Status {
     UpdateMajor,
     UpdateMinor,
@@ -32,5 +33,11 @@ impl Status {
             Self::Unknown(_) => None,
             _ => Some(true),
         }
+    }
+}
+
+impl Default for Status {
+    fn default() -> Self {
+        Self::Unknown("".to_string())
     }
 }

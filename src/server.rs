@@ -19,10 +19,10 @@ use crate::{
     check::get_updates,
     config::{Config, Theme},
     info,
-    structs::image::Image,
+    structs::update::Update,
     utils::{
         json::{to_full_json, to_simple_json},
-        sort_update_vec::sort_image_vec,
+        sort_update_vec::sort_update_vec,
         time::{elapsed, now},
     },
 };
@@ -147,7 +147,7 @@ async fn refresh(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
 
 struct ServerData {
     template: String,
-    raw_updates: Vec<Image>,
+    raw_updates: Vec<Update>,
     simple_json: Value,
     full_json: Value,
     config: Config,
@@ -172,7 +172,7 @@ impl ServerData {
         if !self.raw_updates.is_empty() {
             info!("Refreshing data");
         }
-        let updates = sort_image_vec(&get_updates(&None, &self.config).await);
+        let updates = sort_update_vec(&get_updates(&None, &self.config).await);
         info!(
             "✨ Checked {} images in {}ms",
             updates.len(),
@@ -187,7 +187,7 @@ impl ServerData {
         let images = self
             .raw_updates
             .iter()
-            .map(|image| object!({"name": image.reference, "status": image.has_update().to_string()}),)
+            .map(|image| object!({"name": image.reference, "status": image.get_status().to_string()}),)
             .collect::<Vec<Object>>();
         self.simple_json = to_simple_json(&self.raw_updates);
         self.full_json = to_full_json(&self.raw_updates);

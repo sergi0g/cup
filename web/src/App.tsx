@@ -9,6 +9,17 @@ import { theme } from "./theme";
 import RefreshButton from "./components/RefreshButton";
 import Search from "./components/Search";
 
+const SORT_ORDER = [
+  "monitored_images",
+  "updates_available",
+  "major_updates",
+  "minor_updates",
+  "patch_updates",
+  "other_updates",
+  "up_to_date",
+  "unknown",
+];
+
 function App() {
   const [data, setData] = useState<Data | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -29,7 +40,9 @@ function App() {
             className={`bg-white shadow-sm dark:bg-${theme}-900 my-8 rounded-md`}
           >
             <dl className="grid grid-cols-2 gap-1 overflow-hidden *:relative lg:grid-cols-4">
-              {Object.entries(data.metrics).map(([name]) => (
+              {Object.entries(data.metrics).sort((a, b) => {
+                return SORT_ORDER.indexOf(a[0]) - SORT_ORDER.indexOf(b[0]);
+              }).map(([name]) => (
                 <Statistic
                   name={name as keyof typeof data.metrics}
                   metrics={data.metrics}

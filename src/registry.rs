@@ -52,10 +52,10 @@ pub async fn get_latest_digest(
         "Checking for digest update to {}", image.reference
     );
     let start = SystemTime::now();
-    let protocol = get_protocol(&image.registry, &config.registries);
+    let protocol = get_protocol(&image.parts.registry, &config.registries);
     let url = format!(
         "{}://{}/v2/{}/manifests/{}",
-        protocol, &image.registry, &image.repository, &image.tag
+        protocol, &image.parts.registry, &image.parts.repository, &image.parts.tag
     );
     let authorization = to_bearer_string(&token);
     let headers = vec![("Accept", Some("application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.docker.distribution.manifest.v2+json, application/vnd.oci.image.index.v1+json")), ("Authorization", authorization.as_deref())];
@@ -103,7 +103,7 @@ pub async fn get_token(
 ) -> String {
     let mut url = auth_url.to_owned();
     for image in images {
-        url = format!("{}&scope=repository:{}:pull", url, image.repository);
+        url = format!("{}&scope=repository:{}:pull", url, image.parts.repository);
     }
     let authorization = credentials.as_ref().map(|creds| format!("Basic {}", creds));
     let headers = vec![("Authorization", authorization.as_deref())];
@@ -128,10 +128,10 @@ pub async fn get_latest_tag(
         "Checking for tag update to {}", image.reference
     );
     let start = now();
-    let protocol = get_protocol(&image.registry, &config.registries);
+    let protocol = get_protocol(&image.parts.registry, &config.registries);
     let url = format!(
         "{}://{}/v2/{}/tags/list",
-        protocol, &image.registry, &image.repository,
+        protocol, &image.parts.registry, &image.parts.repository,
     );
     let authorization = to_bearer_string(&token);
     let headers = vec![
