@@ -14,25 +14,6 @@
             "type": "boolean",
             "description": "Whether or not to enable agent mode. When agent mode is enabled, the server only exposes the API and the web interface is unavailable."
         },
-        "registries": {
-            "type": "object",
-            "description": "Configuration options for specific registries",
-            "additionalProperties": {
-                "authentication": {
-                    "description": "An authentication token provided by the registry",
-                    "type": "string",
-                    "minLength": 1
-                },
-                "insecure": {
-                    "description": "Whether Cup should connect to the registry insecurely (HTTP) or not. Enable this only if you really need to.",
-                    "type": "boolean"
-                },
-                "ignore": {
-                    "description": "Whether or not the registry should be ignored when running Cup",
-                    "type": "boolean"
-                }
-            }
-        },
         "images": {
             "type": "object",
             "description": "Configuration options for specific images",
@@ -53,13 +34,29 @@
                 }
             }
         },
-        "theme": {
-            "description": "The theme used by the web UI",
+        "refresh_interval": {
             "type": "string",
-            "enum": [
-                "default",
-                "blue"
-            ]
+            "description": "The interval at which Cup should check for updates. Must be a valid cron expression. Reference: https://github.com/Hexagon/croner-rust#pattern",
+            "minLength": 11
+        },
+        "registries": {
+            "type": "object",
+            "description": "Configuration options for specific registries",
+            "additionalProperties": {
+                "authentication": {
+                    "description": "An authentication token provided by the registry",
+                    "type": "string",
+                    "minLength": 1
+                },
+                "insecure": {
+                    "description": "Whether Cup should connect to the registry insecurely (HTTP) or not. Enable this only if you really need to.",
+                    "type": "boolean"
+                },
+                "ignore": {
+                    "description": "Whether or not the registry should be ignored when running Cup",
+                    "type": "boolean"
+                }
+            }
         },
         "socket": {
             "description": "The path to the unix socket you would like Cup to use for communication with the Docker daemon. Useful if you're trying to use Cup with Podman.",
@@ -74,6 +71,14 @@
                 "type": "string",
                 "minLength": 1
             }
+        },
+        "theme": {
+            "description": "The theme used by the web UI",
+            "type": "string",
+            "enum": [
+                "default",
+                "blue"
+            ]
         }
     },
     "required": [
