@@ -40,13 +40,14 @@ pub struct ImageConfig {
 pub struct Config {
     version: u8,
     pub agent: bool,
-    pub registries: FxHashMap<String, RegistryConfig>,
-    pub images: ImageConfig,
-    pub theme: Theme,
-    pub socket: Option<String>,
-    pub servers: Vec<String>,
     #[serde(skip_deserializing)]
     pub debug: bool,
+    pub images: ImageConfig,
+    pub refresh_interval: Option<String>,
+    pub registries: FxHashMap<String, RegistryConfig>,
+    pub servers: Vec<String>,
+    pub socket: Option<String>,
+    pub theme: Theme,
 }
 
 impl Config {
@@ -54,12 +55,13 @@ impl Config {
         Self {
             version: 3,
             agent: false,
-            registries: FxHashMap::default(),
-            images: ImageConfig::default(),
-            theme: Theme::Default,
-            socket: None,
-            servers: Vec::new(),
             debug: false,
+            images: ImageConfig::default(),
+            refresh_interval: None,
+            registries: FxHashMap::default(),
+            servers: Vec::new(),
+            socket: None,
+            theme: Theme::Default,
         }
     }
 

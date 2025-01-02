@@ -4,6 +4,7 @@ use chrono::Local;
 use liquid::{object, Object, ValueView};
 use serde_json::Value;
 use tokio::sync::Mutex;
+use tokio_cron_scheduler::{Job, JobScheduler};
 use xitca_web::{
     body::ResponseBody,
     error::Error,
@@ -47,9 +48,27 @@ const SORT_ORDER: [&str; 8] = [
 pub async fn serve(port: &u16, config: &Config) -> std::io::Result<()> {
     info!("Starting server, please wait...");
     let data = ServerData::new(config).await;
+    let scheduler = JobScheduler::new().await.unwrap();
+    let data = Arc::new(Mutex::new(data));
+    let data_copy = data.clone();
+    if let Some(interval) = &config.refresh_interval {
+        scheduler
+            .add(
+                Job::new_async(interval, move |_uuid, _lock| {
+                    let data_copy = data_copy.clone();
+                    Box::pin(async move {
+                        data_copy.lock().await.refresh().await;
+                    })
+                })
+                .unwrap(),
+            )
+            .await
+            .unwrap();
+    }
+    scheduler.start().await.unwrap();
     info!("Ready to start!");
     let mut app_builder = App::new()
-        .with_state(Arc::new(Mutex::new(data)))
+        .with_state(data)
         .at("/api/v2/json", get(handler_service(api_simple)))
         .at("/api/v3/json", get(handler_service(api_full)))
         .at("/api/v2/refresh", get(handler_service(refresh)))
