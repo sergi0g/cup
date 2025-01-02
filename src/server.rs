@@ -1,16 +1,17 @@
 use std::sync::Arc;
 
 use chrono::Local;
-use json::JsonValue;
 use liquid::{object, Object, ValueView};
+use serde_json::Value;
 use tokio::sync::Mutex;
 use xitca_web::{
     body::ResponseBody,
+    error::Error,
     handler::{handler_service, path::PathRef, state::StateRef},
-    http::WebResponse,
-    middleware::Logger,
+    http::{StatusCode, WebResponse},
     route::get,
-    App,
+    service::Service,
+    App, WebContext,
 };
 
 use crate::{
@@ -20,8 +21,8 @@ use crate::{
     structs::image::Image,
     utils::{
         json::{to_full_json, to_simple_json},
-        misc::timestamp,
         sort_update_vec::sort_image_vec,
+        time::{elapsed, now},
     },
 };
 
@@ -59,7 +60,7 @@ pub async fn serve(port: &u16, config: &Config) -> std::io::Result<()> {
             .at("/*", get(handler_service(_static)));
     }
     app_builder
-        .enclosed(Logger::new())
+        .enclosed_fn(logger)
         .serve()
         .bind(format!("0.0.0.0:{}", port))?
         .run()
@@ -105,18 +106,18 @@ async fn _static(data: StateRef<'_, Arc<Mutex<ServerData>>>, path: PathRef<'_>) 
 async fn api_simple(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
     WebResponse::builder()
         .header("Content-Type", "application/json")
-        .body(ResponseBody::from(json::stringify(
-            data.lock().await.simple_json.clone(),
-        )))
+        .body(ResponseBody::from(
+            data.lock().await.simple_json.clone().to_string(),
+        ))
         .unwrap()
 }
 
 async fn api_full(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
     WebResponse::builder()
         .header("Content-Type", "application/json")
-        .body(ResponseBody::from(json::stringify(
-            data.lock().await.full_json.clone(),
-        )))
+        .body(ResponseBody::from(
+            data.lock().await.full_json.clone().to_string(),
+        ))
         .unwrap()
 }
 
@@ -128,8 +129,8 @@ async fn refresh(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
 struct ServerData {
     template: String,
     raw_updates: Vec<Image>,
-    simple_json: JsonValue,
-    full_json: JsonValue,
+    simple_json: Value,
+    full_json: Value,
     config: Config,
     theme: &'static str,
 }
@@ -139,8 +140,8 @@ impl ServerData {
         let mut s = Self {
             config: config.clone(),
             template: String::new(),
-            simple_json: JsonValue::Null,
-            full_json: JsonValue::Null,
+            simple_json: Value::Null,
+            full_json: Value::Null,
             raw_updates: Vec::new(),
             theme: "neutral",
         };
@@ -148,13 +149,16 @@ impl ServerData {
         s
     }
     async fn refresh(&mut self) {
-        let start = timestamp();
+        let start = now();
         if !self.raw_updates.is_empty() {
             info!("Refreshing data");
         }
         let updates = sort_image_vec(&get_updates(&None, &self.config).await);
-        let end = timestamp();
-        info!("✨ Checked {} images in {}ms", updates.len(), end - start);
+        info!(
+            "✨ Checked {} images in {}ms",
+            updates.len(),
+            elapsed(start)
+        );
         self.raw_updates = updates;
         let template = liquid::ParserBuilder::with_stdlib()
             .build()
@@ -173,16 +177,29 @@ impl ServerData {
             .to_rfc3339_opts(chrono::SecondsFormat::Secs, true)
             .to_string()
             .into();
-        self.full_json["last_updated"] = last_updated
-            .to_rfc3339_opts(chrono::SecondsFormat::Secs, true)
-            .to_string()
-            .into();
+        self.full_json["last_updated"] = self.simple_json["last_updated"].clone();
         self.theme = match &self.config.theme {
             Theme::Default => "neutral",
             Theme::Blue => "gray",
         };
-        let mut metrics = self.simple_json["metrics"].entries().map(|(key, value)| liquid::object!({ "name": key, "value": value.as_u16().unwrap()})).collect::<Vec<_>>();
-        metrics.sort_unstable_by(|a, b| {dbg!(a, b); SORT_ORDER.iter().position(|i| i == &a["name"].to_kstr().as_str()).unwrap().cmp(&SORT_ORDER.iter().position(|i| i == &b["name"].to_kstr().as_str()).unwrap())});
+        let mut metrics = self.simple_json["metrics"]
+            .as_object()
+            .unwrap()
+            .iter()
+            .map(|(key, value)| liquid::object!({ "name": key, "value": value }))
+            .collect::<Vec<_>>();
+        metrics.sort_unstable_by(|a, b| {
+            SORT_ORDER
+                .iter()
+                .position(|i| i == &a["name"].to_kstr().as_str())
+                .unwrap()
+                .cmp(
+                    &SORT_ORDER
+                        .iter()
+                        .position(|i| i == &b["name"].to_kstr().as_str())
+                        .unwrap(),
+                )
+        });
         let globals = object!({
             "metrics": metrics,
             "images": images,
@@ -191,4 +208,41 @@ impl ServerData {
         });
         self.template = template.render(&globals).unwrap();
     }
+}
+
+async fn logger<S, C, B>(next: &S, ctx: WebContext<'_, C, B>) -> Result<WebResponse, Error<C>>
+where
+    S: for<'r> Service<WebContext<'r, C, B>, Response = WebResponse, Error = Error<C>>,
+{
+    let start = now();
+    let request = ctx.req();
+    let method = request.method().to_string();
+    let url = request.uri().to_string();
+
+    if &method != "GET" {
+        // We only allow GET requests
+
+        log(&method, &url, 405, elapsed(start));
+        Err(Error::from(StatusCode::METHOD_NOT_ALLOWED))
+    } else {
+        let res = next.call(ctx).await?;
+        let status = res.status().as_u16();
+
+        log(&method, &url, status, elapsed(start));
+        Ok(res)
+    }
+}
+
+fn log(method: &str, url: &str, status: u16, time: u32) {
+    let color = {
+        if status == 200 {
+            "\x1b[32m"
+        } else {
+            "\x1b[31m"
+        }
+    };
+    println!(
+        "\x1b[94;1mHTTP  \x1b[0m\x1b[32m{}\x1b[0m {} {}{}\x1b[0m in {}ms",
+        method, url, color, status, time
+    )
 }

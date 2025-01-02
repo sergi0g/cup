@@ -1,7 +1,7 @@
 use http_auth::parse_challenges;
-use json::JsonValue;
 use reqwest::Response;
 use rustc_hash::FxHashMap;
+use serde_json::Value;
 
 use crate::{config::RegistryConfig, error};
 
@@ -53,8 +53,8 @@ pub async fn get_response_body(response: Response) -> String {
     }
 }
 
-pub fn parse_json(body: &str) -> JsonValue {
-    match json::parse(body) {
+pub fn parse_json(body: &str) -> Value {
+    match serde_json::from_str(body) {
         Ok(parsed) => parsed,
         Err(e) => {
             error!("Failed to parse server response\n{}", e)

@@ -1,4 +1,4 @@
-use json::{object, JsonValue};
+use serde_json::{json, Value};
 
 use crate::{
     config::Config,
@@ -38,7 +38,7 @@ pub struct Image {
     pub digest_info: Option<DigestInfo>,
     pub version_info: Option<VersionInfo>,
     pub error: Option<String>,
-    pub time_ms: i64,
+    pub time_ms: u32,
 }
 
 impl Image {
@@ -127,23 +127,23 @@ impl Image {
         }
     }
 
-    /// Converts image data into a `JsonValue`
-    pub fn to_json(&self) -> JsonValue {
+    /// Converts image data into a `Value`
+    pub fn to_json(&self) -> Value {
         let has_update = self.has_update();
         let update_type = match has_update {
             Status::UpdateMajor | Status::UpdateMinor | Status::UpdatePatch => "version",
             _ => "digest",
         };
-        object! {
-            reference: self.reference.clone(),
-            parts: object! {
-                registry: self.registry.clone(),
-                repository: self.repository.clone(),
-                tag: self.tag.clone()
+        json!({
+            "reference": self.reference.clone(),
+            "parts": {
+                "registry": self.registry.clone(),
+                "repository": self.repository.clone(),
+                "tag": self.tag.clone()
             },
-            result: object! {
-                has_update: has_update.to_option_bool(),
-                info: match has_update {
+            "result": {
+                "has_update": has_update.to_option_bool(),
+                "info": match has_update {
                     Status::Unknown(_) => None,
                     _ => Some(match update_type {
                         "version" => {
@@ -151,35 +151,35 @@ impl Image {
                                 Some(data) => (data.current_tag.clone(), data.latest_remote_tag.clone()),
                                 _ => unreachable!()
                             };
-                            object! {
+                            json!({
                                 "type": update_type,
-                                version_update_type: match has_update {
+                                "version_update_type": match has_update {
                                     Status::UpdateMajor => "major",
                                     Status::UpdateMinor => "minor",
                                     Status::UpdatePatch => "patch",
                                     _ => unreachable!()
                                 },
-                                new_version: self.tag.replace(&version_tag.to_string(), &latest_remote_tag.as_ref().unwrap().to_string())
-                            }
+                                "new_version": self.tag.replace(&version_tag.to_string(), &latest_remote_tag.as_ref().unwrap().to_string())
+                            })
                         },
                         "digest" => {
                             let (local_digests, remote_digest) = match &self.digest_info {
                                 Some(data) => (data.local_digests.clone(), data.remote_digest.clone()),
                                 _ => unreachable!()
                             };
-                            object! {
+                            json!({
                                 "type": update_type,
-                                local_digests: local_digests,
-                                remote_digest: remote_digest,
-                            }
+                                "local_digests": local_digests,
+                                "remote_digest": remote_digest,
+                            })
                         },
                         _ => unreachable!()
                     }),
                 },
-                error: self.error.clone()
+                "error": self.error.clone()
             },
-            time: self.time_ms
-        }
+            "time": self.time_ms
+        })
     }
 
     /// Checks if the image has an update

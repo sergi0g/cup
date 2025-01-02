@@ -39,5 +39,5 @@ pub fn print_updates(updates: &[Image], icons: &bool) {
 }
 
 pub fn print_raw_updates(updates: &[Image]) {
-    println!("{}", json::stringify(to_simple_json(updates)));
+    println!("{}", to_simple_json(updates));
 }

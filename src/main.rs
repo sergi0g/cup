@@ -7,7 +7,7 @@ use formatting::{print_raw_updates, print_updates};
 #[cfg(feature = "server")]
 use server::serve;
 use std::path::PathBuf;
-use utils::misc::timestamp;
+use std::time::SystemTime;
 
 pub mod check;
 pub mod config;
@@ -81,7 +81,7 @@ async fn main() {
             icons,
             raw,
         }) => {
-            let start = timestamp();
+            let start = SystemTime::now();
             match *raw || config.debug {
                 true => {
                     let updates = get_updates(references, &config).await;
@@ -91,9 +91,8 @@ async fn main() {
                     let spinner = Spinner::new();
                     let updates = get_updates(references, &config).await;
                     spinner.succeed();
-                    let end = timestamp();
                     print_updates(&updates, icons);
-                    info!("✨ Checked {} images in {}ms", updates.len(), end - start);
+                    info!("✨ Checked {} images in {}ms", updates.len(), start.elapsed().unwrap().as_millis());
                 }
             };
         }

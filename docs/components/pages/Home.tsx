@@ -106,7 +106,7 @@ export function Home() {
         <Card
           name="Lightweight"
           icon={IconFeather}
-          description="No runtimes or libraries are needed. All you need is the 5.3 MB static binary that works out of the box on any system."
+          description="No runtimes or libraries are needed. All you need is the 5.1 MB static binary that works out of the box on any system."
         />
       </Section>
       <Section

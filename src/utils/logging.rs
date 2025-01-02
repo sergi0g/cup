@@ -4,7 +4,7 @@
 #[macro_export]
 macro_rules! error {
     ($($arg:tt)*) => ({
-        eprintln!("\x1b[31;1mERROR \x1b[0m {}", format!($($arg)*));
+        eprintln!("\x1b[31;1mERROR\x1b[0m {}", format!($($arg)*));
         std::process::exit(1);
     })
 }
@@ -13,14 +13,14 @@ macro_rules! error {
 #[macro_export]
 macro_rules! warn {
     ($($arg:tt)*) => ({
-        eprintln!("\x1b[33;1mWARN  \x1b[0m {}", format!($($arg)*));
+        eprintln!("\x1b[33;1mWARN \x1b[0m {}", format!($($arg)*));
     })
 }
 
 #[macro_export]
 macro_rules! info {
     ($($arg:tt)*) => ({
-        println!("\x1b[36;1mINFO  \x1b[0m {}", format!($($arg)*));
+        println!("\x1b[36;1mINFO \x1b[0m {}", format!($($arg)*));
     })
 }
 
@@ -28,7 +28,7 @@ macro_rules! info {
 macro_rules! debug {
     ($debg:expr, $($arg:tt)*) => ({
         if $debg {
-            println!("\x1b[35;1mDEBUG \x1b[0m {}", format!($($arg)*));
+            println!("\x1b[35;1mDEBUG\x1b[0m {}", format!($($arg)*));
         }
     })
 }
