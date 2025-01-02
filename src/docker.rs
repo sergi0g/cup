@@ -6,20 +6,33 @@ use crate::{config::Config, error, structs::image::Image};
 
 fn create_docker_client(socket: Option<&String>) -> Docker {
     let client: Result<Docker, bollard::errors::Error> = match socket {
-        Some(sock) => Docker::connect_with_local(
-            sock,
-            120,
-            &ClientVersion {
-                major_version: 1,
-                minor_version: 44,
-            },
-        ),
-        None => Docker::connect_with_local_defaults(),
+        Some(sock) => {
+            if sock.starts_with("unix://") {
+                Docker::connect_with_unix(
+                    sock,
+                    120,
+                    &ClientVersion {
+                        major_version: 1,
+                        minor_version: 44,
+                    },
+                )
+            } else {
+                Docker::connect_with_http(
+                    sock,
+                    120,
+                    &ClientVersion {
+                        major_version: 1,
+                        minor_version: 44,
+                    },
+                )
+            }
+        }
+        None => Docker::connect_with_unix_defaults(),
     };
 
     match client {
         Ok(d) => d,
-        Err(e) => error!("Failed to connect to docker socket!\n{}", e),
+        Err(e) => error!("Failed to connect to docker daemon!\n{}", e),
     }
 }
 
