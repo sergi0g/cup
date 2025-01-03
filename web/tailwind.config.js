@@ -42,6 +42,14 @@ export default {
       pattern: /text-(gray|neutral)-700/,
     },
     {
+      pattern: /text-(gray|neutral)-800/,
+      variants: ["group-data-[hover]"],
+    },
+    {
+      pattern: /text-(gray|neutral)-200/,
+      variants: ["group-data-[hover]:dark"],
+    },
+    {
       pattern: /divide-(gray|neutral)-800/,
       variants: ["dark"],
     },

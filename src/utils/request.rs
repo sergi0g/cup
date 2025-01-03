@@ -35,8 +35,8 @@ pub fn get_protocol(
             } else {
                 "https"
             }
-        },
-        None => "https"
+        }
+        None => "https",
     }
 }
 

@@ -14,7 +14,8 @@ use crate::{
         link::parse_link,
         request::{
             get_protocol, get_response_body, parse_json, parse_www_authenticate, to_bearer_string,
-        }, time::{elapsed, now},
+        },
+        time::{elapsed, now},
     },
 };
 
@@ -173,7 +174,9 @@ pub async fn get_latest_tag(
     let tag = tags.iter().max();
     debug!(
         config.debug,
-        "Checked for tag update to {} in {}ms", image.reference, elapsed(start)
+        "Checked for tag update to {} in {}ms",
+        image.reference,
+        elapsed(start)
     );
     match tag {
         Some(t) => {

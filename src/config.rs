@@ -45,7 +45,7 @@ pub struct Config {
     pub images: ImageConfig,
     pub refresh_interval: Option<String>,
     pub registries: FxHashMap<String, RegistryConfig>,
-    pub servers: Vec<String>,
+    pub servers: FxHashMap<String, String>,
     pub socket: Option<String>,
     pub theme: Theme,
 }
@@ -59,7 +59,7 @@ impl Config {
             images: ImageConfig::default(),
             refresh_interval: None,
             registries: FxHashMap::default(),
-            servers: Vec::new(),
+            servers: FxHashMap::default(),
             socket: None,
             theme: Theme::Default,
         }

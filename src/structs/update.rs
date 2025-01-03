@@ -9,7 +9,6 @@ pub struct Update {
     pub parts: Parts,
     pub result: UpdateResult,
     pub time: u32,
-    #[serde(skip_serializing)]
     pub server: Option<String>,
     #[serde(skip_serializing, skip_deserializing)]
     pub status: Status,
@@ -79,19 +78,15 @@ impl Update {
             Status::Unknown(s) => {
                 if s.is_empty() {
                     match self.result.has_update {
-                        Some(true) => {
-                            match &self.result.info {
-                                UpdateInfo::Version(info) => {
-                                    match info.version_update_type.as_str() {
-                                        "major" => Status::UpdateMajor,
-                                        "minor" => Status::UpdateMinor,
-                                        "patch" => Status::UpdatePatch,
-                                        _ => unreachable!(),
-                                    }
-                                },
-                                UpdateInfo::Digest(_) => Status::UpdateAvailable,
+                        Some(true) => match &self.result.info {
+                            UpdateInfo::Version(info) => match info.version_update_type.as_str() {
+                                "major" => Status::UpdateMajor,
+                                "minor" => Status::UpdateMinor,
+                                "patch" => Status::UpdatePatch,
                                 _ => unreachable!(),
-                            }
+                            },
+                            UpdateInfo::Digest(_) => Status::UpdateAvailable,
+                            _ => unreachable!(),
                         },
                         Some(false) => Status::UpToDate,
                         None => Status::Unknown(self.result.error.clone().unwrap()),
@@ -99,8 +94,8 @@ impl Update {
                 } else {
                     self.status.clone()
                 }
-            },
-            status => status.clone()
+            }
+            status => status.clone(),
         }
     }
 }

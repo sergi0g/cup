@@ -64,13 +64,13 @@
             "minLength": 1
         },
         "servers": {
-            "type": "array",
+            "type": "object",
             "description": "Additional servers to connect to and fetch update data from",
-            "minItems": 1,
-            "items": {
+            "additionalProperties": {
                 "type": "string",
                 "minLength": 1
-            }
+            },
+            "minProperties": 1
         },
         "theme": {
             "description": "The theme used by the web UI",

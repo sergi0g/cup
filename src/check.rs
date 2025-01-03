@@ -10,22 +10,27 @@ use crate::{
     registry::{check_auth, get_token},
     structs::{image::Image, update::Update},
     utils::request::{get_response_body, parse_json},
+    warn,
 };
 
-/// Fetches image data from other Cup servers
-async fn get_remote_updates(servers: &[String], client: &Client) -> Vec<Update> {
+/// Fetches image data from other Cup instances
+async fn get_remote_updates(servers: &FxHashMap<String, String>, client: &Client) -> Vec<Update> {
     let mut remote_images = Vec::new();
 
-    let futures: Vec<_> = servers
+    let handles: Vec<_> = servers
         .iter()
-        .map(|server| async {
-            let url = if server.starts_with("http://") || server.starts_with("https://") {
-                format!("{}/api/v3/json", server.trim_end_matches('/'))
+        .map(|(name, url)| async {
+            let url = if url.starts_with("http://") || url.starts_with("https://") {
+                format!("{}/api/v3/json", url.trim_end_matches('/'))
             } else {
-                format!("https://{}/api/v3/json", server.trim_end_matches('/'))
+                format!("https://{}/api/v3/json", url.trim_end_matches('/'))
             };
             match client.get(&url, vec![], false).await {
                 Ok(response) => {
+                    if response.status() != 200 {
+                        warn!("GET {}: Failed to fetch updates from server. Server returned invalid response code: {}",url,response.status());
+                        return Vec::new();
+                    }
                     let json = parse_json(&get_response_body(response).await);
                     if let Some(updates) = json["images"].as_array() {
                         let mut server_updates: Vec<Update> = updates
@@ -34,7 +39,7 @@ async fn get_remote_updates(servers: &[String], client: &Client) -> Vec<Update> 
                             .collect();
                         // Add server origin to each image
                         for update in &mut server_updates {
-                            update.server = Some(server.clone());
+                            update.server = Some(name.clone());
                             update.status = update.get_status();
                         }
                         return server_updates;
@@ -42,12 +47,15 @@ async fn get_remote_updates(servers: &[String], client: &Client) -> Vec<Update> 
 
                     Vec::new()
                 }
-                Err(_) => Vec::new(),
+                Err(e) => {
+                    warn!("Failed to fetch updates from server. {}", e);
+                    Vec::new()
+                },
             }
         })
         .collect();
 
-    for mut images in join_all(futures).await {
+    for mut images in join_all(handles).await {
         remote_images.append(&mut images);
     }
 
@@ -64,8 +72,7 @@ pub async fn get_updates(references: &Option<Vec<String>>, config: &Config) -> V
 
     // Add extra images from references
     if let Some(refs) = references {
-        let image_refs: FxHashSet<&String> =
-            images.iter().map(|image| &image.reference).collect();
+        let image_refs: FxHashSet<&String> = images.iter().map(|image| &image.reference).collect();
         let extra = refs
             .iter()
             .filter(|&reference| !image_refs.contains(reference))
@@ -85,10 +92,7 @@ pub async fn get_updates(references: &Option<Vec<String>>, config: &Config) -> V
     debug!(
         config.debug,
         "Checking {:?}",
-        images
-            .iter()
-            .map(|image| &image.reference)
-            .collect_vec()
+        images.iter().map(|image| &image.reference).collect_vec()
     );
 
     // Get a list of unique registries our images belong to. We are unwrapping the registry because it's guaranteed to be there.
@@ -106,7 +110,10 @@ pub async fn get_updates(references: &Option<Vec<String>>, config: &Config) -> V
     let mut image_map: FxHashMap<&String, Vec<&Image>> = FxHashMap::default();
 
     for image in &images {
-        image_map.entry(&image.parts.registry).or_default().push(image);
+        image_map
+            .entry(&image.parts.registry)
+            .or_default()
+            .push(image);
     }
 
     // Retrieve an authentication token (if required) for each registry.
@@ -149,7 +156,7 @@ pub async fn get_updates(references: &Option<Vec<String>>, config: &Config) -> V
         .collect::<Vec<&String>>();
 
     let mut handles = Vec::with_capacity(images.len());
-    
+
     // Loop through images check for updates
     for image in &images {
         let is_ignored = ignored_registries.contains(&&image.parts.registry)

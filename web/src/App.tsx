@@ -8,6 +8,7 @@ import { Data } from "./types";
 import { theme } from "./theme";
 import RefreshButton from "./components/RefreshButton";
 import Search from "./components/Search";
+import { Server } from "./components/Server";
 
 const SORT_ORDER = [
   "monitored_images",
@@ -40,15 +41,17 @@ function App() {
             className={`bg-white shadow-sm dark:bg-${theme}-900 my-8 rounded-md`}
           >
             <dl className="grid grid-cols-2 gap-1 overflow-hidden *:relative lg:grid-cols-4">
-              {Object.entries(data.metrics).sort((a, b) => {
-                return SORT_ORDER.indexOf(a[0]) - SORT_ORDER.indexOf(b[0]);
-              }).map(([name]) => (
-                <Statistic
-                  name={name as keyof typeof data.metrics}
-                  metrics={data.metrics}
-                  key={name}
-                />
-              ))}
+              {Object.entries(data.metrics)
+                .sort((a, b) => {
+                  return SORT_ORDER.indexOf(a[0]) - SORT_ORDER.indexOf(b[0]);
+                })
+                .map(([name]) => (
+                  <Statistic
+                    name={name as keyof typeof data.metrics}
+                    metrics={data.metrics}
+                    key={name}
+                  />
+                ))}
             </dl>
           </div>
           <div
@@ -61,11 +64,27 @@ function App() {
               <RefreshButton />
             </div>
             <Search onChange={setSearchQuery} />
-            <ul className={`dark:divide-${theme}-800 divide-y dark:text-white`}>
-              {data.images
-                .filter((image) => image.reference.includes(searchQuery))
-                .map((image) => (
-                  <Image data={image} key={image.reference} />
+            <ul>
+              {Object.entries(
+                data.images.reduce(
+                  (acc, image) => {
+                    const server = image.server ?? "";
+                    if (!acc[server]) acc[server] = [];
+                    acc[server].push(image);
+                    return acc;
+                  },
+                  {} as Record<string, typeof data.images>,
+                ),
+              )
+                .sort()
+                .map(([server, images]) => (
+                  <Server name={server} key={server}>
+                    {images
+                      .filter((image) => image.reference.includes(searchQuery))
+                      .map((image) => (
+                        <Image data={image} key={image.reference} />
+                      ))}
+                  </Server>
                 ))}
             </ul>
           </div>

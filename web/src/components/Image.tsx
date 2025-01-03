@@ -51,11 +51,8 @@ export default function Image({ data }: { data: Image }) {
   }
   return (
     <>
-      <button
-        onClick={handleOpen}
-        className={`w-full *:flex *:items-center *:gap-3 *:px-6 *:py-4`}
-      >
-        <li className="break-all text-start">
+      <button onClick={handleOpen} className="w-full">
+        <li className="flex items-center gap-4 break-all px-6 py-4 text-start">
           <IconCube className="size-6 shrink-0" />
           {data.reference}
           <Icon data={data} />

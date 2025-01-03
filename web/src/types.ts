@@ -26,6 +26,7 @@ export interface Image {
     error: string | null;
   };
   time: number;
+  server: string | null;
 }
 
 interface VersionInfo {

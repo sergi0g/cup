@@ -188,7 +188,7 @@ impl Image {
             },
             time: self.time_ms,
             server: None,
-            status: Status::Unknown(String::new())
+            status: Status::Unknown(String::new()),
         }
     }
 
