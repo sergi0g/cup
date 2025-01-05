@@ -11,11 +11,16 @@ pub fn parse_www_authenticate(www_auth: &str) -> String {
     if !challenges.is_empty() {
         let challenge = &challenges[0];
         if challenge.scheme == "Bearer" {
-            format!(
-                "{}?service={}",
-                challenge.params[0].1.as_escaped(),
-                challenge.params[1].1.as_escaped()
-            )
+            challenge
+                .params
+                .iter()
+                .fold(String::new(), |acc, (key, value)| {
+                    if *key == "realm" {
+                        return acc.to_owned() + value.as_escaped() + "?";
+                    } else {
+                        return format!("{}&{}={}", acc, key, value.as_escaped());
+                    }
+                })
         } else {
             error!("Unsupported scheme {}", &challenge.scheme)
         }
