@@ -20,4 +20,19 @@ services:
       - ./cup.json:/config/cup.json
 ```
 
+If you don't have a config, you can use this instead:
+
+```yaml
+services:
+  cup:
+    image: ghcr.io/sergi0g/cup:latest
+    container_name: cup # Optional
+    restart: unless-stopped
+    command: serve
+    ports:
+      - 8000:8000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+```
+
 This can be customized further of course, if you choose to use a different port, another config location, or would like to change something else. Have fun!
