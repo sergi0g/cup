@@ -20,4 +20,9 @@ services:
       - ./cup.json:/config/cup.json
 ```
 
+Cup can run with a non-root user, but needs to be in a docker group. Assuming user id of 1000 and `docker` group id of 999 you can add this to the docker compose:
+```yaml
+    user: "1000:999"
+```
+
 This can be customized further of course, if you choose to use a different port, another config location, or would like to change something else. Have fun!
