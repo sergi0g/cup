@@ -135,6 +135,7 @@ impl Image {
     pub fn to_update(&self) -> Update {
         let has_update = self.has_update();
         let update_type = match has_update {
+            Status::UpToDate => "none",
             Status::UpdateMajor | Status::UpdateMinor | Status::UpdatePatch => "version",
             _ => "digest",
         };
@@ -181,7 +182,8 @@ impl Image {
                                 remote_digest,
                             })
                         }
-                        _ => unreachable!(),
+                        "none" => UpdateInfo::None,
+                        _ => unreachable!()
                     },
                 },
                 error: self.error.clone(),
