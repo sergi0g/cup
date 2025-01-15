@@ -78,23 +78,29 @@ impl Version {
     }
 
     pub fn to_status(&self, base: &Self) -> Status {
-        if self.major == base.major {
+        if self.major > base.major {
+            Status::UpdateMajor
+        } else if self.major == base.major {
             match (self.minor, base.minor) {
                 (Some(a_minor), Some(b_minor)) => {
-                    if a_minor == b_minor {
+                    if a_minor > b_minor {
+                        Status::UpdateMinor
+                    } else if a_minor == b_minor {
                         match (self.patch, base.patch) {
                             (Some(a_patch), Some(b_patch)) => {
-                                if a_patch == b_patch {
+                                if a_patch > b_patch {
+                                    Status::UpdatePatch
+                                } else if a_patch == b_patch {
                                     Status::UpToDate
                                 } else {
-                                    Status::UpdatePatch
+                                    Status::Unknown(format!("Tag {} does not exist", base))
                                 }
                             }
                             (None, None) => Status::UpToDate,
                             _ => unreachable!(),
                         }
                     } else {
-                        Status::UpdateMinor
+                        Status::Unknown(format!("Tag {} does not exist", base))
                     }
                 }
                 (None, None) => Status::UpToDate,
@@ -104,7 +110,7 @@ impl Version {
                 ),
             }
         } else {
-            Status::UpdateMajor
+            Status::Unknown(format!("Tag {} does not exist", base))
         }
     }
 }

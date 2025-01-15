@@ -103,7 +103,6 @@ impl Image {
         }
     }
 
-    /// Compares remote digest of the image with its local digests to determine if it has an update or not
     pub fn has_update(&self) -> Status {
         if self.error.is_some() {
             Status::Unknown(self.error.clone().unwrap())
@@ -190,7 +189,7 @@ impl Image {
             },
             time: self.time_ms,
             server: None,
-            status: Status::Unknown(String::new()),
+            status: has_update,
         }
     }
 
