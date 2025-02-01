@@ -38,7 +38,7 @@ export default function Image({ data }: { data: Image }) {
     data.result.info?.type == "version"
       ? data.reference.split(":")[0] + ":" + data.result.info.new_version
       : data.reference;
-  var url: string | null = null;
+  let url: string | null = null;
   if (clickable_registries.includes(data.parts.registry)) {
     switch (data.parts.registry) {
       case "registry-1.docker.io":
@@ -67,7 +67,7 @@ export default function Image({ data }: { data: Image }) {
           <div className="flex min-h-full items-end justify-center text-center sm:items-center sm:p-0">
             <DialogPanel
               transition
-              className={`relative transform overflow-hidden rounded-t-lg bg-white md:rounded-lg dark:bg-${theme}-900 text-left shadow-xl transition-all data-[closed]:translate-y-4 data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in sm:my-8 sm:w-full sm:max-w-lg data-[closed]:sm:translate-y-0 data-[closed]:sm:scale-95 md:max-w-xl lg:max-w-2xl dark:text-white`}
+              className={`relative transform overflow-hidden rounded-t-lg bg-white md:rounded-lg dark:bg-${theme}-900 w-full text-left shadow-xl transition-all data-[closed]:translate-y-4 data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in sm:my-8 sm:w-full sm:max-w-lg data-[closed]:sm:translate-y-0 data-[closed]:sm:scale-95 md:max-w-xl lg:max-w-2xl dark:text-white`}
             >
               <div
                 className={`flex flex-col gap-3 px-6 py-4 text-${theme}-400 dark:text-${theme}-600`}
