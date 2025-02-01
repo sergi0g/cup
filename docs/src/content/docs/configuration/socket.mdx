@@ -1,0 +1,19 @@
+# Socket
+
+If you need to specify a custom Docker socket (e.g. because you're using Podman), you can use the `socket` option. Here's an example:
+
+```json
+{
+  "socket": "/run/user/1000/podman/podman.sock"
+  // Other options
+}
+```
+
+You can also specify a TCP socket if you're using a remote Docker host or a [proxy](https://github.com/Tecnativa/docker-socket-proxy):
+
+```json
+{
+  "socket": "tcp://localhost:2375"
+  // Other options
+}
+```
