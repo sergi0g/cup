@@ -47,17 +47,20 @@ impl Version {
                 let major: u32 = match c.name("major") {
                     Some(major) => {
                         positions.push((major.start(), major.end()));
-                        major.as_str().parse().unwrap()
+                        match major.as_str().parse() {
+                            Ok(m) => m,
+                            Err(_) => return None
+                        }
                     }
                     None => return None,
                 };
                 let minor: Option<u32> = c.name("minor").map(|minor| {
                     positions.push((minor.start(), minor.end()));
-                    minor.as_str().parse().unwrap()
+                    minor.as_str().parse().expect(&format!("Minor version invalid in tag {}", tag))
                 });
                 let patch: Option<u32> = c.name("patch").map(|patch| {
                     positions.push((patch.start(), patch.end()));
-                    patch.as_str().parse().unwrap()
+                    patch.as_str().parse().expect(&format!("Patch version invalid in tag {}", tag))
                 });
                 let mut format_str = tag.to_string();
                 positions.reverse();

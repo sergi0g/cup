@@ -182,7 +182,10 @@ pub async fn get_latest_tag(
         Some(t) => {
             if t == base && image.digest_info.is_some() {
                 // Tags are equal so we'll compare digests
-                debug!(config.debug, "Tags for {} are equal, comparing digests.", image.reference);
+                debug!(
+                    config.debug,
+                    "Tags for {} are equal, comparing digests.", image.reference
+                );
                 get_latest_digest(
                     &Image {
                         version_info: Some(VersionInfo {
