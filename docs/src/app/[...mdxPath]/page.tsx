@@ -4,7 +4,7 @@ import { useMDXComponents } from "@/mdx-components";
 export const generateStaticParams = generateStaticParamsFor("mdxPath");
 
 interface Props {
-  params: { mdxPath: string[] };
+  params: Promise<{ mdxPath: string[] }>;
 }
 
 export async function generateMetadata(props: Props) {
