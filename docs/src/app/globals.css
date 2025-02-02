@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+.nextra-card .tabler-icon:hover {
+  color: rgb(17 24 39 / var(--tw-text-opacity));
+}
+.nextra-card .tabler-icon {
+  color: rgb(55 65 81 / var(--tw-text-opacity));
+}
+.nextra-card .tabler-icon:is(.dark *) {
+  color: rgb(229 229 229 / var(--tw-text-opacity));
+}
+
+.nextra-card .tabler-icon:is(.dark *):hover {
+  color: rgb(250 250 250 / var(--tw-text-opacity));
+}

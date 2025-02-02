@@ -1,0 +1,10 @@
+{
+  "overrides": [
+    {
+      "files": "src/content/docs/integrations.mdx",
+      "options": {
+        "tabWidth": 4
+      }
+    }
+  ]
+}

@@ -8,7 +8,7 @@ export default {
   safelist: [
     // Generate minimum extra CSS
     {
-      pattern: /bg-(gray|neutral)-50/,
+      pattern: /bg-(gray|neutral)-(50|100|200|500)/,
     },
     {
       pattern: /bg-(gray|neutral)-(900|950)/,
@@ -23,26 +23,41 @@ export default {
       variants: ["before:dark", "after:dark", "dark"],
     },
     {
+      pattern: /text-(gray|neutral)-(50|300)/,
+      variants: ["dark"],
+    },
+    {
       pattern: /text-(gray|neutral)-600/,
-      variants: ["hover"]
+      variants: ["dark", "hover"],
     },
     {
       pattern: /text-(gray|neutral)-400/,
-      variants: ["hover", "dark", "dark:hover"]
+      variants: ["dark", "dark:hover"],
     },
     {
       pattern: /text-(gray|neutral)-500/,
-      variants: ["dark", "placeholder"],
+      variants: ["placeholder"],
+    },
+    {
+      pattern: /text-(gray|neutral)-700/,
+    },
+    {
+      pattern: /text-(gray|neutral)-800/,
+      variants: ["group-data-[hover]"],
+    },
+    {
+      pattern: /text-(gray|neutral)-200/,
+      variants: ["group-data-[hover]:dark"],
     },
     {
       pattern: /divide-(gray|neutral)-800/,
       variants: ["dark"],
     },
     {
-      pattern: /border-(gray|neutral)-300/,
+      pattern: /border-(gray|neutral)-(200|300)/,
     },
     {
-      pattern: /border-(gray|neutral)-700/,
+      pattern: /border-(gray|neutral)-(700|800)/,
       variants: ["dark"],
     },
   ],

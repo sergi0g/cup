@@ -15,8 +15,8 @@ export default function RefreshButton() {
     request.open(
       "GET",
       process.env.NODE_ENV === "production"
-        ? "/refresh"
-        : `http://${window.location.hostname}:8000/refresh`,
+        ? "/api/v3/refresh"
+        : `http://${window.location.hostname}:8000/api/v3/refresh`,
     );
     request.send();
   };
@@ -33,7 +33,7 @@ export default function RefreshButton() {
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="group-disabled:animate-spin"
+          className="shrink-0 group-disabled:animate-spin"
         >
           <path stroke="none" d="M0 0h24v24H0z" fill="none" />
           <path d="M4,11A8.1,8.1 0 0 1 19.5,9M20,5v4h-4" />

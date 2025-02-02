@@ -1,7 +1,0 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-.tabler-icon {
-    color: rgb(250 250 250 / var(--tw-text-opacity)) !important
-}
