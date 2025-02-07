@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use chrono::Local;
 use liquid::{object, Object, ValueView};
+use rustc_hash::FxHashMap;
 use serde_json::Value;
 use tokio::sync::Mutex;
 use tokio_cron_scheduler::{Job, JobScheduler};
@@ -184,11 +185,6 @@ impl ServerData {
             .unwrap()
             .parse(HTML)
             .unwrap();
-        let images = self
-            .raw_updates
-            .iter()
-            .map(|image| object!({"name": image.reference, "status": image.get_status().to_string()}),)
-            .collect::<Vec<Object>>();
         self.simple_json = to_simple_json(&self.raw_updates);
         self.full_json = to_full_json(&self.raw_updates);
         let last_updated = Local::now();
@@ -219,9 +215,22 @@ impl ServerData {
                         .unwrap(),
                 )
         });
+        let mut servers: FxHashMap<&str, Vec<Object>> = FxHashMap::default();
+        self.raw_updates.iter().for_each(|update| {
+            let key = update.server.as_deref().unwrap_or("");
+            match servers.get_mut(&key) {
+                Some(server) => server.push(
+                    object!({"name": update.reference, "status": update.get_status().to_string()}),
+                ),
+                None => {
+                    let _ = servers.insert(key, vec![object!({"name": update.reference, "status": update.get_status().to_string()})]);
+                }
+            }
+        });
         let globals = object!({
             "metrics": metrics,
-            "images": images,
+            "servers": servers,
+            "server_ids": servers.into_keys().collect::<Vec<&str>>(),
             "last_updated": last_updated.format("%Y-%m-%d %H:%M:%S").to_string(),
             "theme": &self.theme
         });

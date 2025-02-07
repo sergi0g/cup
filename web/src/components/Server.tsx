@@ -30,7 +30,7 @@ export function Server({
           {name}
         </span>
         <IconChevronDown
-          className={`duration:300 size-5 text-${theme}-600 transition-transform group-data-[open]:rotate-180 dark:text-${theme}-400 group-data-[hover]:text-${theme}-800 group-data-[hover]:dark:text-${theme}-200 transition-colors duration-300`}
+          className={`duration-300 size-5 text-${theme}-600 transition-transform group-data-[open]:rotate-180 dark:text-${theme}-400 group-data-[hover]:text-${theme}-800 group-data-[hover]:dark:text-${theme}-200 transition-colors`}
         />
       </DisclosureButton>
       <DisclosurePanel
