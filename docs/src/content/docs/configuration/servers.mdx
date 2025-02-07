@@ -1,0 +1,15 @@
+# Multiple servers
+
+Besides checking for local image updates, you might want to be able to view update stats for all your servers running Cup in a central place. If you choose to add more servers to your Cup configuration, Cup will retrieve the current list of updates from your other servers and it will be included in the results.
+
+Just add something like this to your config:
+
+```json
+{
+    "servers": {
+        "Cool server 1": "http://your-other-server-running-cup:8000",
+        "Other server": "http://and-another-one:9000"
+    }
+    // Other options
+}
+```
