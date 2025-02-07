@@ -97,7 +97,7 @@ export default async function Home() {
         />
         <Card
           name="Both CLI and web interface"
-          description="Whether you prefer the command line, or the web, Cup runs wherever you choose."
+          description="Whether you prefer the command line or the web, Cup runs wherever you choose."
           icon={IconDevices}
         />
         <Card

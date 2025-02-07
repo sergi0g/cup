@@ -1,5 +1,6 @@
 import Image from "next/image";
 import cup from "@/app/assets/cup.gif";
+import { Callout } from "nextra/components";
 
 # CLI
 
@@ -59,6 +60,10 @@ It provides some useful metrics (see [server](/docs/usage/server) for more infor
 $ cup check -r
 {"metrics":{"monitored_images":26,"up_to_date":2,"updates_available":23,"major_updates":8,"minor_updates":6,"patch_updates":2,"other_updates":7,"unknown":1},"images":{"ghcr.io/immich-app/immich-server:v1.106.4":false,"portainer/portainer-ce:2.20.3-alpine":false,"ghcr.io/runtipi/runtipi:v3.4.1":false,...}}
 ```
+
+<Callout emoji="⚠️">
+When parsing Cup's output, capture only `stdout`, otherwise you might not get valid JSON (if there are warnings)
+</Callout>
 
 ## Usage with Docker
 
