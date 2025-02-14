@@ -36,7 +36,7 @@ export default function Image({ data }: { data: Image }) {
   };
   const new_reference =
     data.result.info?.type == "version"
-      ? data.reference.split(":")[0] + ":" + data.result.info.new_version
+      ? data.reference.split(":")[0] + ":" + data.result.info.new_tag
       : data.reference;
   let url: string | null = null;
   if (clickable_registries.includes(data.parts.registry)) {

@@ -163,10 +163,13 @@ impl Image {
                                     _ => unreachable!(),
                                 }
                                 .to_string(),
-                                new_version: format_str
+                                new_tag: format_str
                                     .replacen("{}", &new_tag.major.to_string(), 1)
                                     .replacen("{}", &new_tag.minor.unwrap_or(0).to_string(), 1)
                                     .replacen("{}", &new_tag.patch.unwrap_or(0).to_string(), 1),
+                                // Throwing these in, because they're useful for the CLI output, however we won't (de)serialize them
+                                current_version: self.version_info.as_ref().unwrap().current_tag.to_string(),
+                                new_version: self.version_info.as_ref().unwrap().latest_remote_tag.as_ref().unwrap().to_string()
                             })
                         }
                         "digest" => {

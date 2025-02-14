@@ -32,7 +32,7 @@ export interface Image {
 interface VersionInfo {
   type: "version";
   version_update_type: "major" | "minor" | "patch";
-  new_version: string;
+  new_tag: string;
 }
 
 interface DigestInfo {

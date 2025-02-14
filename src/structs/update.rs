@@ -36,6 +36,10 @@ pub enum UpdateInfo {
 #[cfg_attr(test, derive(PartialEq, Debug))]
 pub struct VersionUpdateInfo {
     pub version_update_type: String,
+    pub new_tag: String,
+    #[serde(skip_serializing, skip_deserializing)]
+    pub current_version: String,
+    #[serde(skip_serializing, skip_deserializing)]
     pub new_version: String,
 }
 
@@ -54,7 +58,7 @@ impl Serialize for VersionUpdateInfo {
         let mut state = serializer.serialize_struct("VersionUpdateInfo", 3)?;
         let _ = state.serialize_field("type", "version");
         let _ = state.serialize_field("version_update_type", &self.version_update_type);
-        let _ = state.serialize_field("new_version", &self.new_version);
+        let _ = state.serialize_field("new_version", &self.new_tag);
         state.end()
     }
 }
