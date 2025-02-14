@@ -40,7 +40,7 @@ export default async function Home() {
               <h3 className="mx-auto mt-6 max-w-3xl text-center text-xl leading-tight font-medium text-gray-400">
                 Cup is a small utility with a big impact. Simplify your
                 container management workflow with fast and efficient update
-                checking, a full-featured CLI and web inteface, and more.
+                checking, a full-featured CLI and web interface, and more.
               </h3>
             </div>
             <div className="mt-8 grid w-fit grid-cols-2 gap-4 *:flex *:items-center *:gap-2 *:rounded-lg *:px-3 *:py-2">
