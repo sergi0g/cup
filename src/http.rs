@@ -4,7 +4,7 @@ use reqwest::Response;
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
 
-use crate::{error, warn};
+use crate::{error, Context};
 
 pub enum RequestMethod {
     GET,
@@ -23,16 +23,18 @@ impl Display for RequestMethod {
 /// A struct for handling HTTP requests. Takes care of the repetitive work of checking for errors, etc and exposes a simple interface
 pub struct Client {
     inner: ClientWithMiddleware,
+    ctx: Context,
 }
 
 impl Client {
-    pub fn new() -> Self {
+    pub fn new(ctx: &Context) -> Self {
         Self {
             inner: ClientBuilder::new(reqwest::Client::new())
                 .with(RetryTransientMiddleware::new_with_policy(
                     ExponentialBackoff::builder().build_with_max_retries(3),
                 ))
                 .build(),
+            ctx: ctx.clone(),
         }
     }
 
@@ -57,14 +59,14 @@ impl Client {
                 let status = response.status();
                 if status == 404 {
                     let message = format!("{} {}: Not found!", method, url);
-                    warn!("{}", message);
+                    self.ctx.logger.warn(&message);
                     Err(message)
                 } else if status == 401 {
                     if ignore_401 {
                         Ok(response)
                     } else {
                         let message = format!("{} {}: Unauthorized! Please configure authentication for this registry or if you have already done so, please make sure it is correct.", method, url);
-                        warn!("{}", message);
+                        self.ctx.logger.warn(&message);
                         Err(message)
                     }
                 } else if status.as_u16() <= 400 {
@@ -87,11 +89,11 @@ impl Client {
             Err(error) => {
                 if error.is_connect() {
                     let message = format!("{} {}: Connection failed!", method, url);
-                    warn!("{}", message);
+                    self.ctx.logger.warn(&message);
                     Err(message)
                 } else if error.is_timeout() {
                     let message = format!("{} {}: Connection timed out!", method, url);
-                    warn!("{}", message);
+                    self.ctx.logger.warn(&message);
                     Err(message)
                 } else {
                     error!(
@@ -121,11 +123,5 @@ impl Client {
         headers: Vec<(&str, Option<&str>)>,
     ) -> Result<Response, String> {
         self.request(url, RequestMethod::HEAD, headers, false).await
-    }
-}
-
-impl Default for Client {
-    fn default() -> Self {
-        Self::new()
     }
 }

@@ -4,6 +4,7 @@ use config::Config;
 use formatting::spinner::Spinner;
 #[cfg(feature = "cli")]
 use formatting::{print_raw_updates, print_updates};
+use logging::Logger;
 #[cfg(feature = "server")]
 use server::serve;
 use std::path::PathBuf;
@@ -15,6 +16,7 @@ pub mod docker;
 #[cfg(feature = "cli")]
 pub mod formatting;
 pub mod http;
+pub mod logging;
 pub mod registry;
 #[cfg(feature = "server")]
 pub mod server;
@@ -62,6 +64,12 @@ enum Commands {
     },
 }
 
+#[derive(Clone)]
+pub struct Context {
+    pub config: Config,
+    pub logger: Logger,
+}
+
 #[tokio::main]
 async fn main() {
     let cli = Cli::parse();
@@ -73,7 +81,10 @@ async fn main() {
     if let Some(socket) = cli.socket {
         config.socket = Some(socket)
     }
-    config.debug = cli.debug;
+    let mut ctx = Context {
+        config,
+        logger: Logger::new(cli.debug, false),
+    };
     match &cli.command {
         #[cfg(feature = "cli")]
         Some(Commands::Check {
@@ -82,23 +93,26 @@ async fn main() {
             raw,
         }) => {
             let start = SystemTime::now();
-            match *raw || config.debug {
+            if *raw {
+                ctx.logger.set_raw(true);
+            }
+            match *raw || cli.debug {
                 true => {
-                    let updates = get_updates(references, &config).await;
+                    let updates = get_updates(references, &ctx).await;
                     print_raw_updates(&updates);
                 }
                 false => {
                     let spinner = Spinner::new();
-                    let updates = get_updates(references, &config).await;
+                    let updates = get_updates(references, &ctx).await;
                     spinner.succeed();
                     print_updates(&updates, icons);
-                    info!("✨ Checked {} images in {}ms", updates.len(), start.elapsed().unwrap().as_millis());
+                    ctx.logger.info(format!("✨ Checked {} images in {}ms", updates.len(), start.elapsed().unwrap().as_millis()));
                 }
             };
         }
         #[cfg(feature = "server")]
         Some(Commands::Serve { port }) => {
-            let _ = serve(port, &config).await;
+            let _ = serve(port, &ctx).await;
         }
         None => error!("Whoops! It looks like you haven't specified a command to run! Try `cup help` to see available options."),
     }

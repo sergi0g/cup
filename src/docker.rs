@@ -2,7 +2,7 @@ use bollard::{models::ImageInspect, ClientVersion, Docker};
 
 use futures::future::join_all;
 
-use crate::{config::Config, error, structs::image::Image};
+use crate::{error, structs::image::Image, Context};
 
 fn create_docker_client(socket: Option<&str>) -> Docker {
     let client: Result<Docker, bollard::errors::Error> = match socket {
@@ -38,10 +38,10 @@ fn create_docker_client(socket: Option<&str>) -> Docker {
 
 /// Retrieves images from Docker daemon. If `references` is Some, return only the images whose references match the ones specified.
 pub async fn get_images_from_docker_daemon(
-    config: &Config,
+    ctx: &Context,
     references: &Option<Vec<String>>,
 ) -> Vec<Image> {
-    let client: Docker = create_docker_client(config.socket.as_deref());
+    let client: Docker = create_docker_client(ctx.config.socket.as_deref());
     match references {
         Some(refs) => {
             let mut inspect_handles = Vec::with_capacity(refs.len());

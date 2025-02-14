@@ -18,14 +18,14 @@ use xitca_web::{
 
 use crate::{
     check::get_updates,
-    config::{Config, Theme},
-    info,
+    config::Theme,
     structs::update::Update,
     utils::{
         json::{to_full_json, to_simple_json},
         sort_update_vec::sort_update_vec,
         time::{elapsed, now},
     },
+    Context,
 };
 
 const HTML: &str = include_str!("static/index.html");
@@ -46,13 +46,13 @@ const SORT_ORDER: [&str; 8] = [
     "unknown",
 ]; // For Liquid rendering
 
-pub async fn serve(port: &u16, config: &Config) -> std::io::Result<()> {
-    info!("Starting server, please wait...");
-    let data = ServerData::new(config).await;
+pub async fn serve(port: &u16, ctx: &Context) -> std::io::Result<()> {
+    ctx.logger.info("Starting server, please wait...");
+    let data = ServerData::new(ctx).await;
     let scheduler = JobScheduler::new().await.unwrap();
     let data = Arc::new(Mutex::new(data));
     let data_copy = data.clone();
-    if let Some(interval) = &config.refresh_interval {
+    if let Some(interval) = &ctx.config.refresh_interval {
         scheduler
             .add(
                 Job::new_async(interval, move |_uuid, _lock| {
@@ -67,14 +67,14 @@ pub async fn serve(port: &u16, config: &Config) -> std::io::Result<()> {
             .unwrap();
     }
     scheduler.start().await.unwrap();
-    info!("Ready to start!");
+    ctx.logger.info("Ready to start!");
     let mut app_builder = App::new()
         .with_state(data)
         .at("/api/v2/json", get(handler_service(api_simple)))
         .at("/api/v3/json", get(handler_service(api_full)))
         .at("/api/v2/refresh", get(handler_service(refresh)))
         .at("/api/v3/refresh", get(handler_service(refresh)));
-    if !config.agent {
+    if !ctx.config.agent {
         app_builder = app_builder
             .at("/", get(handler_service(_static)))
             .at("/*", get(handler_service(_static)));
@@ -151,14 +151,14 @@ struct ServerData {
     raw_updates: Vec<Update>,
     simple_json: Value,
     full_json: Value,
-    config: Config,
+    ctx: Context,
     theme: &'static str,
 }
 
 impl ServerData {
-    async fn new(config: &Config) -> Self {
+    async fn new(ctx: &Context) -> Self {
         let mut s = Self {
-            config: config.clone(),
+            ctx: ctx.clone(),
             template: String::new(),
             simple_json: Value::Null,
             full_json: Value::Null,
@@ -171,14 +171,14 @@ impl ServerData {
     async fn refresh(&mut self) {
         let start = now();
         if !self.raw_updates.is_empty() {
-            info!("Refreshing data");
+            self.ctx.logger.info("Refreshing data");
         }
-        let updates = sort_update_vec(&get_updates(&None, &self.config).await);
-        info!(
+        let updates = sort_update_vec(&get_updates(&None, &self.ctx).await);
+        self.ctx.logger.info(format!(
             "✨ Checked {} images in {}ms",
             updates.len(),
             elapsed(start)
-        );
+        ));
         self.raw_updates = updates;
         let template = liquid::ParserBuilder::with_stdlib()
             .build()
@@ -193,7 +193,7 @@ impl ServerData {
             .to_string()
             .into();
         self.full_json["last_updated"] = self.simple_json["last_updated"].clone();
-        self.theme = match &self.config.theme {
+        self.theme = match &self.ctx.config.theme {
             Theme::Default => "neutral",
             Theme::Blue => "gray",
         };

@@ -1,10 +1,10 @@
 use crate::{
-    config::Config,
     error,
     http::Client,
     registry::{get_latest_digest, get_latest_tag},
     structs::{status::Status, version::Version},
     utils::reference::split,
+    Context,
 };
 
 use super::{
@@ -168,8 +168,20 @@ impl Image {
                                     .replacen("{}", &new_tag.minor.unwrap_or(0).to_string(), 1)
                                     .replacen("{}", &new_tag.patch.unwrap_or(0).to_string(), 1),
                                 // Throwing these in, because they're useful for the CLI output, however we won't (de)serialize them
-                                current_version: self.version_info.as_ref().unwrap().current_tag.to_string(),
-                                new_version: self.version_info.as_ref().unwrap().latest_remote_tag.as_ref().unwrap().to_string()
+                                current_version: self
+                                    .version_info
+                                    .as_ref()
+                                    .unwrap()
+                                    .current_tag
+                                    .to_string(),
+                                new_version: self
+                                    .version_info
+                                    .as_ref()
+                                    .unwrap()
+                                    .latest_remote_tag
+                                    .as_ref()
+                                    .unwrap()
+                                    .to_string(),
                             })
                         }
                         "digest" => {
@@ -185,7 +197,7 @@ impl Image {
                             })
                         }
                         "none" => UpdateInfo::None,
-                        _ => unreachable!()
+                        _ => unreachable!(),
                     },
                 },
                 error: self.error.clone(),
@@ -197,11 +209,11 @@ impl Image {
     }
 
     /// Checks if the image has an update
-    pub async fn check(&self, token: Option<&str>, config: &Config, client: &Client) -> Self {
+    pub async fn check(&self, token: Option<&str>, ctx: &Context, client: &Client) -> Self {
         match &self.version_info {
-            Some(data) => get_latest_tag(self, &data.current_tag, token, config, client).await,
+            Some(data) => get_latest_tag(self, &data.current_tag, token, ctx, client).await,
             None => match self.digest_info {
-                Some(_) => get_latest_digest(self, token, config, client).await,
+                Some(_) => get_latest_digest(self, token, ctx, client).await,
                 None => unreachable!(),
             },
         }

@@ -3,21 +3,19 @@ use itertools::Itertools;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
-    config::Config,
-    debug,
     docker::get_images_from_docker_daemon,
     http::Client,
     registry::{check_auth, get_token},
     structs::{image::Image, update::Update},
     utils::request::{get_response_body, parse_json},
-    warn,
+    Context,
 };
 
 /// Fetches image data from other Cup instances
-async fn get_remote_updates(servers: &FxHashMap<String, String>, client: &Client) -> Vec<Update> {
+async fn get_remote_updates(ctx: &Context, client: &Client) -> Vec<Update> {
     let mut remote_images = Vec::new();
 
-    let handles: Vec<_> = servers
+    let handles: Vec<_> = ctx.config.servers
         .iter()
         .map(|(name, url)| async {
             let url = if url.starts_with("http://") || url.starts_with("https://") {
@@ -28,7 +26,7 @@ async fn get_remote_updates(servers: &FxHashMap<String, String>, client: &Client
             match client.get(&url, vec![], false).await {
                 Ok(response) => {
                     if response.status() != 200 {
-                        warn!("GET {}: Failed to fetch updates from server. Server returned invalid response code: {}",url,response.status());
+                        ctx.logger.warn(format!("GET {}: Failed to fetch updates from server. Server returned invalid response code: {}",url,response.status()));
                         return Vec::new();
                     }
                     let json = parse_json(&get_response_body(response).await);
@@ -48,7 +46,7 @@ async fn get_remote_updates(servers: &FxHashMap<String, String>, client: &Client
                     Vec::new()
                 }
                 Err(e) => {
-                    warn!("Failed to fetch updates from server. {}", e);
+                    ctx.logger.warn(format!("Failed to fetch updates from server. {}", e));
                     Vec::new()
                 },
             }
@@ -63,12 +61,12 @@ async fn get_remote_updates(servers: &FxHashMap<String, String>, client: &Client
 }
 
 /// Returns a list of updates for all images passed in.
-pub async fn get_updates(references: &Option<Vec<String>>, config: &Config) -> Vec<Update> {
-    let client = Client::new();
+pub async fn get_updates(references: &Option<Vec<String>>, ctx: &Context) -> Vec<Update> {
+    let client = Client::new(ctx);
 
     // Get local images
-    debug!(config.debug, "Retrieving images to be checked");
-    let mut images = get_images_from_docker_daemon(config, references).await;
+    ctx.logger.debug("Retrieving images to be checked");
+    let mut images = get_images_from_docker_daemon(ctx, references).await;
 
     // Add extra images from references
     if let Some(refs) = references {
@@ -82,18 +80,17 @@ pub async fn get_updates(references: &Option<Vec<String>>, config: &Config) -> V
     }
 
     // Get remote images from other servers
-    let remote_updates = if !config.servers.is_empty() {
-        debug!(config.debug, "Fetching updates from remote servers");
-        get_remote_updates(&config.servers, &client).await
+    let remote_updates = if !ctx.config.servers.is_empty() {
+        ctx.logger.debug("Fetching updates from remote servers");
+        get_remote_updates(ctx, &client).await
     } else {
         Vec::new()
     };
 
-    debug!(
-        config.debug,
+    ctx.logger.debug(format!(
         "Checking {:?}",
         images.iter().map(|image| &image.reference).collect_vec()
-    );
+    ));
 
     // Get a list of unique registries our images belong to. We are unwrapping the registry because it's guaranteed to be there.
     let registries: Vec<&String> = images
@@ -104,7 +101,7 @@ pub async fn get_updates(references: &Option<Vec<String>>, config: &Config) -> V
 
     // Create request client. All network requests share the same client for better performance.
     // This client is also configured to retry a failed request up to 3 times with exponential backoff in between.
-    let client = Client::new();
+    let client = Client::new(ctx);
 
     // Create a map of images indexed by registry. This solution seems quite inefficient, since each iteration causes a key to be looked up. I can't find anything better at the moment.
     let mut image_map: FxHashMap<&String, Vec<&Image>> = FxHashMap::default();
@@ -119,12 +116,12 @@ pub async fn get_updates(references: &Option<Vec<String>>, config: &Config) -> V
     // Retrieve an authentication token (if required) for each registry.
     let mut tokens: FxHashMap<&str, Option<String>> = FxHashMap::default();
     for registry in registries {
-        let credentials = if let Some(registry_config) = config.registries.get(registry) {
+        let credentials = if let Some(registry_config) = ctx.config.registries.get(registry) {
             &registry_config.authentication
         } else {
             &None
         };
-        match check_auth(registry, config, &client).await {
+        match check_auth(registry, ctx, &client).await {
             Some(auth_url) => {
                 let token = get_token(
                     image_map.get(registry).unwrap(),
@@ -141,9 +138,10 @@ pub async fn get_updates(references: &Option<Vec<String>>, config: &Config) -> V
         }
     }
 
-    debug!(config.debug, "Tokens: {:?}", tokens);
+    ctx.logger.debug(format!("Tokens: {:?}", tokens));
 
-    let ignored_registries = config
+    let ignored_registries = ctx
+        .config
         .registries
         .iter()
         .filter_map(|(registry, registry_config)| {
@@ -160,14 +158,15 @@ pub async fn get_updates(references: &Option<Vec<String>>, config: &Config) -> V
     // Loop through images check for updates
     for image in &images {
         let is_ignored = ignored_registries.contains(&&image.parts.registry)
-            || config
+            || ctx
+                .config
                 .images
                 .exclude
                 .iter()
                 .any(|item| image.reference.starts_with(item));
         if !is_ignored {
             let token = tokens.get(image.parts.registry.as_str()).unwrap();
-            let future = image.check(token.as_deref(), config, &client);
+            let future = image.check(token.as_deref(), ctx, &client);
             handles.push(future);
         }
     }

@@ -40,8 +40,6 @@ pub struct ImageConfig {
 pub struct Config {
     version: u8,
     pub agent: bool,
-    #[serde(skip_deserializing)]
-    pub debug: bool,
     pub images: ImageConfig,
     pub refresh_interval: Option<String>,
     pub registries: FxHashMap<String, RegistryConfig>,
@@ -55,7 +53,6 @@ impl Config {
         Self {
             version: 3,
             agent: false,
-            debug: false,
             images: ImageConfig::default(),
             refresh_interval: None,
             registries: FxHashMap::default(),

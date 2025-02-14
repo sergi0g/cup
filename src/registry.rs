@@ -3,8 +3,7 @@ use std::time::SystemTime;
 use itertools::Itertools;
 
 use crate::{
-    config::Config,
-    debug, error,
+    error,
     http::Client,
     structs::{
         image::{DigestInfo, Image, VersionInfo},
@@ -17,10 +16,11 @@ use crate::{
         },
         time::{elapsed, now},
     },
+    Context,
 };
 
-pub async fn check_auth(registry: &str, config: &Config, client: &Client) -> Option<String> {
-    let protocol = get_protocol(registry, &config.registries);
+pub async fn check_auth(registry: &str, ctx: &Context, client: &Client) -> Option<String> {
+    let protocol = get_protocol(registry, &ctx.config.registries);
     let url = format!("{}://{}/v2/", protocol, registry);
     let response = client.get(&url, Vec::new(), true).await;
     match response {
@@ -45,15 +45,13 @@ pub async fn check_auth(registry: &str, config: &Config, client: &Client) -> Opt
 pub async fn get_latest_digest(
     image: &Image,
     token: Option<&str>,
-    config: &Config,
+    ctx: &Context,
     client: &Client,
 ) -> Image {
-    debug!(
-        config.debug,
-        "Checking for digest update to {}", image.reference
-    );
+    ctx.logger
+        .debug(format!("Checking for digest update to {}", image.reference));
     let start = SystemTime::now();
-    let protocol = get_protocol(&image.parts.registry, &config.registries);
+    let protocol = get_protocol(&image.parts.registry, &ctx.config.registries);
     let url = format!(
         "{}://{}/v2/{}/manifests/{}",
         protocol, &image.parts.registry, &image.parts.repository, &image.parts.tag
@@ -63,10 +61,10 @@ pub async fn get_latest_digest(
 
     let response = client.head(&url, headers).await;
     let time = start.elapsed().unwrap().as_millis() as u32;
-    debug!(
-        config.debug,
-        "Checked for digest update to {} in {}ms", image.reference, time
-    );
+    ctx.logger.debug(format!(
+        "Checked for digest update to {} in {}ms",
+        image.reference, time
+    ));
     match response {
         Ok(res) => match res.headers().get("docker-content-digest") {
             Some(digest) => {
@@ -121,15 +119,13 @@ pub async fn get_latest_tag(
     image: &Image,
     base: &Version,
     token: Option<&str>,
-    config: &Config,
+    ctx: &Context,
     client: &Client,
 ) -> Image {
-    debug!(
-        config.debug,
-        "Checking for tag update to {}", image.reference
-    );
+    ctx.logger
+        .debug(format!("Checking for tag update to {}", image.reference));
     let start = now();
-    let protocol = get_protocol(&image.parts.registry, &config.registries);
+    let protocol = get_protocol(&image.parts.registry, &ctx.config.registries);
     let url = format!(
         "{}://{}/v2/{}/tags/list",
         protocol, &image.parts.registry, &image.parts.repository,
@@ -144,12 +140,11 @@ pub async fn get_latest_tag(
     let mut next_url = Some(url);
 
     while next_url.is_some() {
-        debug!(
-            config.debug,
+        ctx.logger.debug(format!(
             "{} has extra tags! Current number of valid tags: {}",
             image.reference,
             tags.len()
-        );
+        ));
         let (new_tags, next) = match get_extra_tags(
             &next_url.unwrap(),
             headers.clone(),
@@ -172,20 +167,19 @@ pub async fn get_latest_tag(
         next_url = next;
     }
     let tag = tags.iter().max();
-    debug!(
-        config.debug,
+    ctx.logger.debug(format!(
         "Checked for tag update to {} in {}ms",
         image.reference,
         elapsed(start)
-    );
+    ));
     match tag {
         Some(t) => {
             if t == base && image.digest_info.is_some() {
                 // Tags are equal so we'll compare digests
-                debug!(
-                    config.debug,
-                    "Tags for {} are equal, comparing digests.", image.reference
-                );
+                ctx.logger.debug(format!(
+                    "Tags for {} are equal, comparing digests.",
+                    image.reference
+                ));
                 get_latest_digest(
                     &Image {
                         version_info: Some(VersionInfo {
@@ -196,7 +190,7 @@ pub async fn get_latest_tag(
                         ..image.clone()
                     },
                     token,
-                    config,
+                    ctx,
                     client,
                 )
                 .await
