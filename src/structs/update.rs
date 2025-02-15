@@ -58,7 +58,7 @@ impl Serialize for VersionUpdateInfo {
         let mut state = serializer.serialize_struct("VersionUpdateInfo", 3)?;
         let _ = state.serialize_field("type", "version");
         let _ = state.serialize_field("version_update_type", &self.version_update_type);
-        let _ = state.serialize_field("new_version", &self.new_tag);
+        let _ = state.serialize_field("new_tag", &self.new_tag);
         state.end()
     }
 }

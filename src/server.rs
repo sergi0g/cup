@@ -270,7 +270,7 @@ fn log(method: &str, url: &str, status: u16, time: u32) {
         }
     };
     println!(
-        "\x1b[94;1mHTTP  \x1b[0m\x1b[32m{}\x1b[0m {} {}{}\x1b[0m in {}ms",
+        "\x1b[94;1m HTTP \x1b[0m\x1b[32m{}\x1b[0m {} {}{}\x1b[0m in {}ms",
         method, url, color, status, time
     )
 }
