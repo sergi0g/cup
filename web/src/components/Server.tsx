@@ -4,7 +4,7 @@ import {
   DisclosurePanel,
 } from "@headlessui/react";
 import { theme } from "../theme";
-import { IconChevronDown } from "@tabler/icons-react";
+import { ChevronDown } from "lucide-react";
 
 export function Server({
   name,
@@ -29,7 +29,7 @@ export function Server({
         >
           {name}
         </span>
-        <IconChevronDown
+        <ChevronDown
           className={`duration-300 size-5 text-${theme}-600 transition-transform group-data-[open]:rotate-180 dark:text-${theme}-400 group-data-[hover]:text-${theme}-800 group-data-[hover]:dark:text-${theme}-200 transition-colors`}
         />
       </DisclosureButton>

@@ -1,6 +1,6 @@
 import { ChangeEvent, useState } from "react";
 import { theme } from "../theme";
-import { IconSearch, IconX } from "@tabler/icons-react";
+import { SearchIcon, X } from "lucide-react";
 
 export default function Search({
   onChange,
@@ -27,7 +27,7 @@ export default function Search({
       <div
         className={`flex w-full items-center rounded-md border border-${theme}-300 dark:border-${theme}-700 gap-1 px-2 bg-${theme}-200 dark:bg-${theme}-800 peer flex-nowrap`}
       >
-        <IconSearch className="size-5" />
+        <SearchIcon className="size-5" />
         <div className="w-full">
           <input
             className={`h-10 w-full text-sm text-${theme}-600 dark:text-${theme}-400 peer bg-transparent focus:outline-none placeholder:text-${theme}-500`}
@@ -41,7 +41,7 @@ export default function Search({
             onClick={handleClear}
             className={`hover:text-${theme}-600 dark:hover:text-${theme}-400`}
           >
-            <IconX className="size-5" />
+            <X className="size-5" />
           </button>
         )}
       </div>

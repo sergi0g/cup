@@ -1,9 +1,4 @@
-import {
-  IconCircleArrowUpFilled,
-  IconCircleCheckFilled,
-  IconEyeFilled,
-  IconHelpCircleFilled,
-} from "@tabler/icons-react";
+import { CircleArrowUp, CircleCheck, Eye, HelpCircle } from "lucide-react";
 import { theme } from "../theme";
 import { Data } from "../types";
 
@@ -39,14 +34,14 @@ export default function Statistic({
             {metrics[name]}
           </dd>
           {name === "monitored_images" && (
-            <IconEyeFilled className="size-6 shrink-0 text-black dark:text-white" />
+            <Eye className="size-6 shrink-0 text-black dark:text-white" />
           )}
           {name === "up_to_date" && (
-            <IconCircleCheckFilled className="size-6 shrink-0 text-green-500" />
+            <CircleCheck className="size-6 shrink-0 text-green-500" />
           )}
           {name === "updates_available" && getUpdatesAvailableIcon(metrics)}
           {name === "unknown" && (
-            <IconHelpCircleFilled className="size-6 shrink-0 text-gray-500" />
+            <HelpCircle className="size-6 shrink-0 text-gray-500" />
           )}
         </div>
       </div>
@@ -75,5 +70,5 @@ function getUpdatesAvailableIcon(metrics: Data["metrics"]) {
     default:
       color = "text-blue-500";
   }
-  return <IconCircleArrowUpFilled className={`size-6 shrink-0 ${color}`} />;
+  return <CircleArrowUp className={`size-6 shrink-0 ${color}`} />;
 }

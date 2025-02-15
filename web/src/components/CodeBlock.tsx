@@ -1,6 +1,6 @@
 import { ReactNode, useState } from "react";
 import { theme } from "../theme";
-import { IconCheck, IconClipboard } from "@tabler/icons-react";
+import { Clipboard, ClipboardCheck } from "lucide-react";
 
 export function CodeBlock({
   children,
@@ -29,7 +29,7 @@ export function CodeBlock({
       {enableCopy &&
         navigator.clipboard &&
         (copySuccess ? (
-          <IconCheck
+          <ClipboardCheck
             className={`absolute right-3 size-7 bg-${theme}-100 py-1 pl-2 dark:bg-${theme}-950`}
           />
         ) : (
@@ -37,7 +37,7 @@ export function CodeBlock({
             className={`duration-50 absolute right-3 bg-${theme}-100 py-1 pl-2 opacity-0 transition-opacity group-hover:opacity-100 dark:bg-${theme}-950`}
             onClick={handleCopy(`docker pull ${children}`)}
           >
-            <IconClipboard className="size-5" />
+            <Clipboard className="size-5" />
           </button>
         ))}
     </div>

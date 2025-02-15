@@ -5,19 +5,11 @@ import {
   DialogPanel,
   DialogTitle,
 } from "@headlessui/react";
-import {
-  IconAlertTriangleFilled,
-  IconCircleArrowUpFilled,
-  IconCircleCheckFilled,
-  IconCube,
-  IconHelpCircleFilled,
-  IconStopwatch,
-  IconX,
-} from "@tabler/icons-react";
 import { WithTooltip } from "./Tooltip";
 import type { Image } from "../types";
 import { theme } from "../theme";
 import { CodeBlock } from "./CodeBlock";
+import { Box, CircleArrowUp, CircleCheck, HelpCircle, Timer, TriangleAlert, X } from "lucide-react";
 
 const clickable_registries = [
   "registry-1.docker.io",
@@ -53,7 +45,7 @@ export default function Image({ data }: { data: Image }) {
     <>
       <button onClick={handleOpen} className="w-full">
         <li className="flex items-center gap-4 break-all px-6 py-4 text-start">
-          <IconCube className="size-6 shrink-0" />
+          <Box className="size-6 shrink-0" />
           {data.reference}
           <Icon data={data} />
         </li>
@@ -73,7 +65,7 @@ export default function Image({ data }: { data: Image }) {
                 className={`flex flex-col gap-3 px-6 py-4 text-${theme}-400 dark:text-${theme}-600`}
               >
                 <div className="mb-4 flex items-center gap-3">
-                  <IconCube className="size-6 shrink-0 text-black dark:text-white" />
+                  <Box className="size-6 shrink-0 text-black dark:text-white" />
                   <DialogTitle className="text-black dark:text-white">
                     {url ? (
                       <>
@@ -103,21 +95,21 @@ export default function Image({ data }: { data: Image }) {
                     )}
                   </DialogTitle>
                   <button onClick={handleClose} className="ml-auto">
-                    <IconX className="size-6 shrink-0 text-gray-500" />
+                    <X className="size-6 shrink-0 text-gray-500" />
                   </button>
                 </div>
                 <div className="flex items-center gap-3">
                   <DialogIcon data={data} />
                 </div>
                 <div className="mb-4 flex items-center gap-3">
-                  <IconStopwatch className="size-6 shrink-0 text-gray-500" />
+                  <Timer className="size-6 shrink-0 text-gray-500" />
                   <span>
                     Checked in <b>{data.time}</b> ms
                   </span>
                 </div>
                 {data.result.error && (
                   <div className="break-before mb-4 flex items-center gap-3 overflow-hidden rounded-md bg-yellow-400/10 px-3 py-2">
-                    <IconAlertTriangleFilled className="size-6 shrink-0 text-yellow-500" />
+                    <TriangleAlert className="size-6 shrink-0 text-yellow-500" />
                     {data.result.error}
                   </div>
                 )}
@@ -164,7 +156,7 @@ function Icon({ data }: { data: Image }) {
           text="Unknown"
           className="ml-auto size-6 shrink-0 text-gray-500"
         >
-          <IconHelpCircleFilled />
+          <HelpCircle />
         </WithTooltip>
       );
     case false:
@@ -173,7 +165,7 @@ function Icon({ data }: { data: Image }) {
           text="Up to date"
           className="ml-auto size-6 shrink-0 text-green-500"
         >
-          <IconCircleCheckFilled />
+          <CircleCheck />
         </WithTooltip>
       );
     case true:
@@ -185,7 +177,7 @@ function Icon({ data }: { data: Image }) {
                 text="Major Update"
                 className="ml-auto size-6 shrink-0 text-red-500"
               >
-                <IconCircleArrowUpFilled />
+                <CircleArrowUp />
               </WithTooltip>
             );
           case "minor":
@@ -194,7 +186,7 @@ function Icon({ data }: { data: Image }) {
                 text="Minor Update"
                 className="ml-auto size-6 shrink-0 text-yellow-500"
               >
-                <IconCircleArrowUpFilled />
+                <CircleArrowUp />
               </WithTooltip>
             );
           case "patch":
@@ -203,7 +195,7 @@ function Icon({ data }: { data: Image }) {
                 text="Patch Update"
                 className="ml-auto size-6 shrink-0 text-blue-500"
               >
-                <IconCircleArrowUpFilled />
+                <CircleArrowUp />
               </WithTooltip>
             );
         }
@@ -213,7 +205,7 @@ function Icon({ data }: { data: Image }) {
             text="Update available"
             className="ml-auto size-6 shrink-0 text-blue-500"
           >
-            <IconCircleArrowUpFilled />
+            <CircleArrowUp />
           </WithTooltip>
         );
       }
@@ -225,14 +217,14 @@ function DialogIcon({ data }: { data: Image }) {
     case null:
       return (
         <>
-          <IconHelpCircleFilled className="size-6 shrink-0 text-gray-500" />
+          <HelpCircle className="size-6 shrink-0 text-gray-500" />
           Unknown
         </>
       );
     case false:
       return (
         <>
-          <IconCircleCheckFilled className="size-6 shrink-0 text-green-500" />
+          <CircleCheck className="size-6 shrink-0 text-green-500" />
           Up to date
         </>
       );
@@ -242,21 +234,21 @@ function DialogIcon({ data }: { data: Image }) {
           case "major":
             return (
               <>
-                <IconCircleArrowUpFilled className="size-6 shrink-0 text-red-500" />
+                <CircleArrowUp className="size-6 shrink-0 text-red-500" />
                 Major update
               </>
             );
           case "minor":
             return (
               <>
-                <IconCircleArrowUpFilled className="size-6 shrink-0 text-yellow-500" />
+                <CircleArrowUp className="size-6 shrink-0 text-yellow-500" />
                 Minor update
               </>
             );
           case "patch":
             return (
               <>
-                <IconCircleArrowUpFilled className="size-6 shrink-0 text-blue-500" />
+                <CircleArrowUp className="size-6 shrink-0 text-blue-500" />
                 Patch update
               </>
             );
@@ -264,7 +256,7 @@ function DialogIcon({ data }: { data: Image }) {
       } else if (data.result.info?.type === "digest") {
         return (
           <>
-            <IconCircleArrowUpFilled className="size-6 shrink-0 text-blue-500" />
+            <CircleArrowUp className="size-6 shrink-0 text-blue-500" />
             Update available
           </>
         );

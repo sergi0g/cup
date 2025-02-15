@@ -1,7 +1,7 @@
-import { IconLoader2 } from "@tabler/icons-react";
 import { Data } from "../types";
 import Logo from "./Logo";
 import { theme } from "../theme";
+import { RefreshCw } from "lucide-react";
 
 export default function Loading({ onLoad }: { onLoad: (data: Data) => void }) {
   fetch(
@@ -28,7 +28,7 @@ export default function Loading({ onLoad }: { onLoad: (data: Data) => void }) {
           <div
             className={`flex h-full items-center justify-center gap-1 text-${theme}-500 dark:text-${theme}-400`}
           >
-            Loading <IconLoader2 className="animate-spin" />
+            Loading <RefreshCw className="animate-spin" />
           </div>
         </div>
       </div>
