@@ -1,11 +1,10 @@
-import { MouseEvent } from "react";
+import { useState } from "react";
 import { WithTooltip } from "./Tooltip";
 
 export default function RefreshButton() {
-  const refresh = (event: MouseEvent) => {
-    const btn = event.currentTarget as HTMLButtonElement;
-    btn.disabled = true;
-
+  const [disabled, setDisabled] = useState(false);
+  const refresh = () => {
+    setDisabled(true);
     const request = new XMLHttpRequest();
     request.onload = () => {
       if (request.status === 200) {
@@ -22,7 +21,7 @@ export default function RefreshButton() {
   };
   return (
     <WithTooltip text="Reload">
-      <button className="group" onClick={refresh}>
+      <button className="group" onClick={refresh} disabled={disabled}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="24"

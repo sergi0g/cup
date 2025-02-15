@@ -34,12 +34,12 @@
   <body>
     <div id="root">
       <div
-        class="flex justify-center min-h-screen bg-{{ theme }}-50 dark:bg-{{ theme }}-950"
+        class="flex justify-center min-h-screen bg-white dark:bg-{{ theme }}-900"
       >
         <div class="mx-auto h-full w-full max-w-[80rem] px-4 sm:px-6 lg:px-8">
           <div class="mx-auto my-8 h-full max-w-[48rem] flex-col">
             <div class="flex items-center gap-1">
-              <h1 class="text-5xl font-bold lg:text-6xl dark:text-white">Cup</h1>
+              <h1 class="text-5xl font-bold lg:text-6xl dark:text-white tracking-tight">Cup</h1>
               <svg
                 version="1.1"
                 id="Layer_2"
@@ -103,7 +103,7 @@
               </svg>
             </div>
             <div
-              class="shadow-sm bg-white dark:bg-{{ theme }}-900 rounded-md my-8"
+              class="border shadow-sm border-{{theme}}-200 dark:border-{{theme}}-800 my-8 rounded-md"
             >
               <dl
                 class="grid grid-cols-2 gap-1 overflow-hidden *:relative lg:grid-cols-4"
@@ -118,9 +118,9 @@
                         class="flex h-full flex-col justify-between gap-x-4 gap-y-2 px-6 py-4 align-baseline lg:min-h-32"
                       >
                         <dt
-                          class="text-{{ theme }}-500 dark:text-{{ theme }}-400 leading-6 font-medium"
+                          class="text-{{ theme }}-500 dark:text-{{ theme }}-400 text-sm font-semibold uppercase leading-6"
                         >
-                          {{ metric.name | replace: '_', ' ' | capitalize }}
+                          {{ metric.name | replace: '_', ' ' }}
                         </dt>
                         <div class="flex items-center justify-between gap-1">
                           <dd
@@ -135,13 +135,14 @@
                                 width="24"
                                 height="24"
                                 viewBox="0 0 24 24"
-                                fill="currentColor"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
                                 class="size-6 shrink-0 text-black dark:text-white"
                               >
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                <path
-                                  d="M12 4c4.29 0 7.863 2.429 10.665 7.154l.22 .379l.045 .1l.03 .083l.014 .055l.014 .082l.011 .1v.11l-.014 .111a.992 .992 0 0 1 -.026 .11l-.039 .108l-.036 .075l-.016 .03c-2.764 4.836 -6.3 7.38 -10.555 7.499l-.313 .004c-4.396 0 -8.037 -2.549 -10.868 -7.504a1 1 0 0 1 0 -.992c2.831 -4.955 6.472 -7.504 10.868 -7.504zm0 5a3 3 0 1 0 0 6a3 3 0 0 0 0 -6z"
-                                />
+                                <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>
                               </svg>
                             {% when 'up_to_date' %}
                               <svg
@@ -149,13 +150,14 @@
                                 width="24"
                                 height="24"
                                 viewBox="0 0 24 24"
-                                fill="currentColor"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
                                 class="size-6 shrink-0 text-green-500"
                               >
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                <path
-                                  d="M17 3.34a10 10 0 1 1 -14.995 8.984l-.005 -.324l.005 -.324a10 10 0 0 1 14.995 -8.336zm-1.293 5.953a1 1 0 0 0 -1.32 -.083l-.094 .083l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.403 1.403l.083 .094l2 2l.094 .083a1 1 0 0 0 1.226 0l.094 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z"
-                                />
+                                <circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>
                               </svg>
                             {% when 'updates_available' %}
                               {% assign max_metric = '' %}
@@ -181,13 +183,14 @@
                                 width="24"
                                 height="24"
                                 viewBox="0 0 24 24"
-                                fill="currentColor"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
                                 class="size-6 shrink-0 {{ color }}"
                               >
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                <path
-                                  d="M17 3.34a10 10 0 1 1 -14.995 8.984l-.005 -.324l.005 -.324a10 10 0 0 1 14.995 -8.336zm-4.98 3.66l-.163 .01l-.086 .016l-.142 .045l-.113 .054l-.07 .043l-.095 .071l-.058 .054l-4 4l-.083 .094a1 1 0 0 0 1.497 1.32l2.293 -2.293v5.586l.007 .117a1 1 0 0 0 1.993 -.117v-5.585l2.293 2.292l.094 .083a1 1 0 0 0 1.32 -1.497l-4 -4l-.082 -.073l-.089 -.064l-.113 -.062l-.081 -.034l-.113 -.034l-.112 -.02l-.098 -.006z"
-                                />
+                                <circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4"/><path d="M12 16V8"/>
                               </svg>
                             {% when 'unknown' %}
                               <svg
@@ -195,13 +198,14 @@
                                 width="24"
                                 height="24"
                                 viewBox="0 0 24 24"
-                                fill="currentColor"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
                                 class="size-6 text-{{ theme }}-500 shrink-0"
                               >
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                <path
-                                  d="M12 2c5.523 0 10 4.477 10 10a10 10 0 0 1 -19.995 .324l-.005 -.324l.004 -.28c.148 -5.393 4.566 -9.72 9.996 -9.72zm0 13a1 1 0 0 0 -.993 .883l-.007 .117l.007 .127a1 1 0 0 0 1.986 0l.007 -.117l-.007 -.127a1 1 0 0 0 -.993 -.883zm1.368 -6.673a2.98 2.98 0 0 0 -3.631 .728a1 1 0 0 0 1.44 1.383l.171 -.18a.98 .98 0 0 1 1.11 -.15a1 1 0 0 1 -.34 1.886l-.232 .012a1 1 0 0 0 .111 1.994a3 3 0 0 0 1.371 -5.673z"
-                                />
+                                <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>
                               </svg>
                           {% endcase %}
                         </div>
@@ -212,20 +216,24 @@
               </dl>
             </div>
             <div
-              class="shadow-sm bg-white dark:bg-{{ theme }}-900 rounded-md my-8"
+              class="border shadow-sm border-{{theme}}-200 dark:border-{{theme}}-800 my-8 rounded-md"
             >
               <div
-                class="flex justify-between items-center px-6 py-4 text-{{ theme }}-500"
+                class="flex justify-between items-center px-6 py-4"
               >
-                <h3>Last checked: {{ last_updated }}</h3>
+                <h3 class="text-{{theme}}-600 dark:text-{{theme}}-500">Last checked: {{ last_updated }}</h3>
               </div>
               <ul>
                 {% for server in server_ids %}
                   {% if server == '' %}
                     <li class="mb-8 last:mb-0">
-                      <ul class="dark:divide-{{theme}}-800 divide-y dark:text-white">
+                      <ul
+                        class="dark:divide-{{theme}}-800 divide-y dark:text-white"
+                      >
                         {% for image in servers[server] %}
-                          <li class="flex items-center gap-4 break-all px-6 py-4 text-start">
+                          <li
+                            class="flex items-center gap-4 break-all px-6 py-4 text-start hover:bg-{{theme}}-100 hover:dark:bg-{{theme}}-800/50 transition-colors duration-200"
+                          >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               width="24"
@@ -236,31 +244,27 @@
                               stroke-width="2"
                               stroke-linecap="round"
                               stroke-linejoin="round"
-                              class="size-6 shrink-0"
+                              class="size-6 shrink-0 text-{{ theme }}-500"
                             >
-                              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                              <path
-                                d="M21 16.008v-8.018a1.98 1.98 0 0 0 -1 -1.717l-7 -4.008a2.016 2.016 0 0 0 -2 0l-7 4.008c-.619 .355 -1 1.01 -1 1.718v8.018c0 .709 .381 1.363 1 1.717l7 4.008a2.016 2.016 0 0 0 2 0l7 -4.008c.619 -.355 1 -1.01 1 -1.718z"
-                              />
-                              <path d="M12 22v-10" />
-                              <path d="M12 12l8.73 -5.04" />
-                              <path d="M3.27 6.96l8.73 5.04" />
+                              <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>
                             </svg>
-                            {{ image.name }}
+                            <span class="font-mono">{{ image.name }}</span>
                             {% case image.status %}
-                              {% when 'Up to date' %}
+                              {% when 'Up to
+                      date' %}
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
                                   width="24"
                                   height="24"
                                   viewBox="0 0 24 24"
-                                  fill="currentColor"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
                                   class="ml-auto text-green-500"
                                 >
-                                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                  <path
-                                    d="M17 3.34a10 10 0 1 1 -14.995 8.984l-.005 -.324l.005 -.324a10 10 0 0 1 14.995 -8.336zm-1.293 5.953a1 1 0 0 0 -1.32 -.083l-.094 .083l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.403 1.403l.083 .094l2 2l.094 .083a1 1 0 0 0 1.226 0l.094 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z"
-                                  />
+                                  <circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>
                                 </svg>
                               {% when 'Unknown' %}
                                 <svg
@@ -268,19 +272,21 @@
                                   width="24"
                                   height="24"
                                   viewBox="0 0 24 24"
-                                  fill="currentColor"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
                                   class="text-{{ theme }}-500 ml-auto"
                                 >
-                                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                  <path
-                                    d="M12 2c5.523 0 10 4.477 10 10a10 10 0 0 1 -19.995 .324l-.005 -.324l.004 -.28c.148 -5.393 4.566 -9.72 9.996 -9.72zm0 13a1 1 0 0 0 -.993 .883l-.007 .117l.007 .127a1 1 0 0 0 1.986 0l.007 -.117l-.007 -.127a1 1 0 0 0 -.993 -.883zm1.368 -6.673a2.98 2.98 0 0 0 -3.631 .728a1 1 0 0 0 1.44 1.383l.171 -.18a.98 .98 0 0 1 1.11 -.15a1 1 0 0 1 -.34 1.886l-.232 .012a1 1 0 0 0 .111 1.994a3 3 0 0 0 1.371 -5.673z"
-                                  />
+                                  <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>
                                 </svg>
                               {% else %}
                                 {% case image.status %}
                                   {% when 'Major update' %}
                                     {% assign color = 'text-red-500' %}
-                                  {% when 'Minor update' %}
+                                  {% when 'Minor
+                      update' %}
                                     {% assign color = 'text-yellow-500' %}
                                   {% else %}
                                     {% assign color = 'text-blue-500' %}
@@ -290,13 +296,14 @@
                                   width="24"
                                   height="24"
                                   viewBox="0 0 24 24"
-                                  fill="currentColor"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
                                   class="ml-auto {{ color }}"
                                 >
-                                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                  <path
-                                    d="M17 3.34a10 10 0 1 1 -14.995 8.984l-.005 -.324l.005 -.324a10 10 0 0 1 14.995 -8.336zm-4.98 3.66l-.163 .01l-.086 .016l-.142 .045l-.113 .054l-.07 .043l-.095 .071l-.058 .054l-4 4l-.083 .094a1 1 0 0 0 1.497 1.32l2.293 -2.293v5.586l.007 .117a1 1 0 0 0 1.993 -.117v-5.585l2.293 2.292l.094 .083a1 1 0 0 0 1.32 -1.497l-4 -4l-.082 -.073l-.089 -.064l-.113 -.062l-.081 -.034l-.113 -.034l-.112 -.02l-.098 -.006z"
-                                  />
+                                  <circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4"/><path d="M12 16V8"/>
                                 </svg>
                             {% endcase %}
                           </li>
@@ -305,12 +312,18 @@
                     </li>
                   {% else %}
                     <li class="mb-4 last:mb-0">
-                      <p class="my-4 text-lg font-semibold text-{{ theme }}-600 dark:text-{{ theme }}-400 px-6">
+                      <p
+                        class="my-4 text-lg font-semibold text-{{ theme }}-600 dark:text-{{ theme }}-400 px-6"
+                      >
                         {{ server }}
                       </p>
-                      <ul class="dark:divide-{{ theme }}-800 divide-y dark:text-white">
+                      <ul
+                        class="dark:divide-{{ theme }}-800 divide-y dark:text-white"
+                      >
                         {% for image in servers[server] %}
-                          <li class="flex items-center gap-4 break-all px-6 py-4 text-start">
+                          <li
+                            class="flex items-center gap-4 break-all px-6 py-4 text-start"
+                          >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               width="24"
@@ -323,29 +336,25 @@
                               stroke-linejoin="round"
                               class="size-6 shrink-0"
                             >
-                              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                              <path
-                                d="M21 16.008v-8.018a1.98 1.98 0 0 0 -1 -1.717l-7 -4.008a2.016 2.016 0 0 0 -2 0l-7 4.008c-.619 .355 -1 1.01 -1 1.718v8.018c0 .709 .381 1.363 1 1.717l7 4.008a2.016 2.016 0 0 0 2 0l7 -4.008c.619 -.355 1 -1.01 1 -1.718z"
-                              />
-                              <path d="M12 22v-10" />
-                              <path d="M12 12l8.73 -5.04" />
-                              <path d="M3.27 6.96l8.73 5.04" />
+                              <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>
                             </svg>
                             {{ image.name }}
                             {% case image.status %}
-                              {% when 'Up to date' %}
+                              {% when 'Up to
+                      date' %}
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
                                   width="24"
                                   height="24"
                                   viewBox="0 0 24 24"
-                                  fill="currentColor"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
                                   class="ml-auto text-green-500"
                                 >
-                                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                  <path
-                                    d="M17 3.34a10 10 0 1 1 -14.995 8.984l-.005 -.324l.005 -.324a10 10 0 0 1 14.995 -8.336zm-1.293 5.953a1 1 0 0 0 -1.32 -.083l-.094 .083l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.403 1.403l.083 .094l2 2l.094 .083a1 1 0 0 0 1.226 0l.094 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z"
-                                  />
+                                  <circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>
                                 </svg>
                               {% when 'Unknown' %}
                                 <svg
@@ -353,19 +362,21 @@
                                   width="24"
                                   height="24"
                                   viewBox="0 0 24 24"
-                                  fill="currentColor"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
                                   class="text-{{ theme }}-500 ml-auto"
                                 >
-                                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                  <path
-                                    d="M12 2c5.523 0 10 4.477 10 10a10 10 0 0 1 -19.995 .324l-.005 -.324l.004 -.28c.148 -5.393 4.566 -9.72 9.996 -9.72zm0 13a1 1 0 0 0 -.993 .883l-.007 .117l.007 .127a1 1 0 0 0 1.986 0l.007 -.117l-.007 -.127a1 1 0 0 0 -.993 -.883zm1.368 -6.673a2.98 2.98 0 0 0 -3.631 .728a1 1 0 0 0 1.44 1.383l.171 -.18a.98 .98 0 0 1 1.11 -.15a1 1 0 0 1 -.34 1.886l-.232 .012a1 1 0 0 0 .111 1.994a3 3 0 0 0 1.371 -5.673z"
-                                  />
+                                  <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>
                                 </svg>
                               {% else %}
                                 {% case image.status %}
                                   {% when 'Major update' %}
                                     {% assign color = 'text-red-500' %}
-                                  {% when 'Minor update' %}
+                                  {% when 'Minor
+                      update' %}
                                     {% assign color = 'text-yellow-500' %}
                                   {% else %}
                                     {% assign color = 'text-blue-500' %}
@@ -375,13 +386,14 @@
                                   width="24"
                                   height="24"
                                   viewBox="0 0 24 24"
-                                  fill="currentColor"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
                                   class="ml-auto {{ color }}"
                                 >
-                                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                  <path
-                                    d="M17 3.34a10 10 0 1 1 -14.995 8.984l-.005 -.324l.005 -.324a10 10 0 0 1 14.995 -8.336zm-4.98 3.66l-.163 .01l-.086 .016l-.142 .045l-.113 .054l-.07 .043l-.095 .071l-.058 .054l-4 4l-.083 .094a1 1 0 0 0 1.497 1.32l2.293 -2.293v5.586l.007 .117a1 1 0 0 0 1.993 -.117v-5.585l2.293 2.292l.094 .083a1 1 0 0 0 1.32 -1.497l-4 -4l-.082 -.073l-.089 -.064l-.113 -.062l-.081 -.034l-.113 -.034l-.112 -.02l-.098 -.006z"
-                                  />
+                                  <circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4"/><path d="M12 16V8"/>
                                 </svg>
                             {% endcase %}
                           </li>

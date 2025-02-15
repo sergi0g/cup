@@ -17,15 +17,14 @@ export default function Statistic({
   metrics: Data["metrics"];
 }) {
   if (!metricsToShow.includes(name)) return null;
-  let displayName = name.replaceAll("_", " ");
-  displayName = displayName.slice(0, 1).toUpperCase() + displayName.slice(1); // Capitalize name
+  const displayName = name.replaceAll("_", " ");
   return (
     <div
       className={`before:bg-${theme}-200 before:dark:bg-${theme}-800 after:bg-${theme}-200 after:dark:bg-${theme}-800 gi`}
     >
       <div className="flex h-full flex-col justify-between gap-x-4 gap-y-2 px-6 py-4 align-baseline lg:min-h-32">
         <dt
-          className={`text-${theme}-500 dark:text-${theme}-400 font-medium leading-6`}
+          className={`text-${theme}-500 dark:text-${theme}-400 text-sm font-semibold uppercase leading-6`}
         >
           {displayName}
         </dt>

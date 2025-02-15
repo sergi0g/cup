@@ -9,7 +9,15 @@ import { WithTooltip } from "./Tooltip";
 import type { Image } from "../types";
 import { theme } from "../theme";
 import { CodeBlock } from "./CodeBlock";
-import { Box, CircleArrowUp, CircleCheck, HelpCircle, Timer, TriangleAlert, X } from "lucide-react";
+import {
+  Box,
+  CircleArrowUp,
+  CircleCheck,
+  HelpCircle,
+  Timer,
+  TriangleAlert,
+  X,
+} from "lucide-react";
 
 const clickable_registries = [
   "registry-1.docker.io",
@@ -44,9 +52,11 @@ export default function Image({ data }: { data: Image }) {
   return (
     <>
       <button onClick={handleOpen} className="w-full">
-        <li className="flex items-center gap-4 break-all px-6 py-4 text-start">
-          <Box className="size-6 shrink-0" />
-          {data.reference}
+        <li
+          className={`flex items-center gap-4 break-all px-6 py-4 text-start hover:bg-${theme}-100 hover:dark:bg-${theme}-800/50 transition-colors duration-200`}
+        >
+          <Box className={`size-6 shrink-0 text-${theme}-500`} />
+          <span className="font-mono">{data.reference}</span>
           <Icon data={data} />
         </li>
       </button>
@@ -59,14 +69,14 @@ export default function Image({ data }: { data: Image }) {
           <div className="flex min-h-full items-end justify-center text-center sm:items-center sm:p-0">
             <DialogPanel
               transition
-              className={`relative transform overflow-hidden rounded-t-lg bg-white md:rounded-lg dark:bg-${theme}-900 w-full text-left shadow-xl transition-all data-[closed]:translate-y-4 data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in sm:my-8 sm:w-full sm:max-w-lg data-[closed]:sm:translate-y-0 data-[closed]:sm:scale-95 md:max-w-xl lg:max-w-2xl dark:text-white`}
+              className={`relative transform overflow-hidden rounded-t-lg bg-white dark:border dark:border-${theme}-800 md:rounded-lg dark:bg-${theme}-900 w-full text-left shadow-xl transition-all data-[closed]:translate-y-4 data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in sm:my-8 sm:w-full sm:max-w-lg data-[closed]:sm:translate-y-0 data-[closed]:sm:scale-95 md:max-w-xl lg:max-w-2xl dark:text-white`}
             >
               <div
-                className={`flex flex-col gap-3 px-6 py-4 text-${theme}-400 dark:text-${theme}-600`}
+                className={`flex flex-col gap-3 px-6 py-4 text-${theme}-600 dark:text-${theme}-400`}
               >
                 <div className="mb-4 flex items-center gap-3">
-                  <Box className="size-6 shrink-0 text-black dark:text-white" />
-                  <DialogTitle className="text-black dark:text-white">
+                  <Box className={`size-6 shrink-0 text-${theme}-500`} />
+                  <DialogTitle className="font-mono text-black dark:text-white">
                     {url ? (
                       <>
                         <a
@@ -95,28 +105,32 @@ export default function Image({ data }: { data: Image }) {
                     )}
                   </DialogTitle>
                   <button onClick={handleClose} className="ml-auto">
-                    <X className="size-6 shrink-0 text-gray-500" />
+                    <X
+                      className={`size-6 shrink-0 text-${theme}-500 transition-colors duration-200 hover:text-black dark:hover:text-white`}
+                    />
                   </button>
                 </div>
                 <div className="flex items-center gap-3">
                   <DialogIcon data={data} />
                 </div>
-                <div className="mb-4 flex items-center gap-3">
+                <div className="flex items-center gap-3">
                   <Timer className="size-6 shrink-0 text-gray-500" />
                   <span>
                     Checked in <b>{data.time}</b> ms
                   </span>
                 </div>
                 {data.result.error && (
-                  <div className="break-before mb-4 flex items-center gap-3 overflow-hidden rounded-md bg-yellow-400/10 px-3 py-2">
+                  <div className="break-before mt-4 flex items-center gap-3 overflow-hidden rounded-md bg-yellow-400/10 px-3 py-2">
                     <TriangleAlert className="size-6 shrink-0 text-yellow-500" />
                     {data.result.error}
                   </div>
                 )}
                 {data.result.has_update && (
-                  <div className="flex flex-col gap-1">
+                  <div className="mt-4 flex flex-col gap-1">
                     Pull command
-                    <CodeBlock enableCopy>{new_reference}</CodeBlock>
+                    <CodeBlock enableCopy>
+                      docker pull {new_reference}
+                    </CodeBlock>
                   </div>
                 )}
                 <div className="flex flex-col gap-1">

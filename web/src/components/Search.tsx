@@ -23,14 +23,14 @@ export default function Search({
     onChange("");
   };
   return (
-    <div className={`w-full px-6 text-${theme}-500`}>
+    <div className={`w-full px-6 text-black dark:text-white`}>
       <div
-        className={`flex w-full items-center rounded-md border border-${theme}-300 dark:border-${theme}-700 gap-1 px-2 bg-${theme}-200 dark:bg-${theme}-800 peer flex-nowrap`}
+        className={`flex w-full items-center rounded-md border border-${theme}-200 dark:border-${theme}-700 gap-1 px-2 bg-${theme}-100 dark:bg-${theme}-800 peer flex-nowrap`}
       >
         <SearchIcon className="size-5" />
         <div className="w-full">
           <input
-            className={`h-10 w-full text-sm text-${theme}-600 dark:text-${theme}-400 peer bg-transparent focus:outline-none placeholder:text-${theme}-500`}
+            className={`h-10 w-full text-sm text-${theme}-800 dark:text-${theme}-200 peer bg-transparent focus:outline-none placeholder:text-${theme}-600 placeholder:dark:text-${theme}-400`}
             placeholder="Search"
             onChange={handleChange}
             value={searchQuery}
@@ -39,7 +39,7 @@ export default function Search({
         {showClear && (
           <button
             onClick={handleClear}
-            className={`hover:text-${theme}-600 dark:hover:text-${theme}-400`}
+            className={`hover:text-${theme}-600 dark:hover:text-${theme}-400 transition-colors duration-200`}
           >
             <X className="size-5" />
           </button>

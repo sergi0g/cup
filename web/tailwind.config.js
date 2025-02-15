@@ -8,7 +8,11 @@ export default {
   safelist: [
     // Generate minimum extra CSS
     {
-      pattern: /bg-(gray|neutral)-(50|100|200|500)/,
+      pattern: /bg-(gray|neutral)-(50|200|500)/,
+    },
+    {
+      pattern: /bg-(gray|neutral)-100/,
+      variants: ["hover"],
     },
     {
       pattern: /bg-(gray|neutral)-(900|950)/,
@@ -20,10 +24,10 @@ export default {
     },
     {
       pattern: /bg-(gray|neutral)-800/,
-      variants: ["before:dark", "after:dark", "dark"],
+      variants: ["before:dark", "after:dark", "dark", "hover:dark"],
     },
     {
-      pattern: /text-(gray|neutral)-(50|300)/,
+      pattern: /text-(gray|neutral)-(50|300|200)/,
       variants: ["dark"],
     },
     {
@@ -35,8 +39,12 @@ export default {
       variants: ["dark", "dark:hover"],
     },
     {
-      pattern: /text-(gray|neutral)-500/,
+      pattern: /text-(gray|neutral)-600/,
       variants: ["placeholder"],
+    },
+    {
+      pattern: /text-(gray|neutral)-400/,
+      variants: ["placeholder:dark"],
     },
     {
       pattern: /text-(gray|neutral)-700/,
