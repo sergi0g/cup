@@ -18,7 +18,7 @@ pub fn parse_www_authenticate(www_auth: &str) -> String {
                     if *key == "realm" {
                         return acc.to_owned() + value.as_escaped() + "?";
                     } else {
-                        return format!("{}&{}={}", acc, key, value.as_escaped());
+                        format!("{}&{}={}", acc, key, value.as_escaped())
                     }
                 })
         } else {
