@@ -16,4 +16,5 @@ export default withNextra({
       },
     ],
   },
+  basePath: "",
 });
