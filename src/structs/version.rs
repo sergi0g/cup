@@ -81,39 +81,31 @@ impl Version {
     }
 
     pub fn to_status(&self, base: &Self) -> Status {
-        if self.major > base.major {
-            Status::UpdateMajor
-        } else if self.major == base.major {
-            match (self.minor, base.minor) {
-                (Some(a_minor), Some(b_minor)) => {
-                    if a_minor > b_minor {
-                        Status::UpdateMinor
-                    } else if a_minor == b_minor {
-                        match (self.patch, base.patch) {
-                            (Some(a_patch), Some(b_patch)) => {
-                                if a_patch > b_patch {
-                                    Status::UpdatePatch
-                                } else if a_patch == b_patch {
-                                    Status::UpToDate
-                                } else {
-                                    Status::Unknown(format!("Tag {} does not exist", base))
-                                }
+        match self.major.cmp(&base.major) {
+            Ordering::Greater => Status::UpdateMajor,
+            Ordering::Equal => match (self.minor, base.minor) {
+                (Some(a_minor), Some(b_minor)) => match a_minor.cmp(&b_minor) {
+                    Ordering::Greater => Status::UpdateMinor,
+                    Ordering::Equal => match (self.patch, base.patch) {
+                        (Some(a_patch), Some(b_patch)) => match a_patch.cmp(&b_patch) {
+                            Ordering::Greater => Status::UpdatePatch,
+                            Ordering::Equal => Status::UpToDate,
+                            Ordering::Less => {
+                                Status::Unknown(format!("Tag {} does not exist", base))
                             }
-                            (None, None) => Status::UpToDate,
-                            _ => unreachable!(),
-                        }
-                    } else {
-                        Status::Unknown(format!("Tag {} does not exist", base))
-                    }
-                }
+                        },
+                        (None, None) => Status::UpToDate,
+                        _ => unreachable!(),
+                    },
+                    Ordering::Less => Status::Unknown(format!("Tag {} does not exist", base)),
+                },
                 (None, None) => Status::UpToDate,
                 _ => unreachable!(
                     "Version error: {} and {} should either both be Some or None",
                     self, base
                 ),
-            }
-        } else {
-            Status::Unknown(format!("Tag {} does not exist", base))
+            },
+            Ordering::Less => Status::Unknown(format!("Tag {} does not exist", base)),
         }
     }
 }
