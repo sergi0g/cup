@@ -42,7 +42,7 @@ pub fn print_updates(updates: &[Update], icons: &bool) {
                         _ => 0,
                     };
                 let time_length = update.time.to_string().len();
-                return (
+                (
                     if reference_length > acc.0 {
                         reference_length
                     } else {
@@ -58,7 +58,7 @@ pub fn print_updates(updates: &[Update], icons: &bool) {
                     } else {
                         acc.2
                     },
-                );
+                )
             });
         println!(
             " \x1b[90;1m╭{:─<rw$}┬{:─<sw$}┬{:─<tw$}╮\x1b[0m",
@@ -125,7 +125,7 @@ pub fn print_updates(updates: &[Update], icons: &bool) {
             };
             let description = format!(
                 "{} {}",
-                status.to_string(),
+                status,
                 match &update.result.info {
                     UpdateInfo::Version(info) => {
                         format!("({} → {})", info.current_version, info.new_version)
