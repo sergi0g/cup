@@ -27,7 +27,7 @@ function App() {
   if (!data) return <Loading onLoad={setData} />;
   return (
     <div
-      className={`flex min-h-screen justify-center bg-white dark:bg-${theme}-900`}
+      className={`flex min-h-screen justify-center bg-white dark:bg-${theme}-950`}
     >
       <div className="mx-auto h-full w-full max-w-[80rem] px-4 sm:px-6 lg:px-8">
         <div className="mx-auto my-8 flex h-full max-w-[48rem] flex-col">
@@ -38,7 +38,7 @@ function App() {
             <Logo />
           </div>
           <div
-            className={`border shadow-sm border-${theme}-200 dark:border-${theme}-800 my-8 rounded-md`}
+            className={`border shadow-sm border-${theme}-200 dark:border-${theme}-900 my-8 rounded-md`}
           >
             <dl className="grid grid-cols-2 gap-1 overflow-hidden *:relative lg:grid-cols-4">
               {Object.entries(data.metrics)
@@ -55,7 +55,7 @@ function App() {
             </dl>
           </div>
           <div
-            className={`border shadow-sm border-${theme}-200 dark:border-${theme}-800 my-8 rounded-md`}
+            className={`border shadow-sm border-${theme}-200 dark:border-${theme}-900 my-8 rounded-md`}
           >
             <div
               className={`flex items-center justify-between px-6 py-4 text-${theme}-500`}

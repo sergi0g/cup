@@ -12,7 +12,7 @@
       <meta
         name="theme-color"
         media="(prefers-color-scheme: dark)"
-        content="#171717"
+        content="#0a0a0a"
       >
     {% else %}
       <meta
@@ -23,7 +23,7 @@
       <meta
         name="theme-color"
         media="(prefers-color-scheme: dark)"
-        content="#101828"
+        content="#030712"
       >
     {% endif %}
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -34,7 +34,7 @@
   <body>
     <div id="root">
       <div
-        class="flex justify-center min-h-screen bg-white dark:bg-{{ theme }}-900"
+        class="flex justify-center min-h-screen bg-white dark:bg-{{ theme }}-950"
       >
         <div class="mx-auto h-full w-full max-w-[80rem] px-4 sm:px-6 lg:px-8">
           <div class="mx-auto my-8 h-full max-w-[48rem] flex-col">
@@ -103,7 +103,7 @@
               </svg>
             </div>
             <div
-              class="border shadow-sm border-{{theme}}-200 dark:border-{{theme}}-800 my-8 rounded-md"
+              class="border shadow-sm border-{{theme}}-200 dark:border-{{theme}}-900 my-8 rounded-md"
             >
               <dl
                 class="grid grid-cols-2 gap-1 overflow-hidden *:relative lg:grid-cols-4"
@@ -112,7 +112,7 @@
                 {% for metric in metrics %}
                   {% if metrics_to_show contains metric.name %}
                     <div
-                      class="before:bg-{{ theme }}-200 before:dark:bg-{{ theme }}-800 after:bg-{{ theme }}-200 after:dark:bg-{{ theme }}-800 gi"
+                      class="before:bg-{{ theme }}-200 before:dark:bg-{{ theme }}-900 after:bg-{{ theme }}-200 after:dark:bg-{{ theme }}-900 gi"
                     >
                       <div
                         class="flex h-full flex-col justify-between gap-x-4 gap-y-2 px-6 py-4 align-baseline lg:min-h-32"
@@ -216,7 +216,7 @@
               </dl>
             </div>
             <div
-              class="border shadow-sm border-{{theme}}-200 dark:border-{{theme}}-800 my-8 rounded-md"
+              class="border shadow-sm border-{{theme}}-200 dark:border-{{theme}}-900 my-8 rounded-md"
             >
               <div
                 class="flex justify-between items-center px-6 py-4"
@@ -228,11 +228,11 @@
                   {% if server == '' %}
                     <li class="mb-8 last:mb-0">
                       <ul
-                        class="dark:divide-{{theme}}-800 divide-y dark:text-white"
+                        class="dark:divide-{{theme}}-900 divide-y dark:text-white"
                       >
                         {% for image in servers[server] %}
                           <li
-                            class="flex items-center gap-4 break-all px-6 py-4 text-start hover:bg-{{theme}}-100 hover:dark:bg-{{theme}}-800/50 transition-colors duration-200"
+                            class="flex items-center gap-4 break-all px-6 py-4 text-start hover:bg-{{theme}}-100 hover:dark:bg-{{theme}}-900/50 transition-colors duration-200"
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -318,11 +318,11 @@
                         {{ server }}
                       </p>
                       <ul
-                        class="dark:divide-{{ theme }}-800 divide-y dark:text-white"
+                        class="dark:divide-{{ theme }}-900 divide-y dark:text-white"
                       >
                         {% for image in servers[server] %}
                           <li
-                            class="flex items-center gap-4 break-all px-6 py-4 text-start"
+                            class="flex items-center gap-4 break-all px-6 py-4 text-start hover:bg-{{ theme }}-100 hover:dark:bg-{{ theme }}-900/50 transition-colors duration-200"
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"

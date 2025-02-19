@@ -23,7 +23,7 @@ export default {
       variants: ["before", "after"],
     },
     {
-      pattern: /bg-(gray|neutral)-800/,
+      pattern: /bg-(gray|neutral)-900/,
       variants: ["before:dark", "after:dark", "dark", "hover:dark"],
     },
     {
@@ -58,14 +58,14 @@ export default {
       variants: ["group-data-[hover]:dark"],
     },
     {
-      pattern: /divide-(gray|neutral)-800/,
+      pattern: /divide-(gray|neutral)-900/,
       variants: ["dark"],
     },
     {
       pattern: /border-(gray|neutral)-(200|300)/,
     },
     {
-      pattern: /border-(gray|neutral)-(700|800)/,
+      pattern: /border-(gray|neutral)-(700|800|900)/,
       variants: ["dark"],
     },
   ],

@@ -53,7 +53,7 @@ export default function Image({ data }: { data: Image }) {
     <>
       <button onClick={handleOpen} className="w-full">
         <li
-          className={`flex items-center gap-4 break-all px-6 py-4 text-start hover:bg-${theme}-100 hover:dark:bg-${theme}-800/50 transition-colors duration-200`}
+          className={`flex items-center gap-4 break-all px-6 py-4 text-start hover:bg-${theme}-100 hover:dark:bg-${theme}-900/50 transition-colors duration-200`}
         >
           <Box className={`size-6 shrink-0 text-${theme}-500`} />
           <span className="font-mono">{data.reference}</span>
@@ -83,21 +83,23 @@ export default function Image({ data }: { data: Image }) {
                           href={url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={`group flex w-fit items-center justify-center gap-1 text-black hover:underline dark:text-white`}
+                          className={`group w-fit text-black hover:underline dark:text-white`}
                         >
-                          <span>{data.reference}</span>
-                          <svg
-                            viewBox="0 0 12 12"
-                            fill="none"
-                            width="10px"
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="transition-all duration-100 group-hover:rotate-45"
-                          >
-                            <path
-                              d="M11 9.283V1H2.727v1.44h5.83L1 9.99 2.01 11l7.556-7.55v5.833H11Z"
-                              fill="currentColor"
-                            ></path>
-                          </svg>
+                          <span>
+                            {data.reference}
+                            <svg
+                              viewBox="0 0 12 12"
+                              fill="none"
+                              height="1cap"
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="ml-1 inline transition-all duration-100 group-hover:rotate-45"
+                            >
+                              <path
+                                d="M11 9.283V1H2.727v1.44h5.83L1 9.99 2.01 11l7.556-7.55v5.833H11Z"
+                                fill="currentColor"
+                              ></path>
+                            </svg>
+                          </span>
                         </a>
                       </>
                     ) : (

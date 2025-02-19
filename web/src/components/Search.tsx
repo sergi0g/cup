@@ -25,9 +25,9 @@ export default function Search({
   return (
     <div className={`w-full px-6 text-black dark:text-white`}>
       <div
-        className={`flex w-full items-center rounded-md border border-${theme}-200 dark:border-${theme}-700 gap-1 px-2 bg-${theme}-100 dark:bg-${theme}-800 peer flex-nowrap`}
+        className={`flex w-full items-center rounded-md border border-${theme}-200 dark:border-${theme}-700 gap-1 px-2 bg-${theme}-100 dark:bg-${theme}-900 peer flex-nowrap`}
       >
-        <SearchIcon className="size-5" />
+        <SearchIcon className={`size-5 text-${theme}-600 dark:text-${theme}-400`} />
         <div className="w-full">
           <input
             className={`h-10 w-full text-sm text-${theme}-800 dark:text-${theme}-200 peer bg-transparent focus:outline-none placeholder:text-${theme}-600 placeholder:dark:text-${theme}-400`}

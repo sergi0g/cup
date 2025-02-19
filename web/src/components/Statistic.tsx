@@ -20,7 +20,7 @@ export default function Statistic({
   const displayName = name.replaceAll("_", " ");
   return (
     <div
-      className={`before:bg-${theme}-200 before:dark:bg-${theme}-800 after:bg-${theme}-200 after:dark:bg-${theme}-800 gi`}
+      className={`before:bg-${theme}-200 before:dark:bg-${theme}-900 after:bg-${theme}-200 after:dark:bg-${theme}-900 gi`}
     >
       <div className="flex h-full flex-col justify-between gap-x-4 gap-y-2 px-6 py-4 align-baseline lg:min-h-32">
         <dt

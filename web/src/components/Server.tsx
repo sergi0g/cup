@@ -16,7 +16,7 @@ export function Server({
   if (name.length === 0)
     return (
       <li className="mb-8 last:mb-0">
-        <ul className={`dark:divide-${theme}-800 divide-y dark:text-white`}>
+        <ul className={`dark:divide-${theme}-900 divide-y dark:text-white`}>
           {children}
         </ul>
       </li>
@@ -34,7 +34,7 @@ export function Server({
         />
       </DisclosureButton>
       <DisclosurePanel
-        className={`dark:divide-${theme}-800 divide-y dark:text-white`}
+        className={`dark:divide-${theme}-900 divide-y dark:text-white`}
         as="ul"
         transition
       >
