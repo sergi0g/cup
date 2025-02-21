@@ -34,6 +34,8 @@ struct Cli {
     command: Option<Commands>,
     #[arg(short, long)]
     debug: bool,
+    #[arg(long)]
+    refresh: bool,
 }
 
 #[derive(Subcommand)]
@@ -98,12 +100,12 @@ async fn main() {
             }
             match *raw || cli.debug {
                 true => {
-                    let updates = get_updates(references, &ctx).await;
+                    let updates = get_updates(references, cli.refresh, &ctx).await;
                     print_raw_updates(&updates);
                 }
                 false => {
                     let spinner = Spinner::new();
-                    let updates = get_updates(references, &ctx).await;
+                    let updates = get_updates(references, cli.refresh, &ctx).await;
                     spinner.succeed();
                     print_updates(&updates, icons);
                     ctx.logger.info(format!("✨ Checked {} images in {}ms", updates.len(), start.elapsed().unwrap().as_millis()));

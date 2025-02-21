@@ -12,21 +12,38 @@ use crate::{
 };
 
 /// Fetches image data from other Cup instances
-async fn get_remote_updates(ctx: &Context, client: &Client) -> Vec<Update> {
+async fn get_remote_updates(ctx: &Context, client: &Client, refresh: bool) -> Vec<Update> {
     let mut remote_images = Vec::new();
 
     let handles: Vec<_> = ctx.config.servers
         .iter()
         .map(|(name, url)| async {
-            let url = if url.starts_with("http://") || url.starts_with("https://") {
-                format!("{}/api/v3/json", url.trim_end_matches('/'))
+            let base_url = if url.starts_with("http://") || url.starts_with("https://") {
+                format!("{}/api/v3/", url.trim_end_matches('/'))
             } else {
-                format!("https://{}/api/v3/json", url.trim_end_matches('/'))
+                format!("https://{}/api/v3/", url.trim_end_matches('/'))
             };
-            match client.get(&url, vec![], false).await {
+            let json_url = base_url.clone() + "json";
+            if refresh {
+                let refresh_url = base_url + "refresh";
+                match client.get(&(&refresh_url), vec![], false).await {
+                    Ok(response) => {
+                        if response.status() != 200 {
+                            ctx.logger.warn(format!("GET {}: Failed to refresh server. Server returned invalid response code: {}",refresh_url,response.status()));
+                            return Vec::new();
+                        }
+                    },
+                    Err(e) => {
+                        ctx.logger.warn(format!("GET {}: Failed to refresh server. {}", refresh_url, e));
+                        return Vec::new();
+                    },
+                }
+
+            }
+            match client.get(&json_url, vec![], false).await {
                 Ok(response) => {
                     if response.status() != 200 {
-                        ctx.logger.warn(format!("GET {}: Failed to fetch updates from server. Server returned invalid response code: {}",url,response.status()));
+                        ctx.logger.warn(format!("GET {}: Failed to fetch updates from server. Server returned invalid response code: {}",json_url,response.status()));
                         return Vec::new();
                     }
                     let json = parse_json(&get_response_body(response).await);
@@ -46,7 +63,7 @@ async fn get_remote_updates(ctx: &Context, client: &Client) -> Vec<Update> {
                     Vec::new()
                 }
                 Err(e) => {
-                    ctx.logger.warn(format!("Failed to fetch updates from server. {}", e));
+                    ctx.logger.warn(format!("GET {}: Failed to fetch updates from server. {}", json_url, e));
                     Vec::new()
                 },
             }
@@ -61,7 +78,11 @@ async fn get_remote_updates(ctx: &Context, client: &Client) -> Vec<Update> {
 }
 
 /// Returns a list of updates for all images passed in.
-pub async fn get_updates(references: &Option<Vec<String>>, ctx: &Context) -> Vec<Update> {
+pub async fn get_updates(
+    references: &Option<Vec<String>>,
+    refresh: bool,
+    ctx: &Context,
+) -> Vec<Update> {
     let client = Client::new(ctx);
 
     // Get local images
@@ -82,7 +103,7 @@ pub async fn get_updates(references: &Option<Vec<String>>, ctx: &Context) -> Vec
     // Get remote images from other servers
     let remote_updates = if !ctx.config.servers.is_empty() {
         ctx.logger.debug("Fetching updates from remote servers");
-        get_remote_updates(ctx, &client).await
+        get_remote_updates(ctx, &client, refresh).await
     } else {
         Vec::new()
     };

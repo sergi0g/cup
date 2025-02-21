@@ -173,7 +173,7 @@ impl ServerData {
         if !self.raw_updates.is_empty() {
             self.ctx.logger.info("Refreshing data");
         }
-        let updates = sort_update_vec(&get_updates(&None, &self.ctx).await);
+        let updates = sort_update_vec(&get_updates(&None, true, &self.ctx).await);
         self.ctx.logger.info(format!(
             "✨ Checked {} images in {}ms",
             updates.len(),
