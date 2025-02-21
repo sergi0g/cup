@@ -37,9 +37,7 @@ pub enum UpdateInfo {
 pub struct VersionUpdateInfo {
     pub version_update_type: String,
     pub new_tag: String,
-    #[serde(skip_serializing, skip_deserializing)]
     pub current_version: String,
-    #[serde(skip_serializing, skip_deserializing)]
     pub new_version: String,
 }
 

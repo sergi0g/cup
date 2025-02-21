@@ -33,6 +33,8 @@ interface VersionInfo {
   type: "version";
   version_update_type: "major" | "minor" | "patch";
   new_tag: string;
+  current_version: string;
+  new_version: string;
 }
 
 interface DigestInfo {
