@@ -1,5 +1,5 @@
 import React from "react";
-import "./styles.css";
+import "./styles.css"
 
 import CopyableCode from "../CopyableCode";
 import { Browser } from "../Browser";

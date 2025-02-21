@@ -1,13 +1,3 @@
-/* Override nextra styles restricting width */
-
-:root {
-  --nextra-content-width: unset !important;
-}
-
-header.nextra-navbar {
-  --nextra-content-width: 90rem;
-}
-
 article {
   padding-inline: 0 !important;
   padding-top: 0 !important;
