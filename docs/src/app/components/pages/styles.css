@@ -1,7 +1,7 @@
-article {
-  padding-inline: 0 !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
+article:has(.home) {
+  padding-inline: 0;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 article div.x\:mt-16:last-child:empty {

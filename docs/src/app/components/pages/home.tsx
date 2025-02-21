@@ -23,7 +23,7 @@ import Link from "next/link";
 export default async function Home() {
   return (
     <>
-      <div className="relative">
+      <div className="relative home">
         <GridPattern />
         <div className="px-4 pt-16 pb-8 sm:pt-24 lg:px-8">
           <div className="flex w-full flex-col items-center justify-between">
