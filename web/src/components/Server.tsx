@@ -13,14 +13,7 @@ export function Server({
   name: string;
   children: React.ReactNode;
 }) {
-  if (name.length === 0)
-    return (
-      <li className="mb-8 last:mb-0">
-        <ul className={`dark:divide-${theme}-900 divide-y dark:text-white`}>
-          {children}
-        </ul>
-      </li>
-    );
+  if (name.length === 0) name = "Local images";
   return (
     <Disclosure defaultOpen as="li" className={`mb-4 last:mb-0`}>
       <DisclosureButton className="group my-4 flex w-full items-center justify-between px-6">
