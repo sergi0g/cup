@@ -20,7 +20,7 @@ const logo = (
 );
 
 const navbar = (
-  <Navbar logo={logo} projectLink="https://github.com/sergi0g/cup">
+  <Navbar logo={logo} projectLink="https://github.com/sergi0g/cup" chatLink="https://discord.gg/jmh5ctzwNG">
     <ThemeSwitch lite className="cursor-pointer" />
   </Navbar>
 );

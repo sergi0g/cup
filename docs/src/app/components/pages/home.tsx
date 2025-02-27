@@ -1,29 +1,28 @@
 import React from "react";
-import "./styles.css"
+import "./styles.css";
 
-import CopyableCode from "../CopyableCode";
 import { Browser } from "../Browser";
 import { Card } from "../Card";
 import {
   IconAdjustments,
   IconArrowRight,
+  IconBarrierBlockOff,
   IconBolt,
-  IconBraces,
-  IconDevices,
   IconFeather,
-  IconLockCheck,
+  IconGitMerge,
+  IconPuzzle,
+  IconServer,
+  IconTerminal,
 } from "@tabler/icons-react";
 import { GitHubIcon } from "nextra/icons";
 import { GridPattern } from "../GridPattern";
 import { GradientText } from "../GradientText";
-import { Section } from "../Section";
-import { Steps } from "nextra/components";
 import Link from "next/link";
 
 export default async function Home() {
   return (
     <>
-      <div className="relative home">
+      <div className="relative home bg-radial-[ellipse_at_center] from-transparent from-20% to-white dark:to-black">
         <GridPattern />
         <div className="px-4 pt-16 pb-8 sm:pt-24 lg:px-8">
           <div className="flex w-full flex-col items-center justify-between">
@@ -37,7 +36,7 @@ export default async function Home() {
                   blur={30}
                 />
               </h1>
-              <h3 className="mx-auto mt-6 max-w-3xl text-center text-xl leading-tight font-medium text-gray-400">
+              <h3 className="mx-auto mt-6 max-w-3xl text-center text-xl leading-tight font-medium text-neutral-500 dark:text-neutral-400">
                 Cup is a small utility with a big impact. Simplify your
                 container management workflow with fast and efficient update
                 checking, a full-featured CLI and web interface, and more.
@@ -54,7 +53,7 @@ export default async function Home() {
               <a
                 href="https://github.com/sergi0g/cup"
                 target="_blank"
-                className="hide-focus h-full text-nowrap border border-neutral-400 transition-colors duration-200 ease-in-out hover:border-neutral-600 focus:border-neutral-600 dark:border-neutral-600 hover:dark:border-neutral-400 hover:dark:shadow-sm hover:dark:shadow-neutral-600 focus:dark:border-neutral-400"
+                className="hide-focus h-full bg-white dark:bg-black text-nowrap border border-black/15 transition-colors duration-200 ease-in-out hover:border-black/40 dark:border-white/15 hover:dark:border-white/40 hover:dark:shadow-sm focus:dark:border-white/30"
               >
                 Star on GitHub
                 <GitHubIcon className="ml-auto size-4 md:size-5" />
@@ -66,68 +65,49 @@ export default async function Home() {
           <Browser />
         </div>
       </div>
-      <Section
-        title="Powerful at its core."
-        className="bg-gradient-to-r from-red-500 to-amber-500"
-      >
-        <Card
-          name="100% Safe Code"
-          icon={IconLockCheck}
-          description="Built with safe Rust and Typescript to ensure security and reliability."
-        />
-        <Card
-          name="Lightning Fast Performance"
-          icon={IconBolt}
-          description="Heavily optimized to squeeze out every last drop of performance. Each release is extensively benchmarked and profiled so that you'll never have to stare at a loading spinner for long."
-        />
-        <Card
-          name="Lightweight"
-          icon={IconFeather}
-          description="No runtimes or libraries are needed. All you need is the 5.1 MB static binary that works out of the box on any system."
-        />
-      </Section>
-      <Section
-        title="Efficient, yet flexible."
-        className="bg-gradient-to-r from-blue-500 to-indigo-500"
-      >
-        <Card
-          name="JSON output"
-          description="Connect Cup to your favorite intergrations with JSON output for the CLI and an API for the server. Now go make that cool dashboard you've been dreaming of!"
-          icon={IconBraces}
-        />
-        <Card
-          name="Both CLI and web interface"
-          description="Whether you prefer the command line or the web, Cup runs wherever you choose."
-          icon={IconDevices}
-        />
-        <Card
-          name="Configurable"
-          description="The simple configuration file provides you with all the tools you need to specify a custom Docker socket, manage registry connection options, choose a theme for the web interface and more."
-          icon={IconAdjustments}
-        />
-      </Section>
-      <div className="relative py-24 border-t border-t-neutral-300 dark:border-t-neutral-600/30 text-black dark:text-white">
-        <GridPattern />
-        <div className="mx-auto flex w-full max-w-screen-xl flex-col items-center">
-          <p className="mb-8 text-center text-3xl font-bold">
-            Still not convinced? Try it out now!
-          </p>
-          <div>
-            <Steps>
-              <h3 className="mb-2">Open a terminal and run</h3>
-              <CopyableCode>
-                docker run --rm -t -v /var/run/docker.sock:/var/run/docker.sock
-                -p 8000:8000 ghcr.io/sergi0g/cup serve
-              </CopyableCode>
-              <h3 className="mb-2">Open the dashboard in your browser</h3>
-              <p>
-                Visit{" "}
-                <a href="http://localhost:8000" className="underline">
-                  http://localhost:8000
-                </a>{" "}
-                in your browser to try it out!
-              </p>
-            </Steps>
+      <div className="bg-white dark:bg-black py-12 px-8 w-full">
+        <div className="flex h-full w-full items-center justify-center">
+          <div className="grid md:grid-cols-2 md:grid-rows-4 lg:grid-cols-4 lg:grid-rows-2 w-full max-w-7xl gap-px border border-transparent bg-black/10 dark:bg-white/10">
+            <Card
+              name="Built for speed."
+              icon={IconBolt}
+              description="Cup is written in Rust and every release goes through extensive profiling to squeeze out every last drop of performance."
+            />
+            <Card
+              name="Configurable."
+              icon={IconAdjustments}
+              description="Make Cup yours with the extensive configuration options available. Customize and tailor it to your needs."
+            />
+            <Card
+              name="Extend it."
+              icon={IconPuzzle}
+              description="JSON output enables you to connect Cup with your favorite integrations, build automations and more."
+            />
+            <Card
+              name="CLI available."
+              icon={IconTerminal}
+              description="Do you like terminals? Cup has a CLI. Check for updates quickly without spinning up a server."
+            />
+            <Card
+              name="Multiple servers."
+              icon={IconServer}
+              description="Run multiple Cup instances and effortlessly check on them through one web interface."
+            />
+            <Card
+              name="Unstoppable."
+              icon={IconBarrierBlockOff}
+              description="Cup is designed to check for updates without using up any rate limits. 10 images per hour won't be a problem, even with 100 images."
+            />
+            <Card
+              name="Lightweight."
+              icon={IconFeather}
+              description="No need for a powerful server and endless storage. The tiny 5.4 MB binary won't hog your CPU and memory."
+            />
+            <Card
+              name="Open source."
+              icon={IconGitMerge}
+              description="All source code is publicly available in our GitHub repository. We're looking for contributors!"
+            />
           </div>
         </div>
       </div>

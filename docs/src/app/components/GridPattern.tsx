@@ -8,7 +8,7 @@ export function GridPattern() {
   return (
     <svg
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 bottom-0 left-0 right-0 top-0 -z-10 h-full w-full stroke-neutral-200 dark:stroke-neutral-600/30"
+      className="pointer-events-none absolute inset-0 bottom-0 left-0 right-0 top-0 h-full w-full -z-10 bg-white stroke-neutral-200 dark:stroke-white/10 dark:bg-black"
     >
       <defs>
         <pattern
@@ -22,7 +22,6 @@ export function GridPattern() {
           <path
             d={`M.5 ${SIZE}V.5H${SIZE}`}
             fill="none"
-            strokeDasharray={"4 2"}
           />
         </pattern>
       </defs>
