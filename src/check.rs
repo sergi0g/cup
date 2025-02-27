@@ -17,7 +17,7 @@ async fn get_remote_updates(ctx: &Context, client: &Client, refresh: bool) -> Ve
 
     let handles: Vec<_> = ctx.config.servers
         .iter()
-        .map(|(name, url)| async {
+        .map(|(name, url)| async move {
             let base_url = if url.starts_with("http://") || url.starts_with("https://") {
                 format!("{}/api/v3/", url.trim_end_matches('/'))
             } else {
@@ -47,16 +47,21 @@ async fn get_remote_updates(ctx: &Context, client: &Client, refresh: bool) -> Ve
                         return Vec::new();
                     }
                     let json = parse_json(&get_response_body(response).await);
+                    ctx.logger.debug(format!("JSON response for {}: {}", name, json));
                     if let Some(updates) = json["images"].as_array() {
                         let mut server_updates: Vec<Update> = updates
                             .iter()
-                            .filter_map(|img| serde_json::from_value(img.clone()).ok())
+                            .filter_map(|img| match serde_json::from_value(img.clone()) {
+                                Ok(o) => o,
+                                Err(e) => {dbg!(e);None}
+                            })
                             .collect();
                         // Add server origin to each image
                         for update in &mut server_updates {
                             update.server = Some(name.clone());
                             update.status = update.get_status();
                         }
+                        ctx.logger.debug(format!("Updates for {}: {:#?}", name, server_updates));
                         return server_updates;
                     }
 

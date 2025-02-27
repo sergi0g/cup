@@ -1,8 +1,7 @@
 use std::fmt::Display;
 
 /// Enum for image status
-#[derive(Ord, Eq, PartialEq, PartialOrd, Clone)]
-#[cfg_attr(test, derive(Debug))]
+#[derive(Ord, Eq, PartialEq, PartialOrd, Clone, Debug)]
 pub enum Status {
     UpdateMajor,
     UpdateMinor,

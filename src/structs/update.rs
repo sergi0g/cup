@@ -2,8 +2,8 @@ use serde::{ser::SerializeStruct, Deserialize, Serialize};
 
 use super::{parts::Parts, status::Status};
 
-#[derive(Serialize, Deserialize, Clone)]
-#[cfg_attr(test, derive(PartialEq, Debug, Default))]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[cfg_attr(test, derive(PartialEq, Default))]
 pub struct Update {
     pub reference: String,
     pub parts: Parts,
@@ -14,16 +14,16 @@ pub struct Update {
     pub status: Status,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
-#[cfg_attr(test, derive(PartialEq, Debug, Default))]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[cfg_attr(test, derive(PartialEq, Default))]
 pub struct UpdateResult {
     pub has_update: Option<bool>,
     pub info: UpdateInfo,
     pub error: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
-#[cfg_attr(test, derive(PartialEq, Debug, Default))]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[cfg_attr(test, derive(PartialEq, Default))]
 #[serde(untagged)]
 pub enum UpdateInfo {
     #[cfg_attr(test, default)]
@@ -32,8 +32,8 @@ pub enum UpdateInfo {
     Digest(DigestUpdateInfo),
 }
 
-#[derive(Deserialize, Clone)]
-#[cfg_attr(test, derive(PartialEq, Debug))]
+#[derive(Deserialize, Clone, Debug)]
+#[cfg_attr(test, derive(PartialEq))]
 pub struct VersionUpdateInfo {
     pub version_update_type: String,
     pub new_tag: String,
@@ -41,8 +41,8 @@ pub struct VersionUpdateInfo {
     pub new_version: String,
 }
 
-#[derive(Deserialize, Clone)]
-#[cfg_attr(test, derive(PartialEq, Debug))]
+#[derive(Deserialize, Clone, Debug)]
+#[cfg_attr(test, derive(PartialEq))]
 pub struct DigestUpdateInfo {
     pub local_digests: Vec<String>,
     pub remote_digest: Option<String>,
@@ -53,10 +53,12 @@ impl Serialize for VersionUpdateInfo {
     where
         S: serde::Serializer,
     {
-        let mut state = serializer.serialize_struct("VersionUpdateInfo", 3)?;
+        let mut state = serializer.serialize_struct("VersionUpdateInfo", 5)?;
         let _ = state.serialize_field("type", "version");
         let _ = state.serialize_field("version_update_type", &self.version_update_type);
         let _ = state.serialize_field("new_tag", &self.new_tag);
+        let _ = state.serialize_field("current_version", &self.current_version);
+        let _ = state.serialize_field("new_version", &self.new_version);
         state.end()
     }
 }
