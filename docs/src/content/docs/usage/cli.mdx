@@ -12,36 +12,52 @@ Cup's CLI provides the `cup check` command.
 
 ```ansi
 $ cup check
-[38;5;1m
-mysql:8.0                                             Major update
-node:20                                               Major update
-postgres:16-alpine                                    Major update[0m[38;5;3m
-rust:1.80.1-alpine                                    Minor update[0m[38;5;12m
-redis:7.4.0                                           Patch update
-nginx:alpine                                      Update available
-redis:alpine                                      Update available
-ubuntu:latest                                     Update available[0m[38;5;2m
-node:iron                                               Up to date
-2fauth/2fauth:latest                                    Up to date
-c1982/sdns:latest                                       Up to date[0m[38;5;8m
-registry.acme.com/acme-server:latest                       Unknown
-[36;1mINFO  [0m✨ Checked 58 images in 3772ms
+[32;1m✓[0m Done!
+[90;1m~ Local images[0m
+ [90;1m╭─────────────────────────────────────────┬──────────────────────────────────┬─────────╮[0m
+ [90;1m│[36;1mReference                                [90;1m│[36;1mStatus                            [90;1m│[36;1mTime (ms)[90;1m│[0m
+ [90;1m├─────────────────────────────────────────┼──────────────────────────────────┼─────────┤[0m
+ [90;1m│[0mpostgres:15-alpine                       [90;1m│[0m[31mMajor update (15 → 17)            [0m[90;1m│[0m788      [90;1m│[0m
+ [90;1m│[0mghcr.io/immich-app/immich-server:v1.118.2[90;1m│[0m[33mMinor update (1.118.2 → 1.127.0)  [0m[90;1m│[0m2294     [90;1m│[0m
+ [90;1m│[0mollama/ollama:0.4.1                      [90;1m│[0m[33mMinor update (0.4.1 → 0.5.12)     [0m[90;1m│[0m533      [90;1m│[0m
+ [90;1m│[0madguard/adguardhome:v0.107.52            [90;1m│[0m[34mPatch update (0.107.52 → 0.107.57)[0m[90;1m│[0m1738     [90;1m│[0m
+ [90;1m│[0mjc21/nginx-proxy-manager:latest          [90;1m│[0m[32mUp to date                        [0m[90;1m│[0m583      [90;1m│[0m
+ [90;1m│[0mlouislam/uptime-kuma:1                   [90;1m│[0m[32mUp to date                        [0m[90;1m│[0m793      [90;1m│[0m
+ [90;1m│[0mmoby/buildkit:buildx-stable-1            [90;1m│[0m[32mUp to date                        [0m[90;1m│[0m600      [90;1m│[0m
+ [90;1m│[0mtecnativa/docker-socket-proxy:latest     [90;1m│[0m[32mUp to date                        [0m[90;1m│[0m564      [90;1m│[0m
+ [90;1m│[0mubuntu:latest                            [90;1m│[0m[32mUp to date                        [0m[90;1m│[0m585      [90;1m│[0m
+ [90;1m│[0mwagoodman/dive:latest                    [90;1m│[0m[32mUp to date                        [0m[90;1m│[0m585      [90;1m│[0m
+ [90;1m│[0mrolebot:latest                           [90;1m│[0m[90mUnknown                           [0m[90;1m│[0m174      [90;1m│[0m
+ [90;1m╰─────────────────────────────────────────┴──────────────────────────────────┴─────────╯[0m
+[36;1m INFO[0m ✨ Checked 11 images in 8312ms
 ```
 
 ### Check for updates to specific images
 
 ```ansi
-$ cup check node:latest[38;5;12m
-node:latest                                       Update available
-[36;1mINFO  [0m✨ Checked 1 images in 1310ms
+$ cup check node:latest
+[32;1m✓[0m Done!
+[90;1m~ Local images[0m
+ [90;1m╭───────────┬────────────────┬─────────╮[0m
+ [90;1m│[36;1mReference  [90;1m│[36;1mStatus          [90;1m│[36;1mTime (ms)[90;1m│[0m
+ [90;1m├───────────┼────────────────┼─────────┤[0m
+ [90;1m│[0mnode:latest[90;1m│[0m[34mUpdate available[0m[90;1m│[0m788      [90;1m│[0m
+ [90;1m╰───────────┴────────────────┴─────────╯[0m
+[36;1m INFO[0m ✨ Checked 1 images in 310ms
 ```
 
 ```ansi
 $ cup check nextcloud:30 postgres:14 mysql:8.0[38;5;12m
-nextcloud:30                                      Update available
-postgres:14                                       Update available[38;5;2m
-mysql:8.0                                               Up to date
-[36;1mINFO  [0m✨ Checked 3 images in 1769ms
+[32;1m✓[0m Done!
+[90;1m~ Local images[0m
+ [90;1m╭────────────┬────────────────────────┬─────────╮[0m
+ [90;1m│[36;1mReference   [90;1m│[36;1mStatus                  [90;1m│[36;1mTime (ms)[90;1m│[0m
+ [90;1m├────────────┼────────────────────────┼─────────┤[0m
+ [90;1m│[0mpostgres:14 [90;1m│[0m[31mMajor update (14 → 17)  [0m[90;1m│[0m195      [90;1m│[0m
+ [90;1m│[0mmysql:8.0   [90;1m│[0m[31mMajor update (8.0 → 9.2)[0m[90;1m│[0m382      [90;1m│[0m
+ [90;1m│[0mnextcloud:30[90;1m│[0m[32mUp to date              [0m[90;1m│[0m585      [90;1m│[0m
+ [90;1m╰────────────┴────────────────────────┴─────────╯[0m
+[36;1m INFO[0m ✨ Checked 3 images in 769ms
 ```
 
 ## Enable icons
@@ -62,7 +78,8 @@ $ cup check -r
 ```
 
 <Callout emoji="⚠️">
-When parsing Cup's output, capture only `stdout`, otherwise you might not get valid JSON (if there are warnings)
+  When parsing Cup's output, capture only `stdout`, otherwise you might not get
+  valid JSON (if there are warnings)
 </Callout>
 
 ## Usage with Docker

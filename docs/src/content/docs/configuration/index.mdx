@@ -8,7 +8,7 @@ import {
   IconLockOpen,
   IconKey,
   IconPlug,
-  IconServer
+  IconServer,
 } from "@tabler/icons-react";
 
 # Configuration
@@ -71,12 +71,21 @@ Here's a full example:
 
 ```json
 {
-  "authentication": {
-    "ghcr.io": "<YOUR_TOKEN_HERE>",
-    "registry-1.docker.io": "<YOUR_TOKEN_HERE>"
+  "$schema": "https://raw.githubusercontent.com/sergi0g/cup/v3/cup.schema.json",
+  "version": 3,
+  "images": {
+    "exclude": ["ghcr.io/immich-app/immich-machine-learning"],
+    "extra": ["ghcr.io/sergi0g/cup:v3.0.0"]
   },
-  "theme": "blue",
-  "insecure_registries": ["localhost:5000", "my-insecure-registry.example.com"]
+  "registries": {
+    "myregistry.com": {
+      "authentication": "<YOUR_TOKEN_HERE>"
+    }
+  },
+  "servers": {
+    "Raspberry Pi": "https://server.local:8000"
+  },
+  "theme": "blue"
 }
 ```
 
