@@ -13,7 +13,6 @@
   "dependencies": {
     "@headlessui/react": "^2.1.10",
     "@radix-ui/react-tooltip": "^1.1.2",
-    "caniuse-lite": "^1.0.30001698",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
     "lucide-react": "^0.475.0",
