@@ -51,10 +51,7 @@ async fn get_remote_updates(ctx: &Context, client: &Client, refresh: bool) -> Ve
                     if let Some(updates) = json["images"].as_array() {
                         let mut server_updates: Vec<Update> = updates
                             .iter()
-                            .filter_map(|img| match serde_json::from_value(img.clone()) {
-                                Ok(o) => o,
-                                Err(e) => {dbg!(e);None}
-                            })
+                            .filter_map(|img| serde_json::from_value(img.clone()).ok())
                             .collect();
                         // Add server origin to each image
                         for update in &mut server_updates {
