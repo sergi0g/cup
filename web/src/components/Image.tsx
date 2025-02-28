@@ -38,6 +38,7 @@ export default function Image({ data }: { data: Image }) {
     data.result.info?.type == "version"
       ? data.reference.split(":")[0] + ":" + data.result.info.new_tag
       : data.reference;
+  const info = getInfo(data)!;
   let url: string | null = null;
   if (clickable_registries.includes(data.parts.registry)) {
     switch (data.parts.registry) {
@@ -57,7 +58,12 @@ export default function Image({ data }: { data: Image }) {
         >
           <Box className={`size-6 shrink-0 text-${theme}-500`} />
           <span className="font-mono">{data.reference}</span>
-          <Icon data={data} />
+          <WithTooltip
+            text={info.description}
+            className={`ml-auto size-6 shrink-0 ${info.color}`}
+          >
+            <info.icon />
+          </WithTooltip>
         </li>
       </button>
       <Dialog open={open} onClose={setOpen} className="relative z-10">
@@ -113,7 +119,8 @@ export default function Image({ data }: { data: Image }) {
                   </button>
                 </div>
                 <div className="flex items-center gap-3">
-                  <DialogIcon data={data} />
+                  <info.icon className={`size-6 shrink-0 ${info.color}`} />
+                  {info.description}
                 </div>
                 <div className="flex items-center gap-3">
                   <Timer className="size-6 shrink-0 text-gray-500" />
@@ -164,118 +171,54 @@ export default function Image({ data }: { data: Image }) {
   );
 }
 
-function Icon({ data }: { data: Image }) {
+function getInfo(data: Image):
+  | {
+      color: string;
+      icon: typeof HelpCircle;
+      description: string;
+    }
+  | undefined {
   switch (data.result.has_update) {
     case null:
-      return (
-        <WithTooltip
-          text="Unknown"
-          className="ml-auto size-6 shrink-0 text-gray-500"
-        >
-          <HelpCircle />
-        </WithTooltip>
-      );
+      return {
+        color: "text-gray-500",
+        icon: HelpCircle,
+        description: "Unknown",
+      };
     case false:
-      return (
-        <WithTooltip
-          text="Up to date"
-          className="ml-auto size-6 shrink-0 text-green-500"
-        >
-          <CircleCheck />
-        </WithTooltip>
-      );
+      return {
+        color: "text-green-500",
+        icon: CircleCheck,
+        description: "Up to date",
+      };
     case true:
       if (data.result.info?.type === "version") {
         switch (data.result.info.version_update_type) {
           case "major":
-            return (
-              <WithTooltip
-                text="Major Update"
-                className="ml-auto size-6 shrink-0 text-red-500"
-              >
-                <CircleArrowUp />
-              </WithTooltip>
-            );
+            return {
+              color: "text-red-500",
+              icon: CircleArrowUp,
+              description: "Major update",
+            };
           case "minor":
-            return (
-              <WithTooltip
-                text="Minor Update"
-                className="ml-auto size-6 shrink-0 text-yellow-500"
-              >
-                <CircleArrowUp />
-              </WithTooltip>
-            );
+            return {
+              color: "text-yellow-500",
+              icon: CircleArrowUp,
+              description: "Minor update",
+            };
           case "patch":
-            return (
-              <WithTooltip
-                text="Patch Update"
-                className="ml-auto size-6 shrink-0 text-blue-500"
-              >
-                <CircleArrowUp />
-              </WithTooltip>
-            );
+            return {
+              color: "text-blue-500",
+              icon: CircleArrowUp,
+              description: "Patch update",
+            };
         }
       } else if (data.result.info?.type === "digest") {
-        return (
-          <WithTooltip
-            text="Update available"
-            className="ml-auto size-6 shrink-0 text-blue-500"
-          >
-            <CircleArrowUp />
-          </WithTooltip>
-        );
-      }
-  }
-}
-
-function DialogIcon({ data }: { data: Image }) {
-  switch (data.result.has_update) {
-    case null:
-      return (
-        <>
-          <HelpCircle className="size-6 shrink-0 text-gray-500" />
-          Unknown
-        </>
-      );
-    case false:
-      return (
-        <>
-          <CircleCheck className="size-6 shrink-0 text-green-500" />
-          Up to date
-        </>
-      );
-    case true:
-      if (data.result.info?.type === "version") {
-        switch (data.result.info.version_update_type) {
-          case "major":
-            return (
-              <>
-                <CircleArrowUp className="size-6 shrink-0 text-red-500" />
-                Major update
-              </>
-            );
-          case "minor":
-            return (
-              <>
-                <CircleArrowUp className="size-6 shrink-0 text-yellow-500" />
-                Minor update
-              </>
-            );
-          case "patch":
-            return (
-              <>
-                <CircleArrowUp className="size-6 shrink-0 text-blue-500" />
-                Patch update
-              </>
-            );
-        }
-      } else if (data.result.info?.type === "digest") {
-        return (
-          <>
-            <CircleArrowUp className="size-6 shrink-0 text-blue-500" />
-            Update available
-          </>
-        );
+        return {
+          color: "text-blue-500",
+          icon: CircleArrowUp,
+          description: "Update available",
+        };
       }
   }
 }
