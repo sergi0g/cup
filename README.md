@@ -22,7 +22,7 @@ _If you like this project and/or use Cup, please consider starring the project â
 
 ## Documentation ðŸ“˜
 
-Take a look at https://sergi0g.github.io/cup/docs!
+Take a look at https://cup.sergi0g.dev/docs!
 
 ## Limitations
 
@@ -44,7 +44,7 @@ Here are some ideas to get you started:
 - Help optimize Cup and make it even better!
 - Add more features to the web UI
 
-For more information, check the [docs](https://sergi0g.github.io/cup/docs/contributing)!
+For more information, check the [docs](https://cup.sergi0g.dev/docs/contributing)!
 
 ## Support
 
