@@ -2,62 +2,46 @@ use bollard::{models::ImageInspect, ClientVersion, Docker};
 
 use futures::future::join_all;
 
-use crate::{error, image::Image, config::Config};
+use crate::{error, structs::image::Image, Context};
 
-fn create_docker_client(socket: Option<String>) -> Docker {
+fn create_docker_client(socket: Option<&str>) -> Docker {
     let client: Result<Docker, bollard::errors::Error> = match socket {
-        Some(sock) => Docker::connect_with_local(
-            &sock,
-            120,
-            &ClientVersion {
-                major_version: 1,
-                minor_version: 44,
-            },
-        ),
-        None => Docker::connect_with_local_defaults(),
+        Some(sock) => {
+            if sock.starts_with("unix://") {
+                Docker::connect_with_unix(
+                    sock,
+                    120,
+                    &ClientVersion {
+                        major_version: 1,
+                        minor_version: 44,
+                    },
+                )
+            } else {
+                Docker::connect_with_http(
+                    sock,
+                    120,
+                    &ClientVersion {
+                        major_version: 1,
+                        minor_version: 44,
+                    },
+                )
+            }
+        }
+        None => Docker::connect_with_unix_defaults(),
     };
 
     match client {
         Ok(d) => d,
-        Err(e) => error!("Failed to connect to docker socket!\n{}", e),
+        Err(e) => error!("Failed to connect to docker daemon!\n{}", e),
     }
 }
 
 /// Retrieves images from Docker daemon. If `references` is Some, return only the images whose references match the ones specified.
 pub async fn get_images_from_docker_daemon(
-    config: &Config,
+    ctx: &Context,
     references: &Option<Vec<String>>,
 ) -> Vec<Image> {
-    let client: Docker = create_docker_client(config.socket.clone());
-    // If https://github.com/moby/moby/issues/48612 is fixed, this code should be faster. For now a workaround will be used.
-    // let mut filters = HashMap::with_capacity(1);
-    // match references {
-    //     Some(refs) => {
-    //         filters.insert("reference".to_string(), refs.clone());
-    //     }
-    //     None => (),
-    // }
-    // let images: Vec<ImageSummary> = match client
-    //     .list_images::<String>(Some(ListImagesOptions {
-    //         filters,
-    //         ..Default::default()
-    //     }))
-    //     .await
-    // {
-    //     Ok(images) => images,
-    //     Err(e) => {
-    //         error!("Failed to retrieve list of images available!\n{}", e)
-    //     }
-    // };
-    // let mut handles = Vec::new();
-    // for image in images {
-    //     handles.push(Image::from(image, options))
-    // }
-    // join_all(handles)
-    //     .await
-    //     .iter()
-    //     .filter_map(|img| img.clone())
-    //     .collect()
+    let client: Docker = create_docker_client(ctx.config.socket.as_deref());
     match references {
         Some(refs) => {
             let mut inspect_handles = Vec::with_capacity(refs.len());
@@ -70,14 +54,9 @@ pub async fn get_images_from_docker_daemon(
                 .filter(|inspect| inspect.is_ok())
                 .map(|inspect| inspect.as_ref().unwrap().clone())
                 .collect();
-            let mut image_handles = Vec::with_capacity(inspects.len());
-            for inspect in inspects {
-                image_handles.push(Image::from_inspect(inspect.clone()));
-            }
-            join_all(image_handles)
-                .await
+            inspects
                 .iter()
-                .filter_map(|img| img.clone())
+                .filter_map(|inspect| Image::from_inspect_data(inspect.clone()))
                 .collect()
         }
         None => {
@@ -87,14 +66,9 @@ pub async fn get_images_from_docker_daemon(
                     error!("Failed to retrieve list of images available!\n{}", e)
                 }
             };
-            let mut handles = Vec::new();
-            for image in images {
-                handles.push(Image::from_summary(image))
-            }
-            join_all(handles)
-                .await
+            images
                 .iter()
-                .filter_map(|img| img.clone())
+                .filter_map(|image| Image::from_inspect_data(image.clone()))
                 .collect()
         }
     }

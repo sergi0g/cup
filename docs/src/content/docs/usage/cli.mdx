@@ -1,0 +1,99 @@
+import Image from "next/image";
+import cup from "@/app/assets/cup.gif";
+import { Callout } from "nextra/components";
+
+# CLI
+
+Cup's CLI provides the `cup check` command.
+
+## Basic Usage
+
+### Check for all updates
+
+```ansi
+$ cup check
+[32;1m✓[0m Done!
+[90;1m~ Local images[0m
+ [90;1m╭─────────────────────────────────────────┬──────────────────────────────────┬─────────╮[0m
+ [90;1m│[36;1mReference                                [90;1m│[36;1mStatus                            [90;1m│[36;1mTime (ms)[90;1m│[0m
+ [90;1m├─────────────────────────────────────────┼──────────────────────────────────┼─────────┤[0m
+ [90;1m│[0mpostgres:15-alpine                       [90;1m│[0m[31mMajor update (15 → 17)            [0m[90;1m│[0m788      [90;1m│[0m
+ [90;1m│[0mghcr.io/immich-app/immich-server:v1.118.2[90;1m│[0m[33mMinor update (1.118.2 → 1.127.0)  [0m[90;1m│[0m2294     [90;1m│[0m
+ [90;1m│[0mollama/ollama:0.4.1                      [90;1m│[0m[33mMinor update (0.4.1 → 0.5.12)     [0m[90;1m│[0m533      [90;1m│[0m
+ [90;1m│[0madguard/adguardhome:v0.107.52            [90;1m│[0m[34mPatch update (0.107.52 → 0.107.57)[0m[90;1m│[0m1738     [90;1m│[0m
+ [90;1m│[0mjc21/nginx-proxy-manager:latest          [90;1m│[0m[32mUp to date                        [0m[90;1m│[0m583      [90;1m│[0m
+ [90;1m│[0mlouislam/uptime-kuma:1                   [90;1m│[0m[32mUp to date                        [0m[90;1m│[0m793      [90;1m│[0m
+ [90;1m│[0mmoby/buildkit:buildx-stable-1            [90;1m│[0m[32mUp to date                        [0m[90;1m│[0m600      [90;1m│[0m
+ [90;1m│[0mtecnativa/docker-socket-proxy:latest     [90;1m│[0m[32mUp to date                        [0m[90;1m│[0m564      [90;1m│[0m
+ [90;1m│[0mubuntu:latest                            [90;1m│[0m[32mUp to date                        [0m[90;1m│[0m585      [90;1m│[0m
+ [90;1m│[0mwagoodman/dive:latest                    [90;1m│[0m[32mUp to date                        [0m[90;1m│[0m585      [90;1m│[0m
+ [90;1m│[0mrolebot:latest                           [90;1m│[0m[90mUnknown                           [0m[90;1m│[0m174      [90;1m│[0m
+ [90;1m╰─────────────────────────────────────────┴──────────────────────────────────┴─────────╯[0m
+[36;1m INFO[0m ✨ Checked 11 images in 8312ms
+```
+
+### Check for updates to specific images
+
+```ansi
+$ cup check node:latest
+[32;1m✓[0m Done!
+[90;1m~ Local images[0m
+ [90;1m╭───────────┬────────────────┬─────────╮[0m
+ [90;1m│[36;1mReference  [90;1m│[36;1mStatus          [90;1m│[36;1mTime (ms)[90;1m│[0m
+ [90;1m├───────────┼────────────────┼─────────┤[0m
+ [90;1m│[0mnode:latest[90;1m│[0m[34mUpdate available[0m[90;1m│[0m788      [90;1m│[0m
+ [90;1m╰───────────┴────────────────┴─────────╯[0m
+[36;1m INFO[0m ✨ Checked 1 images in 310ms
+```
+
+```ansi
+$ cup check nextcloud:30 postgres:14 mysql:8.0[38;5;12m
+[32;1m✓[0m Done!
+[90;1m~ Local images[0m
+ [90;1m╭────────────┬────────────────────────┬─────────╮[0m
+ [90;1m│[36;1mReference   [90;1m│[36;1mStatus                  [90;1m│[36;1mTime (ms)[90;1m│[0m
+ [90;1m├────────────┼────────────────────────┼─────────┤[0m
+ [90;1m│[0mpostgres:14 [90;1m│[0m[31mMajor update (14 → 17)  [0m[90;1m│[0m195      [90;1m│[0m
+ [90;1m│[0mmysql:8.0   [90;1m│[0m[31mMajor update (8.0 → 9.2)[0m[90;1m│[0m382      [90;1m│[0m
+ [90;1m│[0mnextcloud:30[90;1m│[0m[32mUp to date              [0m[90;1m│[0m585      [90;1m│[0m
+ [90;1m╰────────────┴────────────────────────┴─────────╯[0m
+[36;1m INFO[0m ✨ Checked 3 images in 769ms
+```
+
+## Enable icons
+
+You can also enable icons if you have a [Nerd Font](https://nerdfonts.com) installed.
+
+<Image src={cup} alt="GIF of Cup's CLI" unoptimized />
+
+## JSON output
+
+When integrating Cup with other services (e.g. webhooks or a dashboard), you may find Cup's JSON output functionality useful.
+
+It provides some useful metrics (see [server](/docs/usage/server) for more information), along with a list of images and whether they have an update or not. Note that at the moment it does not match the detailed API the server provides.
+
+```
+$ cup check -r
+{"metrics":{"monitored_images":26,"up_to_date":2,"updates_available":23,"major_updates":8,"minor_updates":6,"patch_updates":2,"other_updates":7,"unknown":1},"images":{"ghcr.io/immich-app/immich-server:v1.106.4":false,"portainer/portainer-ce:2.20.3-alpine":false,"ghcr.io/runtipi/runtipi:v3.4.1":false,...}}
+```
+
+<Callout emoji="⚠️">
+  When parsing Cup's output, capture only `stdout`, otherwise you might not get
+  valid JSON (if there are warnings)
+</Callout>
+
+## Usage with Docker
+
+If you're using the Docker image, just replace all occurences of `cup` in the examples with `docker run -tv /var/run/docker.sock:/var/run/docker.sock ghcr.io/sergi0g/cup`.
+
+For example, this:
+
+```bash
+$ cup check node:latest
+```
+
+becomes:
+
+```bash
+$ docker run -tv /var/run/docker.sock:/var/run/docker.sock ghcr.io/sergi0g/cup check node:latest
+```

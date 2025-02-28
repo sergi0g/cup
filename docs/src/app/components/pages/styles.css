@@ -1,0 +1,26 @@
+article:has(.home) {
+  padding-inline: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+article div.x\:mt-16:last-child:empty {
+  margin-top: 0;
+}
+
+#hero {
+  animation-name: hero;
+  animation-duration: 1500ms;
+  animation-delay: 500ms;
+  animation-timing-function: ease-in-out;
+  animation-fill-mode: forwards;
+}
+
+@keyframes hero {
+  from {
+    translate: 0 8rem;
+  }
+  to {
+    translate: 0 0;
+  }
+}

@@ -1,0 +1,32 @@
+import { Callout } from "nextra/components";
+
+# Insecure registries
+
+For the best security, Cup only connects to registries over SSL (HTTPS) by default. However, for people running a local registry that doesn't support SSL, this may be a problem.
+
+To solve this problem, you can specify exceptions in your `cup.json`.
+
+Here's what it looks like:
+
+```jsonc
+{
+  "registries": {
+    "<INSECURE_REGISTRY_1>": {
+      "insecure": true
+      // Other options
+    },
+    "<INSECURE_REGISTRY_2>" {
+      "insecure": true
+      // Other options
+    },
+    // ...
+  }
+  // Other options
+}
+```
+
+<Callout emoji="⚠️">
+  When configuring an insecure registry that doesn't run on port 80, don't
+  forget to specify the port (i.e. use `localhost:5000` instead of `localhost`
+  if your registry is running on port `5000`)
+</Callout>

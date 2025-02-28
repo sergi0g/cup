@@ -1,130 +1,96 @@
 use std::path::PathBuf;
 
 use rustc_hash::FxHashMap;
+use serde::Deserialize;
 
 use crate::error;
 
-const VALID_KEYS: [&str; 4] = ["authentication", "theme", "insecure_registries", "socket"];
-
-#[derive(Clone)]
+#[derive(Clone, Deserialize)]
 pub enum Theme {
+    #[serde(rename = "default")]
     Default,
+    #[serde(rename = "blue")]
     Blue,
 }
 
-#[derive(Clone)]
+impl Default for Theme {
+    fn default() -> Self {
+        Self::Default
+    }
+}
+
+#[derive(Clone, Deserialize, Default)]
+#[serde(deny_unknown_fields)]
+#[serde(default)]
+pub struct RegistryConfig {
+    pub authentication: Option<String>,
+    pub insecure: bool,
+    pub ignore: bool,
+}
+
+#[derive(Clone, Deserialize, Default)]
+#[serde(default)]
+pub struct ImageConfig {
+    pub extra: Vec<String>,
+    pub exclude: Vec<String>,
+}
+
+#[derive(Clone, Deserialize)]
+#[serde(default)]
 pub struct Config {
-    pub authentication: FxHashMap<String, String>,
-    pub theme: Theme,
-    pub insecure_registries: Vec<String>,
+    version: u8,
+    pub agent: bool,
+    pub images: ImageConfig,
+    pub refresh_interval: Option<String>,
+    pub registries: FxHashMap<String, RegistryConfig>,
+    pub servers: FxHashMap<String, String>,
     pub socket: Option<String>,
+    pub theme: Theme,
 }
 
 impl Config {
-    /// A stupid new function that exists just so calling `load` doesn't require a self argument
-    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Self {
-            authentication: FxHashMap::default(),
+            version: 3,
+            agent: false,
+            images: ImageConfig::default(),
+            refresh_interval: None,
+            registries: FxHashMap::default(),
+            servers: FxHashMap::default(),
+            socket: None,
             theme: Theme::Default,
-            insecure_registries: Vec::with_capacity(0),
-            socket: None
         }
     }
+
     /// Reads the config from the file path provided and returns the parsed result.
     pub fn load(&self, path: Option<PathBuf>) -> Self {
         let raw_config = match &path {
             Some(path) => std::fs::read_to_string(path),
-            None => Ok(String::from("{}")), // Empty config
+            None => return Self::new(), // Empty config
         };
         if raw_config.is_err() {
-            panic!(
+            error!(
                 "Failed to read config file from {}. Are you sure the file exists?",
                 &path.unwrap().to_str().unwrap()
             )
         };
         self.parse(&raw_config.unwrap()) // We can safely unwrap here
     }
-    /// Parses and validates the config. The process is quite manual and I would rather use a library, but I don't want to grow the dependency tree, for a config as simple as this one.
-    /// Many of these checks are stupid, but we either validate the config properly, or we don't at all, so... this is the result. I _am not_ proud of this code.
+    /// Parses and validates the config.
     pub fn parse(&self, raw_config: &str) -> Self {
-        let json = match json::parse(raw_config) {
-            Ok(v) => v,
-            Err(e) => panic!("Failed to parse config!\n{}", e),
+        let config: Self = match serde_json::from_str(raw_config) {
+            Ok(config) => config,
+            Err(e) => error!("Unexpected error occured while parsing config: {}", e),
         };
-        // In the code, raw_<key> means the JsonValue from the parsed config, before it's validated.
-
-        // Authentication
-        let raw_authentication = &json["authentication"];
-        if !raw_authentication.is_null() && !raw_authentication.is_object() {
-            error!("Config key `authentication` must be an object!");
+        if config.version != 3 {
+            error!("You are trying to run Cup with an incompatible config file! Please migrate your config file to the version 3, or if you have already done so, add a `version` key with the value `3`.")
         }
-        let mut authentication: FxHashMap<String, String> = FxHashMap::default();
-        raw_authentication.entries().for_each(|(registry, key)| {
-            if !key.is_string() {
-                error!("Config key `authentication.{}` must be a string!", registry);
-            }
-            authentication.insert(registry.to_string(), key.to_string());
-        });
+        config
+    }
+}
 
-        // Theme
-        let raw_theme = &json["theme"];
-        if !raw_theme.is_null() && !raw_theme.is_string() {
-            error!("Config key `theme` must be a string!");
-        }
-        let theme: Theme = {
-            if raw_theme.is_null() {
-                Theme::Default
-            } else {
-                match raw_theme.as_str().unwrap() {
-                    "default" => Theme::Default,
-                    "blue" => Theme::Blue,
-                    _ => {
-                        error!("Config key `theme` must be one of: `default`, `blue`!");
-                    }
-                }
-            }
-        };
-
-        // Insecure registries
-        let raw_insecure_registries = &json["insecure_registries"];
-        if !raw_insecure_registries.is_null() && !raw_insecure_registries.is_array() {
-            error!("Config key `insecure_registries` must be an array!");
-        }
-        let insecure_registries: Vec<String> = raw_insecure_registries
-            .members()
-            .map(|registry| {
-                if !registry.is_string() {
-                    error!("Config key `insecure_registries` must only consist of strings!");
-                } else {
-                    registry.as_str().unwrap().to_owned()
-                }
-            })
-            .collect();
-
-        // Socket
-        let raw_socket = &json["socket"];
-        if !raw_socket.is_null() && !raw_socket.is_string() {
-            error!("Config key `socket` must be a string!");
-        }
-        let socket: Option<String> = if raw_socket.is_null() {
-            None
-        } else {
-            Some(raw_socket.to_string())
-        };
-
-        // Check for extra keys
-        json.entries().for_each(|(key, _)| {
-            if !VALID_KEYS.contains(&key) {
-                error!("Invalid key `{}`", key)
-            }
-        });
-
-        Self {
-            authentication,
-            theme,
-            insecure_registries,
-            socket,
-        }
+impl Default for Config {
+    fn default() -> Self {
+        Self::new()
     }
 }

@@ -17,6 +17,9 @@ bun run build
 # Copy UI to src folder
 cp -r dist/ ../src/static
 
+# Go back
+cd ../
+
 # Run command from argv
 
 $@

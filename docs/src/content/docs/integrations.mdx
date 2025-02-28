@@ -1,0 +1,79 @@
+import { Callout, Cards } from "nextra/components";
+import { IconServer, IconTerminal } from "@tabler/icons-react"
+
+# Integrations
+
+At the moment, Cup has no built-in integrations, but it provides an API for the server and JSON output for the CLI, which can enable you to connect Cup to your own integrations.
+
+## JSON data
+
+The data returned from the API or from the CLI is in JSON and looks like this:
+
+```jsonc
+{
+    // Statistics useful for displaying on dashboards.
+    // You could calculate these yourself based on the rest of the data,
+    // but they're provided for easier integration with other systems.
+    "metrics": {
+        "monitored_images": 5,
+        "up_to_date": 2,
+        "updates_available": 3,
+        "major_updates": 1,
+        "minor_updates": 0,
+        "patch_updates": 0,
+        "other_updates": 2,
+        "unknown": 0,
+    },
+    // A list of image objects with all related information.
+    "images": [
+        {
+            "reference": "ghcr.io/sergi0g/cup:latest",
+            "parts": {
+                // The information Cup extracted about the image from the reference. Mostly useful for debugging and the way the web interface works.
+                "registry": "ghcr.io",
+                "repository": "sergi0g/cup",
+                "tag": "latest",
+            },
+            "result": {
+                "has_update": true, // `true` when an image has an update of any kind, `false` when up to date and `null` when unknown.
+                "info": {
+                    // `null` if up to date
+                    "type": "digest", // Can also be `version` when Cup detects the tag contains a version.
+                    // If `type` is "digest":
+                    "local_digests": [
+                        // A list of local digests present for the image
+                        "sha256:b7168e5f6828cbbd3622fa19965007e4611cf42b5f3c603008377ffd45a4fe00",
+                    ],
+                    "remote_digest": "sha256:170f1974d8fc8ca245bcfae5590bc326de347b19719972bf122400fb13dfa42c", // Latest digest available in the registry
+                    // If `type` is "version":
+                    "version_update_type": "major", // Loosely corresponds to SemVer versioning. Can also be `minor` or `patch`.
+                    "new_tag": "v3.3.3", // The tag of the latest image.
+                },
+                "error": null, // If checking for the image fails, will be a string with an error message.
+            },
+            "time": 869, // Time in milliseconds it took to check for the update. Useful for debugging.
+            "server": "Lithium", // The name of the server which the image was checked for updates on. `null` if from the current machine.
+        },
+    ],
+}
+```
+
+<Callout emoji="⚠️">
+    Please keep in mind that the above may not always be up to date. New fields
+    may be added, or some types extended. If you notice that, just open an issue
+    and they'll be updated. Changes to the JSON data schema will _always_ happen
+    in a backwards-compatible way. In case backwards-incompatible changes are
+    made, these docs will be updated. For something more up-to-date, you can
+    take a look at https://github.com/sergi0g/cup/blob/main/web/src/types.ts
+</Callout>
+
+For retrieving the above data, refer to the CLI and server pages:
+
+<Cards>
+    <Cards.Card icon={<IconTerminal />} title="CLI" href="/docs/usage/cli" />
+    <Cards.Card
+        icon={<IconServer />}
+        title="Server"
+        href="/docs/usage/server"
+    />
+</Cards>

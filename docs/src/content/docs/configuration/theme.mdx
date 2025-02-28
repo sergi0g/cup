@@ -1,0 +1,31 @@
+import { Callout } from "nextra/components";
+import Image from "next/image";
+
+import blue from "@/app/assets/blue_theme.png";
+import neutral from "@/app/assets/hero-dark.png";
+
+# Theme
+
+<Callout emoji="⚠️">This configuration option is only for the server</Callout>
+
+Cup initially had a blue theme which looked like this:
+
+<Image alt="Screenshot of blue theme" src={blue} />
+
+This was replaced by a more neutral theme which is now the default:
+
+<Image alt="Screenshot of neutral theme" src={neutral} />
+
+However, you can get the old theme back by adding the `theme` key to your `cup.json`
+Available options are `default` and `blue`.
+
+Here's an example:
+
+```jsonc
+{
+  "theme": "blue"
+  // Other options
+}
+```
+
+Note that the difference between the 2 themes is almost impossible to perceive when your system is in light mode.

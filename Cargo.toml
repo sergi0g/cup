@@ -1,30 +1,34 @@
 [package]
 name = "cup"
-version = "2.4.0"
+version = "3.0.0"
 edition = "2021"
 
 [dependencies]
 clap = { version = "4.5.7", features = ["derive"] }
 indicatif = { version = "0.17.8", optional = true }
-tokio = {version = "1.38.0", features = ["macros"]}
-xitca-web = { version = "0.5.0", optional = true, features = ["logger"] }
+tokio = { version = "1.38.0", features = ["macros", "rt-multi-thread"] }
+xitca-web = { version = "0.5.0", optional = true }
 liquid = { version = "0.26.6", optional = true }
 bollard = "0.16.1"
 once_cell = "1.19.0"
-http-auth = { version = "0.1.9", default-features = false, features = [] }
+http-auth = { version = "0.1.9", default-features = false }
 termsize = { version = "0.1.8", optional = true }
-regex = "1.10.5"
+regex = { version = "1.10.5", default-features = false, features = ["perf"] }
 chrono = { version = "0.4.38", default-features = false, features = ["std", "alloc", "clock"], optional = true }
-json = "0.12.4"
 reqwest = { version = "0.12.7", default-features = false, features = ["rustls-tls"] }
 futures = "0.3.30"
 reqwest-retry = "0.6.1"
 reqwest-middleware = "0.3.3"
 rustc-hash = "2.0.0"
+http-link = "1.0.1"
+itertools = "0.13.0"
+serde_json = "1.0.133"
+serde = "1.0.215"
+tokio-cron-scheduler = { version = "0.13.0", default-features = false, optional = true }
 
 [features]
 default = ["server", "cli"]
-server = ["dep:xitca-web", "dep:liquid", "dep:chrono"]
+server = ["dep:xitca-web", "dep:liquid", "dep:chrono", "dep:tokio-cron-scheduler"]
 cli = ["dep:indicatif", "dep:termsize"]
 
 [profile.release]

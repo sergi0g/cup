@@ -1,0 +1,12 @@
+# Automatic refresh
+
+Cup can automatically refresh the results when running in server mode. Simply add this to your config:
+
+```jsonc
+{
+  "refresh_interval": "0 0,30 * 0 0" // Check twice an hour
+  // Other options
+}
+```
+
+You can use a cron expression to specify the refresh interval. The reference is [here](https://github.com/Hexagon/croner-rust#pattern)

@@ -11,10 +11,11 @@
     "fmt": "prettier --write ."
   },
   "dependencies": {
+    "@headlessui/react": "^2.1.10",
     "@radix-ui/react-tooltip": "^1.1.2",
-    "@tabler/icons-react": "^3.14.0",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
+    "lucide-react": "^0.475.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwind-merge": "^2.5.2",
@@ -33,6 +34,7 @@
     "globals": "^15.9.0",
     "postcss": "^8.4.42",
     "prettier": "^3.3.3",
+    "prettier-plugin-tailwindcss": "^0.6.8",
     "tailwindcss": "^3.4.10",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
