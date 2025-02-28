@@ -21,7 +21,7 @@ export default function RefreshButton() {
   };
   return (
     <WithTooltip text="Reload">
-      <button className="group" onClick={refresh} disabled={disabled}>
+      <button className="group shrink-0" onClick={refresh} disabled={disabled}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="24"
@@ -32,7 +32,7 @@ export default function RefreshButton() {
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="shrink-0 group-disabled:animate-spin"
+          className="size-6 group-disabled:animate-spin"
         >
           <path stroke="none" d="M0 0h24v24H0z" fill="none" />
           <path d="M4,11A8.1,8.1 0 0 1 19.5,9M20,5v4h-4" />
