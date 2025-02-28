@@ -225,182 +225,97 @@
               </div>
               <ul>
                 {% for server in server_ids %}
-                  {% if server == '' %}
-                    <li class="mb-8 last:mb-0">
-                      <ul
-                        class="dark:divide-{{theme}}-900 divide-y dark:text-white"
-                      >
-                        {% for image in servers[server] %}
-                          <li
-                            class="flex items-center gap-4 break-all px-6 py-4 text-start hover:bg-{{theme}}-100 hover:dark:bg-{{theme}}-900/50 transition-colors duration-200"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="24"
-                              height="24"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              class="size-6 shrink-0 text-{{ theme }}-500"
-                            >
-                              <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>
-                            </svg>
-                            <span class="font-mono">{{ image.name }}</span>
-                            {% case image.status %}
-                              {% when 'Up to
-                      date' %}
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="24"
-                                  height="24"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  stroke-width="2"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  class="ml-auto text-green-500"
-                                >
-                                  <circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>
-                                </svg>
-                              {% when 'Unknown' %}
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="24"
-                                  height="24"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  stroke-width="2"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  class="text-{{ theme }}-500 ml-auto"
-                                >
-                                  <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>
-                                </svg>
-                              {% else %}
-                                {% case image.status %}
-                                  {% when 'Major update' %}
-                                    {% assign color = 'text-red-500' %}
-                                  {% when 'Minor
-                      update' %}
-                                    {% assign color = 'text-yellow-500' %}
-                                  {% else %}
-                                    {% assign color = 'text-blue-500' %}
-                                {% endcase %}
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="24"
-                                  height="24"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  stroke-width="2"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  class="ml-auto {{ color }}"
-                                >
-                                  <circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4"/><path d="M12 16V8"/>
-                                </svg>
-                            {% endcase %}
-                          </li>
-                        {% endfor %}
-                      </ul>
-                    </li>
-                  {% else %}
-                    <li class="mb-4 last:mb-0">
-                      <p
-                        class="my-4 text-lg font-semibold text-{{ theme }}-600 dark:text-{{ theme }}-400 px-6"
-                      >
+                  <li class="mb-4 last:mb-0">
+                    <p
+                      class="my-4 text-lg font-semibold text-{{ theme }}-600 dark:text-{{ theme }}-400 px-6"
+                    >
+                      {% if server == '' %}
+                        Local images
+                      {% else %}
                         {{ server }}
-                      </p>
-                      <ul
-                        class="dark:divide-{{ theme }}-900 divide-y dark:text-white"
-                      >
-                        {% for image in servers[server] %}
-                          <li
-                            class="flex items-center gap-4 break-all px-6 py-4 text-start hover:bg-{{ theme }}-100 hover:dark:bg-{{ theme }}-900/50 transition-colors duration-200"
+                      {% endif %}
+                    </p>
+                    <ul
+                      class="dark:divide-{{theme}}-900 divide-y dark:text-white"
+                    >
+                      {% for image in servers[server] %}
+                        <li
+                          class="flex items-center gap-4 break-all px-6 py-4 text-start hover:bg-{{theme}}-100 hover:dark:bg-{{theme}}-900/50 transition-colors duration-200"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            class="size-6 shrink-0 text-{{ theme }}-500"
                           >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="24"
-                              height="24"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              class="size-6 shrink-0"
-                            >
-                              <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>
-                            </svg>
-                            {{ image.name }}
-                            {% case image.status %}
-                              {% when 'Up to
-                      date' %}
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="24"
-                                  height="24"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  stroke-width="2"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  class="ml-auto text-green-500"
-                                >
-                                  <circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>
-                                </svg>
-                              {% when 'Unknown' %}
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="24"
-                                  height="24"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  stroke-width="2"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  class="text-{{ theme }}-500 ml-auto"
-                                >
-                                  <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>
-                                </svg>
-                              {% else %}
-                                {% case image.status %}
-                                  {% when 'Major update' %}
-                                    {% assign color = 'text-red-500' %}
-                                  {% when 'Minor
-                      update' %}
-                                    {% assign color = 'text-yellow-500' %}
-                                  {% else %}
-                                    {% assign color = 'text-blue-500' %}
-                                {% endcase %}
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="24"
-                                  height="24"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  stroke-width="2"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  class="ml-auto {{ color }}"
-                                >
-                                  <circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4"/><path d="M12 16V8"/>
-                                </svg>
-                            {% endcase %}
-                          </li>
-                        {% endfor %}
-                      </ul>
-                    </li>
-                  {% endif %}
+                            <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>
+                          </svg>
+                          <span class="font-mono">{{ image.name }}</span>
+                          {% case image.status %}
+                            {% when 'Up to date' %}
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                class="ml-auto text-green-500"
+                              >
+                                <circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>
+                              </svg>
+                            {% when 'Unknown' %}
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                class="text-{{ theme }}-500 ml-auto"
+                              >
+                                <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>
+                              </svg>
+                            {% else %}
+                              {% case image.status %}
+                                {% when 'Major update' %}
+                                  {% assign color = 'text-red-500' %}
+                                {% when 'Minor update' %}
+                                  {% assign color = 'text-yellow-500' %}
+                                {% else %}
+                                  {% assign color = 'text-blue-500' %}
+                              {% endcase %}
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                class="ml-auto {{ color }}"
+                              >
+                                <circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4"/><path d="M12 16V8"/>
+                              </svg>
+                          {% endcase %}
+                        </li>
+                      {% endfor %}
+                    </ul>
+                  </li>
                 {% endfor %}
               </ul>
             </div>
