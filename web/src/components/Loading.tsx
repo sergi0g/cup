@@ -1,7 +1,7 @@
 import { Data } from "../types";
 import Logo from "./Logo";
 import { theme } from "../theme";
-import { RefreshCw } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 export default function Loading({ onLoad }: { onLoad: (data: Data) => void }) {
   fetch(
@@ -26,9 +26,16 @@ export default function Loading({ onLoad }: { onLoad: (data: Data) => void }) {
             <Logo />
           </div>
           <div
-            className={`flex h-full items-center justify-center gap-1 text-${theme}-500 dark:text-${theme}-400`}
+            className={`flex flex-col h-full items-center justify-center gap-1 text-${theme}-500 dark:text-${theme}-400`}
           >
-            Loading <RefreshCw className="animate-spin" />
+            <div className="flex gap-1 mb-8">
+              Loading <LoaderCircle className="animate-spin" />
+            </div>
+            <p>
+              If this takes more than a few seconds, there was probably a
+              problem fetching the data. Please try reloading the page and
+              report a bug if the problem persists.
+            </p>
           </div>
         </div>
       </div>
