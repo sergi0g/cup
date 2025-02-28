@@ -1,0 +1,22 @@
+# Ignored registries
+
+If you want to skip checking images from some registries, you can modify your config like this:
+
+```jsonc
+{
+  "registries": {
+    "<SOME_REGISTRY_DOMAIN_1>": {
+      "ignore": true
+      // Other options
+    },
+    "<SOME_REGISTRY_DOMAIN_2>" {
+      "ignore": false
+      // Other options
+    },
+    // ...
+  }
+  // Other options
+}
+```
+
+This configuration option is a bit redundant, since you can achieve the same with [this option](/docs/configuration/include-exclude-images). It's recommended to use that.

@@ -1,0 +1,35 @@
+# Include/Exclude images
+
+If you want to exclude some images (e.g. because they have too many tags and take too long to check), you can add the following to your config:
+
+```jsonc
+{
+  "images": {
+    "exclude": [
+        "ghcr.io/immich-app/immich-machine-learning",
+        "postgres:15"
+    ]
+    // ...
+  }
+  // Other options
+}
+```
+
+For an image to be excluded, it must start with one of the strings you specify above. That means you could use `ghcr.io` to exclude all images from ghcr.io or `ghcr.io/sergi0g` to exclude all my images (why would you do that?).
+
+
+If you want Cup to always check some extra images that aren't available locally, you can modify your config like this:
+```jsonc
+{
+  "images": {
+    "extra": [
+        "mysql:8.0",
+        "nextcloud:30"
+    ]
+    // ...
+  }
+  // Other options
+}
+```
+
+Note that you must specify images with version tags, otherwise Cup will exit with an error!
