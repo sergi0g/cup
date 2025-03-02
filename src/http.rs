@@ -95,6 +95,10 @@ impl Client {
                     let message = format!("{} {}: Connection timed out!", method, url);
                     self.ctx.logger.warn(&message);
                     Err(message)
+                } else if error.is_middleware() {
+                    let message = format!("{} {}: Connection failed after 3 retries!", method, url);
+                    self.ctx.logger.warn(&message);
+                    Err(message)
                 } else {
                     error!(
                         "{} {}: Unexpected error: {}",
