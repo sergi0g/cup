@@ -120,6 +120,16 @@ pub async fn get_updates(
         .iter()
         .map(|image| &image.parts.registry)
         .unique()
+        .filter(|&registry| match ctx.config.registries.get(registry) {
+            Some(config) => {
+                if config.ignore {
+                    false
+                } else {
+                    true
+                }
+            }
+            None => true,
+        })
         .collect::<Vec<&String>>();
 
     // Create request client. All network requests share the same client for better performance.
@@ -138,7 +148,7 @@ pub async fn get_updates(
 
     // Retrieve an authentication token (if required) for each registry.
     let mut tokens: FxHashMap<&str, Option<String>> = FxHashMap::default();
-    for registry in registries {
+    for registry in registries.clone() {
         let credentials = if let Some(registry_config) = ctx.config.registries.get(registry) {
             &registry_config.authentication
         } else {
@@ -163,24 +173,11 @@ pub async fn get_updates(
 
     ctx.logger.debug(format!("Tokens: {:?}", tokens));
 
-    let ignored_registries = ctx
-        .config
-        .registries
-        .iter()
-        .filter_map(|(registry, registry_config)| {
-            if registry_config.ignore {
-                Some(registry)
-            } else {
-                None
-            }
-        })
-        .collect::<Vec<&String>>();
-
     let mut handles = Vec::with_capacity(images.len());
 
     // Loop through images check for updates
     for image in &images {
-        let is_ignored = ignored_registries.contains(&&image.parts.registry)
+        let is_ignored = !registries.contains(&&image.parts.registry)
             || ctx
                 .config
                 .images
