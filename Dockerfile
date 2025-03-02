@@ -15,7 +15,7 @@ RUN ~/.bun/bin/bun install
 RUN ~/.bun/bin/bun run build
 
 ### Build Cup ###
-FROM rust:1.80.1-alpine AS build
+FROM rust:1-alpine AS build
 
 # Requirements
 RUN apk add musl-dev
