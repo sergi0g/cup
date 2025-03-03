@@ -65,11 +65,14 @@ jobs:
     needs:
       - get-tag
       - build-binaries
-    uses: ./.github/actions/build-image.yml
-    with:
-      tags: ${{ needs.get-tag.outputs.tag }}
-    secrets:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/actions/build-image
+        with:
+          tags: |
+            ${{ needs.get-tag.outputs.tag }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   nightly-release:
     runs-on: ubuntu-latest
