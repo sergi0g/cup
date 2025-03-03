@@ -72,8 +72,7 @@ jobs:
           tags: |
             ${{ needs.get-tag.outputs.tag }}
             latest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          gh-token: ${{ secrets.GITHUB_TOKEN }}
 
   release:
     runs-on: ubuntu-latest

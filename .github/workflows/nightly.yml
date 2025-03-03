@@ -73,6 +73,7 @@ jobs:
         with:
           tags: |
             ${{ needs.get-tag.outputs.tag }}
+          gh-token: ${{ secrets.GITHUB_TOKEN }}
 
   nightly-release:
     runs-on: ubuntu-latest

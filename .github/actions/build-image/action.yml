@@ -3,9 +3,9 @@ inputs:
   tags:
     description: "Docker image tags"
     required: true
-  secrets:
-    GITHUB_TOKEN:
-      required: true
+  gh-token:
+    description: "Github token"
+    required: true
 
 runs:
   using: 'composite'
@@ -37,7 +37,7 @@ runs:
       with:
         registry: ghcr.io
         username: sergi0g
-        password: ${{ secrets.GITHUB_TOKEN }}
+        password: ${{ inputs.gh-token }}
 
     - name: Build and push image
       uses: docker/build-push-action@v6
