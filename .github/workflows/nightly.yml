@@ -73,8 +73,6 @@ jobs:
         with:
           tags: |
             ${{ needs.get-tag.outputs.tag }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   nightly-release:
     runs-on: ubuntu-latest
