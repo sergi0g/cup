@@ -43,7 +43,7 @@ runs:
       uses: docker/build-push-action@v6
       with:
         context: .
-        file: Dockerfile
+        file: ./.github/actions/build-image/Dockerfile
         platforms: linux/amd64,linux/arm64
         push: true
         tags: ${{ steps.meta.outputs.tags }}
