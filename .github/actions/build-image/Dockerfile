@@ -5,6 +5,7 @@ ARG TARGETOS
 
 COPY binaries/* /
 RUN mv cup-$TARGETOS-$TARGETARCH cup
+RUN chmod +x cup
 
 FROM scratch
 COPY --from=builder /cup /cup
