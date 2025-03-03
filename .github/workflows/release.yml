@@ -65,6 +65,8 @@ jobs:
       - build-binaries
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - uses: ./.github/actions/build-image
         with:
           tags: |
