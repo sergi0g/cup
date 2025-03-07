@@ -82,14 +82,14 @@ export default function Image({ data }: { data: Image }) {
               >
                 <div className="mb-4 flex items-center gap-3">
                   <Box className={`size-6 shrink-0 text-${theme}-500`} />
-                  <DialogTitle className="font-mono text-black dark:text-white">
+                  <DialogTitle className="font-mono text-black dark:text-white break-all">
                     {url ? (
                       <>
                         <a
                           href={url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={`group w-fit text-black hover:underline dark:text-white`}
+                          className={`group w-fit hover:underline`}
                         >
                           <span>
                             {data.reference}
