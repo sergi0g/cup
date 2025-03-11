@@ -1,5 +1,13 @@
 # Cup 🥤
 
+![GitHub License](https://img.shields.io/github/license/sergi0g/cup)
+![CI Status](https://img.shields.io/github/actions/workflow/status/sergi0g/cup/.github%2Fworkflows%2Fci.yml?label=CI)
+![GitHub last commit](https://img.shields.io/github/last-commit/sergi0g/cup)
+![GitHub Release](https://img.shields.io/github/v/release/sergi0g/cup)
+![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/sergi0g/cup)
+![Discord](https://img.shields.io/discord/1337705080518086658)
+
+
 Cup is the easiest way to check for container image updates.
 
 ![Cup web in dark mode](screenshots/web_dark.png)
