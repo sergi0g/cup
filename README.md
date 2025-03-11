@@ -5,7 +5,7 @@
 ![GitHub last commit](https://img.shields.io/github/last-commit/sergi0g/cup)
 ![GitHub Release](https://img.shields.io/github/v/release/sergi0g/cup)
 ![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/sergi0g/cup)
-![Discord](https://img.shields.io/discord/1337705080518086658)
+[![Discord](https://img.shields.io/discord/1337705080518086658)](https://discord.gg/jmh5ctzwNG)
 
 
 Cup is the easiest way to check for container image updates.
