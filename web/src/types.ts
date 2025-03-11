@@ -20,6 +20,7 @@ export interface Image {
     repository: string;
     tag: string;
   };
+  url: string | null;
   result: {
     has_update: boolean | null;
     info: VersionInfo | DigestInfo | null;

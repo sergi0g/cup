@@ -40,7 +40,9 @@ export default function Image({ data }: { data: Image }) {
       : data.reference;
   const info = getInfo(data)!;
   let url: string | null = null;
-  if (clickable_registries.includes(data.parts.registry)) {
+  if (data.url) {
+    url = data.url;
+  } else if (clickable_registries.includes(data.parts.registry)) {
     switch (data.parts.registry) {
       case "registry-1.docker.io":
         url = `https://hub.docker.com/r/${data.parts.repository}`;
@@ -82,7 +84,7 @@ export default function Image({ data }: { data: Image }) {
               >
                 <div className="mb-4 flex items-center gap-3">
                   <Box className={`size-6 shrink-0 text-${theme}-500`} />
-                  <DialogTitle className="font-mono text-black dark:text-white break-all">
+                  <DialogTitle className="break-all font-mono text-black dark:text-white">
                     {url ? (
                       <>
                         <a

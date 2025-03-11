@@ -7,6 +7,7 @@ use super::{parts::Parts, status::Status};
 pub struct Update {
     pub reference: String,
     pub parts: Parts,
+    pub url: Option<String>,
     pub result: UpdateResult,
     pub time: u32,
     pub server: Option<String>,

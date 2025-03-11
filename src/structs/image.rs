@@ -35,6 +35,7 @@ pub struct VersionInfo {
 pub struct Image {
     pub reference: String,
     pub parts: Parts,
+    pub url: Option<String>,
     pub digest_info: Option<DigestInfo>,
     pub version_info: Option<VersionInfo>,
     pub error: Option<String>,
@@ -61,6 +62,7 @@ impl Image {
                     repository,
                     tag,
                 },
+                url: image.url(),
                 digest_info: Some(DigestInfo {
                     local_digests,
                     remote_digest: None,
@@ -141,6 +143,7 @@ impl Image {
         Update {
             reference: self.reference.clone(),
             parts: self.parts.clone(),
+            url: self.url.clone(),
             result: UpdateResult {
                 has_update: has_update.to_option_bool(),
                 info: match has_update {
