@@ -1,5 +1,5 @@
 import { Callout, Cards } from "nextra/components";
-import { IconServer, IconTerminal } from "@tabler/icons-react"
+import { IconServer, IconTerminal } from "@tabler/icons-react";
 
 # Integrations
 
@@ -77,3 +77,7 @@ For retrieving the above data, refer to the CLI and server pages:
         href="/docs/usage/server"
     />
 </Cards>
+
+## Refresh Cup
+
+If you'd like to fetch the latest information, you can manually trigger a refresh by making a `GET` request to the `/api/v3/refresh` endpoint. Once the request completes, you can fetch the data as described above.
