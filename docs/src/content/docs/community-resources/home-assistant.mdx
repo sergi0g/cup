@@ -1,0 +1,47 @@
+import Image from "next/image";
+
+import screenshot from "@/app/assets/ha-cup-component.png";
+
+# Home Assistant integration
+
+Many thanks to [@bastgau](https://github.com/bastgau) for creating this integration.
+
+## About
+
+The **HA Cup Component** integration for Home Assistant allows you to retrieve update statistics for Docker containers directly from your Home Assistant interface.
+
+With this integration, you can easily track the status of your Docker containers and receive notifications when updates are available.
+
+The following sensors are currently implemented:
+
+<Image
+  src={screenshot}
+  alt="Screenshot of Home Assistant showing a card with update information provided by Cup"
+/>
+
+## Installation
+
+### Via HACS
+
+1. Open Home Assistant and go to HACS
+2. Navigate to "Integrations" and click on "Add a custom repository".
+3. Use https://github.com/bastgau/ha-cup-component as the URL
+4. Search for "HA Cup Component" and install it.
+5. Restart Home Assistant.
+
+### One-click install
+
+[![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=bastgau&repository=ha-cup-component&category=Integration)
+
+### Manual Installation
+
+1. Download the integration files from the GitHub repository.
+2. Place the integration folder in the custom_components directory of Home Assistant.
+3. Restart Home Assistant.
+
+## Support & Contributions
+
+If you encounter any issues or wish to contribute to improving this integration, feel free to open an issue or a pull request in the [GitHub repository](https://github.com/bastgau/ha-cup-component).
+
+Support the author:
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/bastgau)
