@@ -42,7 +42,26 @@ pub async fn get_images_from_docker_daemon(
     references: &Option<Vec<String>>,
 ) -> Vec<Image> {
     let client: Docker = create_docker_client(ctx.config.socket.as_deref());
-    match references {
+    let mut swarm_images = match client.list_services::<String>(None).await {
+        Ok(services) => services
+            .iter()
+            .filter_map(|service| match &service.spec {
+                Some(service_spec) => match &service_spec.task_template {
+                    Some(task_spec) => match &task_spec.container_spec {
+                        Some(container_spec) => match &container_spec.image {
+                            Some(image) => Image::from_inspect_data(image),
+                            None => None,
+                        },
+                        None => None,
+                    },
+                    None => None,
+                },
+                None => None,
+            })
+            .collect(),
+        Err(_) => Vec::new(),
+    };
+    let mut local_images = match references {
         Some(refs) => {
             let mut inspect_handles = Vec::with_capacity(refs.len());
             for reference in refs {
@@ -69,7 +88,9 @@ pub async fn get_images_from_docker_daemon(
             images
                 .iter()
                 .filter_map(|image| Image::from_inspect_data(image.clone()))
-                .collect()
+                .collect::<Vec<Image>>()
         }
-    }
+    };
+    local_images.append(&mut swarm_images);
+    local_images
 }

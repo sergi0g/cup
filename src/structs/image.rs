@@ -49,6 +49,9 @@ impl Image {
         let digests = image.digests().unwrap();
         if !tags.is_empty() && !digests.is_empty() {
             let reference = tags[0].clone();
+            if reference.contains('@') {
+                return None; // As far as I know, references that contain @ are either manually pulled by the user or automatically created because of swarm. In the first case AFAICT we can't know what tag was originally pulled, so we'd have to make assumptions and I've decided to remove this. The other case is already handled seperately, so this also ensures images aren't displayed twice, once with and once without a digest.
+            };
             let (registry, repository, tag) = split(&reference);
             let version_tag = Version::from_tag(&tag);
             let local_digests = digests
