@@ -19,6 +19,7 @@ use xitca_web::{
 use crate::{
     check::get_updates,
     config::Theme,
+    error,
     structs::update::Update,
     utils::{
         json::{to_full_json, to_simple_json},
@@ -79,12 +80,16 @@ pub async fn serve(port: &u16, ctx: &Context) -> std::io::Result<()> {
             .at("/", get(handler_service(_static)))
             .at("/*", get(handler_service(_static)));
     }
-    app_builder
+    match app_builder
         .enclosed_fn(logger)
         .serve()
-        .bind(format!("0.0.0.0:{}", port))?
-        .run()
-        .wait()
+        .bind(format!("0.0.0.0:{}", port))
+    {
+        Ok(r) => r,
+        Err(_) => error!("Failed to bind to port {}. Is it in use?", port),
+    }
+    .run()
+    .wait()
 }
 
 async fn _static(data: StateRef<'_, Arc<Mutex<ServerData>>>, path: PathRef<'_>) -> WebResponse {
