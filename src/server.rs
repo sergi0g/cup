@@ -56,13 +56,24 @@ pub async fn serve(port: &u16, ctx: &Context) -> std::io::Result<()> {
     if let Some(interval) = &ctx.config.refresh_interval {
         scheduler
             .add(
-                Job::new_async(interval, move |_uuid, _lock| {
+                match Job::new_async(interval, move |_uuid, _lock| {
                     let data_copy = data_copy.clone();
                     Box::pin(async move {
                         data_copy.lock().await.refresh().await;
                     })
-                })
-                .unwrap(),
+                }) {
+                    Ok(job) => job,
+                    Err(e) => match e {
+                        tokio_cron_scheduler::JobSchedulerError::ParseSchedule => error!(
+                            "Failed to parse cron schedule: {}. Please ensure it is valid!",
+                            interval
+                        ),
+                        e => error!(
+                            "An unexpected error occured while scheduling automatic refresh: {}",
+                            e
+                        ),
+                    },
+                },
             )
             .await
             .unwrap();
