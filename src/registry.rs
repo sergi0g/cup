@@ -205,7 +205,7 @@ pub async fn get_latest_tag(
                 }
             }
         }
-        None => unreachable!("{:?}", tags),
+        None => error!("Image {} has no remote version tags! Local tag: {}", image.reference, image.parts.tag),
     }
 }
 
