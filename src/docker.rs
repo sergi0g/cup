@@ -49,7 +49,7 @@ pub async fn get_images_from_docker_daemon(
                 Some(service_spec) => match &service_spec.task_template {
                     Some(task_spec) => match &task_spec.container_spec {
                         Some(container_spec) => match &container_spec.image {
-                            Some(image) => Image::from_inspect_data(image),
+                            Some(image) => Image::from_inspect_data(ctx, image),
                             None => None,
                         },
                         None => None,
@@ -75,7 +75,7 @@ pub async fn get_images_from_docker_daemon(
                 .collect();
             inspects
                 .iter()
-                .filter_map(|inspect| Image::from_inspect_data(inspect.clone()))
+                .filter_map(|inspect| Image::from_inspect_data(ctx, inspect.clone()))
                 .collect()
         }
         None => {
@@ -87,7 +87,7 @@ pub async fn get_images_from_docker_daemon(
             };
             images
                 .iter()
-                .filter_map(|image| Image::from_inspect_data(image.clone()))
+                .filter_map(|image| Image::from_inspect_data(ctx, image.clone()))
                 .collect::<Vec<Image>>()
         }
     };

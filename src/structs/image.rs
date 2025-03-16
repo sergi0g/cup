@@ -44,7 +44,7 @@ pub struct Image {
 
 impl Image {
     /// Creates and populates the fields of an Image object based on the ImageSummary from the Docker daemon
-    pub fn from_inspect_data<T: InspectData>(image: T) -> Option<Self> {
+    pub fn from_inspect_data<T: InspectData>(ctx: &Context, image: T) -> Option<Self> {
         let tags = image.tags().unwrap();
         let digests = image.digests().unwrap();
         if !tags.is_empty() && !digests.is_empty() {
@@ -56,7 +56,18 @@ impl Image {
             let version_tag = Version::from_tag(&tag);
             let local_digests = digests
                 .iter()
-                .map(|digest| digest.split('@').collect::<Vec<&str>>()[1].to_string())
+                .filter_map(
+                    |digest| match digest.split('@').collect::<Vec<&str>>().get(1) {
+                        Some(digest) => Some(digest.to_string()),
+                        None => {
+                            ctx.logger.warn(format!(
+                                "Ignoring invalid digest {} for image {}!",
+                                digest, reference
+                            ));
+                            None
+                        }
+                    },
+                )
                 .collect();
             Some(Self {
                 reference,
