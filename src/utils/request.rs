@@ -17,8 +17,10 @@ pub fn parse_www_authenticate(www_auth: &str) -> String {
                 .fold(String::new(), |acc, (key, value)| {
                     if *key == "realm" {
                         acc.to_owned() + value.as_escaped() + "?"
-                    } else {
+                    } else if value.unescaped_len() != 0 {
                         format!("{}&{}={}", acc, key, value.as_escaped())
+                    } else {
+                        acc
                     }
                 })
         } else {
