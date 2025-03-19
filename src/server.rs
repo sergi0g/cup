@@ -8,6 +8,7 @@ use tokio::sync::Mutex;
 use tokio_cron_scheduler::{Job, JobScheduler};
 use xitca_web::{
     body::ResponseBody,
+    bytes::Bytes,
     error::Error,
     handler::{handler_service, path::PathRef, state::StateRef},
     http::{StatusCode, WebResponse},
@@ -32,9 +33,9 @@ use crate::{
 const HTML: &str = include_str!("static/index.html");
 const JS: &str = include_str!("static/assets/index.js");
 const CSS: &str = include_str!("static/assets/index.css");
-const FAVICON_ICO: &[u8] = include_bytes!("static/favicon.ico");
-const FAVICON_SVG: &[u8] = include_bytes!("static/favicon.svg");
-const APPLE_TOUCH_ICON: &[u8] = include_bytes!("static/apple-touch-icon.png");
+const FAVICON_ICO: Bytes = Bytes::from_static(include_bytes!("static/favicon.ico"));
+const FAVICON_SVG: Bytes = Bytes::from_static(include_bytes!("static/favicon.svg"));
+const APPLE_TOUCH_ICON: Bytes = Bytes::from_static(include_bytes!("static/apple-touch-icon.png"));
 
 const SORT_ORDER: [&str; 8] = [
     "monitored_images",
