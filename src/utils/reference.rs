@@ -16,7 +16,12 @@ pub fn split(reference: &str) -> (String, String, String) {
             }
         }
     };
-    let splits = repository_and_tag.split('@').next().unwrap().split(':').collect::<Vec<&str>>();
+    let splits = repository_and_tag
+        .split('@')
+        .next()
+        .unwrap()
+        .split(':')
+        .collect::<Vec<&str>>();
     let (repository, tag) = match splits.len() {
         1 | 2 => {
             let repository_components = splits[0].split('/').collect::<Vec<&str>>();
