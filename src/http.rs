@@ -42,7 +42,7 @@ impl Client {
         &self,
         url: &str,
         method: RequestMethod,
-        headers: Vec<(&str, Option<&str>)>,
+        headers: &[(&str, Option<&str>)],
         ignore_401: bool,
     ) -> Result<Response, String> {
         let mut request = match method {
@@ -51,7 +51,7 @@ impl Client {
         };
         for (name, value) in headers {
             if let Some(v) = value {
-                request = request.header(name, v)
+                request = request.header(*name, *v)
             }
         }
         match request.send().await {
@@ -114,7 +114,7 @@ impl Client {
     pub async fn get(
         &self,
         url: &str,
-        headers: Vec<(&str, Option<&str>)>,
+        headers: &[(&str, Option<&str>)],
         ignore_401: bool,
     ) -> Result<Response, String> {
         self.request(url, RequestMethod::GET, headers, ignore_401)
@@ -124,7 +124,7 @@ impl Client {
     pub async fn head(
         &self,
         url: &str,
-        headers: Vec<(&str, Option<&str>)>,
+        headers: &[(&str, Option<&str>)],
     ) -> Result<Response, String> {
         self.request(url, RequestMethod::HEAD, headers, false).await
     }

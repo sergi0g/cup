@@ -26,10 +26,10 @@ async fn get_remote_updates(ctx: &Context, client: &Client, refresh: bool) -> Ve
             let json_url = base_url.clone() + "json";
             if refresh {
                 let refresh_url = base_url + "refresh";
-                match client.get(&(&refresh_url), vec![], false).await {
+                match client.get(&refresh_url, &[], false).await {
                     Ok(response) => {
                         if response.status() != 200 {
-                            ctx.logger.warn(format!("GET {}: Failed to refresh server. Server returned invalid response code: {}",refresh_url,response.status()));
+                            ctx.logger.warn(format!("GET {}: Failed to refresh server. Server returned invalid response code: {}", refresh_url, response.status()));
                             return Vec::new();
                         }
                     },
@@ -40,10 +40,10 @@ async fn get_remote_updates(ctx: &Context, client: &Client, refresh: bool) -> Ve
                 }
 
             }
-            match client.get(&json_url, vec![], false).await {
+            match client.get(&json_url, &[], false).await {
                 Ok(response) => {
                     if response.status() != 200 {
-                        ctx.logger.warn(format!("GET {}: Failed to fetch updates from server. Server returned invalid response code: {}",json_url,response.status()));
+                        ctx.logger.warn(format!("GET {}: Failed to fetch updates from server. Server returned invalid response code: {}", json_url, response.status()));
                         return Vec::new();
                     }
                     let json = parse_json(&get_response_body(response).await);

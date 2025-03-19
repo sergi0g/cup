@@ -22,7 +22,7 @@ use crate::{
 pub async fn check_auth(registry: &str, ctx: &Context, client: &Client) -> Option<String> {
     let protocol = get_protocol(registry, &ctx.config.registries);
     let url = format!("{}://{}/v2/", protocol, registry);
-    let response = client.get(&url, Vec::new(), true).await;
+    let response = client.get(&url, &[], true).await;
     match response {
         Ok(response) => {
             let status = response.status();
@@ -57,9 +57,9 @@ pub async fn get_latest_digest(
         protocol, &image.parts.registry, &image.parts.repository, &image.parts.tag
     );
     let authorization = to_bearer_string(&token);
-    let headers = vec![("Accept", Some("application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.docker.distribution.manifest.v2+json, application/vnd.oci.image.index.v1+json")), ("Authorization", authorization.as_deref())];
+    let headers = [("Accept", Some("application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.docker.distribution.manifest.v2+json, application/vnd.oci.image.index.v1+json")), ("Authorization", authorization.as_deref())];
 
-    let response = client.head(&url, headers).await;
+    let response = client.head(&url, &headers).await;
     let time = start.elapsed().unwrap().as_millis() as u32;
     ctx.logger.debug(format!(
         "Checked for digest update to {} in {}ms",
@@ -95,7 +95,7 @@ pub async fn get_latest_digest(
 }
 
 pub async fn get_token(
-    images: &Vec<&Image>,
+    images: &[&Image],
     auth_url: &str,
     credentials: &Option<String>,
     client: &Client,
@@ -105,9 +105,9 @@ pub async fn get_token(
         url = format!("{}&scope=repository:{}:pull", url, image.parts.repository);
     }
     let authorization = credentials.as_ref().map(|creds| format!("Basic {}", creds));
-    let headers = vec![("Authorization", authorization.as_deref())];
+    let headers = [("Authorization", authorization.as_deref())];
 
-    let response = client.get(&url, headers, false).await;
+    let response = client.get(&url, &headers, false).await;
     let response_json = match response {
         Ok(response) => parse_json(&get_response_body(response).await),
         Err(_) => error!("GET {}: Request failed!", url),
@@ -131,7 +131,7 @@ pub async fn get_latest_tag(
         protocol, &image.parts.registry, &image.parts.repository,
     );
     let authorization = to_bearer_string(&token);
-    let headers = vec![
+    let headers = [
         ("Accept", Some("application/json")),
         ("Authorization", authorization.as_deref()),
     ];
@@ -147,7 +147,7 @@ pub async fn get_latest_tag(
         ));
         let (new_tags, next) = match get_extra_tags(
             &next_url.unwrap(),
-            headers.clone(),
+            &headers,
             base,
             &image.version_info.as_ref().unwrap().format_str,
             client,
@@ -205,18 +205,21 @@ pub async fn get_latest_tag(
                 }
             }
         }
-        None => error!("Image {} has no remote version tags! Local tag: {}", image.reference, image.parts.tag),
+        None => error!(
+            "Image {} has no remote version tags! Local tag: {}",
+            image.reference, image.parts.tag
+        ),
     }
 }
 
 pub async fn get_extra_tags(
     url: &str,
-    headers: Vec<(&str, Option<&str>)>,
+    headers: &[(&str, Option<&str>)],
     base: &Version,
     format_str: &str,
     client: &Client,
 ) -> Result<(Vec<Version>, Option<String>), String> {
-    let response = client.get(url, headers, false).await;
+    let response = client.get(url, &headers, false).await;
 
     match response {
         Ok(res) => {
