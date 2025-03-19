@@ -43,7 +43,9 @@ pub fn split(reference: &str) -> (String, String, String) {
             };
             (repository, tag)
         }
-        _ => {dbg!(splits); panic!()},
+        _ => {
+            panic!("Failed to parse reference! Splits: {:?}", splits)
+        }
     };
     (registry.to_string(), repository, tag.to_string())
 }
