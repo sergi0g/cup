@@ -15,7 +15,7 @@ export default {
       variants: ["hover"],
     },
     {
-      pattern: /bg-(gray|neutral)-(900|950)/,
+      pattern: /bg-(gray|neutral)-(400|900|950)/,
       variants: ["dark"],
     },
     {
@@ -27,7 +27,7 @@ export default {
       variants: ["before:dark", "after:dark", "dark", "hover:dark"],
     },
     {
-      pattern: /text-(gray|neutral)-(50|300|200)/,
+      pattern: /text-(gray|neutral)-(50|300|200|400)/,
       variants: ["dark"],
     },
     {
@@ -66,6 +66,13 @@ export default {
     },
     {
       pattern: /border-(gray|neutral)-(700|800|900)/,
+      variants: ["dark"],
+    },
+    {
+      pattern: /ring-(gray|neutral)-700/,
+    },
+    {
+      pattern: /ring-(gray|neutral)-400/,
       variants: ["dark"],
     },
   ],

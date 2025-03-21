@@ -18,6 +18,7 @@ import {
   TriangleAlert,
   X,
 } from "lucide-react";
+import Badge from "./Badge";
 
 const clickable_registries = [
   "registry-1.docker.io",
@@ -60,12 +61,20 @@ export default function Image({ data }: { data: Image }) {
         >
           <Box className={`size-6 shrink-0 text-${theme}-500`} />
           <span className="font-mono">{data.reference}</span>
-          <WithTooltip
-            text={info.description}
-            className={`ml-auto size-6 shrink-0 ${info.color}`}
-          >
-            <info.icon />
-          </WithTooltip>
+          <div className="ml-auto flex gap-2">
+            {data.result.info?.type === "version" ? (
+              <Badge
+                from={data.result.info.current_version}
+                to={data.result.info.new_version}
+              />
+            ) : null}
+            <WithTooltip
+              text={info.description}
+              className={`size-6 shrink-0 ${info.color}`}
+            >
+              <info.icon />
+            </WithTooltip>
+          </div>
         </li>
       </button>
       <Dialog open={open} onClose={setOpen} className="relative z-10">
