@@ -6,7 +6,7 @@ import { LoaderCircle } from "lucide-react";
 export default function Loading({ onLoad }: { onLoad: (data: Data) => void }) {
   fetch(
     process.env.NODE_ENV === "production"
-      ? "/api/v3/json"
+      ? "./api/v3/json"
       : `http://${window.location.hostname}:8000/api/v3/json`,
   ).then((response) =>
     response.json().then((data) => {
@@ -26,9 +26,9 @@ export default function Loading({ onLoad }: { onLoad: (data: Data) => void }) {
             <Logo />
           </div>
           <div
-            className={`flex flex-col h-full items-center justify-center gap-1 text-${theme}-500 dark:text-${theme}-400`}
+            className={`flex h-full flex-col items-center justify-center gap-1 text-${theme}-500 dark:text-${theme}-400`}
           >
-            <div className="flex gap-1 mb-8">
+            <div className="mb-8 flex gap-1">
               Loading <LoaderCircle className="animate-spin" />
             </div>
             <p>
