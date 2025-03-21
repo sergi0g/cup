@@ -9,4 +9,5 @@ RUN chmod +x cup
 
 FROM scratch
 COPY --from=builder /cup /cup
+EXPOSE 8000
 ENTRYPOINT ["/cup"]
