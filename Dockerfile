@@ -39,4 +39,5 @@ FROM scratch
 # Copy binary
 COPY --from=build /cup/target/release/cup /cup
 
+EXPOSE 8000
 ENTRYPOINT ["/cup"]
