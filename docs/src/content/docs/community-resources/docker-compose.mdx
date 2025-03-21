@@ -40,4 +40,8 @@ Cup can run with a non-root user, but needs to be in a docker group. Assuming us
     user: "1000:999"
 ```
 
+<Callout>
+You can use the command `getent group docker | cut -d: -f3` to find the group id for the docker group.
+</Callout>
+
 The compose can be customized further of course, if you choose to use a different port, another config location, or would like to change something else. Have fun!
