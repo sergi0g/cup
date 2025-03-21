@@ -69,7 +69,7 @@ function App() {
                 data.images.reduce<Record<string, typeof data.images>>(
                   (acc, image) => {
                     const server = image.server ?? "";
-                    if (!acc[server]) acc[server] = [];
+                    if (!Object.hasOwn(acc, server)) acc[server] = [];
                     acc[server].push(image);
                     return acc;
                   },
