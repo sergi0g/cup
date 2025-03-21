@@ -24,6 +24,7 @@ const SORT_ORDER = [
 function App() {
   const [data, setData] = useState<Data | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+
   if (!data) return <Loading onLoad={setData} />;
   return (
     <div
@@ -63,7 +64,9 @@ function App() {
               <LastChecked datetime={data.last_updated} />
               <RefreshButton />
             </div>
-            <Search onChange={setSearchQuery} />
+            <div className="flex gap-2 px-6 text-black dark:text-white">
+              <Search onChange={setSearchQuery} />
+            </div>
             <ul>
               {Object.entries(
                 data.images.reduce<Record<string, typeof data.images>>(
