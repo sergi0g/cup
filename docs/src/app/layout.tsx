@@ -45,7 +45,7 @@ export default async function RootLayout({
           navbar={navbar}
           pageMap={await getPageMap()}
           footer={footer}
-          docsRepositoryBase="https://github.com/sergi0g/cup"
+          docsRepositoryBase="https://github.com/sergi0g/cup/blob/main/docs"
         >
           <div>{children}</div>
         </Layout>
