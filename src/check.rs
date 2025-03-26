@@ -81,20 +81,29 @@ async fn get_remote_updates(ctx: &Context, client: &Client, refresh: bool) -> Ve
 
 /// Returns a list of updates for all images passed in.
 pub async fn get_updates(
-    references: &Option<Vec<String>>,
+    references: &Option<Vec<String>>, // If a user requested _specific_ references to be checked, this will have a value
     refresh: bool,
     ctx: &Context,
 ) -> Vec<Update> {
     let client = Client::new(ctx);
+
+    // Merge references argument with references from config
+    let all_references = match &references {
+        Some(refs) => {
+            refs.clone().extend_from_slice(&ctx.config.images.extra);
+            refs
+        }
+        None => &ctx.config.images.extra,
+    };
 
     // Get local images
     ctx.logger.debug("Retrieving images to be checked");
     let mut images = get_images_from_docker_daemon(ctx, references).await;
 
     // Add extra images from references
-    if let Some(refs) = references {
+    if !all_references.is_empty() {
         let image_refs: FxHashSet<&String> = images.iter().map(|image| &image.reference).collect();
-        let extra = refs
+        let extra = all_references
             .iter()
             .filter(|&reference| !image_refs.contains(reference))
             .map(|reference| Image::from_reference(reference))
