@@ -8,8 +8,12 @@ pub fn split(reference: &str) -> (String, String, String) {
         0 => unreachable!(),
         1 => (DEFAULT_REGISTRY, reference.to_string()),
         _ => {
+            // Check if the image is from Docker Hub
+            if splits[0] == "docker.io" {
+                (DEFAULT_REGISTRY, splits[1..].join("/"))
             // Check if we're looking at a domain
-            if splits[0] == "localhost" || splits[0].contains('.') || splits[0].contains(':') {
+            } else if splits[0] == "localhost" || splits[0].contains('.') || splits[0].contains(':')
+            {
                 (splits[0], splits[1..].join("/"))
             } else {
                 (DEFAULT_REGISTRY, reference.to_string())
@@ -64,6 +68,7 @@ mod tests {
         assert_eq!(split("localhost:1234/test"                                  ), (String::from("localhost:1234"         ), String::from("test"                          ), String::from("latest")));
         assert_eq!(split("test:1234/idk"                                        ), (String::from("test:1234"              ), String::from("idk"                           ), String::from("latest")));
         assert_eq!(split("alpine:3.7"                                           ), (String::from(DEFAULT_REGISTRY         ), String::from("library/alpine"                ), String::from("3.7"   )));
+        assert_eq!(split("docker.io/library/alpine"                             ), (String::from(DEFAULT_REGISTRY         ), String::from("library/alpine"                ), String::from("latest")));
         assert_eq!(split("docker.example.com/examplerepo/alpine:3.7"            ), (String::from("docker.example.com"     ), String::from("examplerepo/alpine"            ), String::from("3.7"   )));
         assert_eq!(split("docker.example.com/examplerepo/alpine/test2:3.7"      ), (String::from("docker.example.com"     ), String::from("examplerepo/alpine/test2"      ), String::from("3.7"   )));
         assert_eq!(split("docker.example.com/examplerepo/alpine/test2/test3:3.7"), (String::from("docker.example.com"     ), String::from("examplerepo/alpine/test2/test3"), String::from("3.7"   )));
