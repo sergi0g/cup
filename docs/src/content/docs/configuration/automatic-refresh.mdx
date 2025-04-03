@@ -4,9 +4,9 @@ Cup can automatically refresh the results when running in server mode. Simply ad
 
 ```jsonc
 {
-  "refresh_interval": "0 0,30 * * * *" // Check twice an hour
+  "refresh_interval": "0 */30 * * * *", // Check twice an hour
   // Other options
 }
 ```
 
-You can use a cron expression to specify the refresh interval. The reference is [here](https://github.com/Hexagon/croner-rust#pattern)
+You can use a cron expression to specify the refresh interval. Note that seconds are not optional. The reference is [here](https://github.com/Hexagon/croner-rust#pattern)

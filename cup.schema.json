@@ -36,7 +36,7 @@
         },
         "refresh_interval": {
             "type": "string",
-            "description": "The interval at which Cup should check for updates. Must be a valid cron expression. Reference: https://github.com/Hexagon/croner-rust#pattern",
+            "description": "The interval at which Cup should check for updates. Must be a valid cron expression. Seconds are not optional. Reference: https://github.com/Hexagon/croner-rust#pattern",
             "minLength": 11
         },
         "registries": {
