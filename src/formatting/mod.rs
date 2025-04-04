@@ -124,11 +124,11 @@ pub fn print_updates(updates: &[Update], icons: &bool) {
                 Status::Unknown(_) => "\x1b[90m",
             };
             let description = format!(
-                "{} {}",
+                "{}{}",
                 status,
                 match &update.result.info {
                     UpdateInfo::Version(info) => {
-                        format!("({} → {})", info.current_version, info.new_version)
+                        format!(" ({} → {})", info.current_version, info.new_version)
                     }
                     _ => String::new(),
                 }
