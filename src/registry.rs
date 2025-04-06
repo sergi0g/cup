@@ -182,10 +182,7 @@ pub async fn get_latest_tag(
                 ));
                 get_latest_digest(
                     &Image {
-                        version_info: Some(VersionInfo {
-                            latest_remote_tag: Some(t.clone()),
-                            ..image.version_info.as_ref().unwrap().clone()
-                        }),
+                        version_info: None, // Overwrite previous version info, since it isn't useful anymore (equal tags means up to date and an image is truly up to date when its digests are up to date, and we'll be checking those anyway)
                         time_ms: image.time_ms + elapsed(start),
                         ..image.clone()
                     },
