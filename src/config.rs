@@ -6,16 +6,30 @@ use serde::Deserialize;
 use crate::error;
 
 #[derive(Clone, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum Theme {
-    #[serde(rename = "default")]
     Default,
-    #[serde(rename = "blue")]
     Blue,
 }
 
 impl Default for Theme {
     fn default() -> Self {
         Self::Default
+    }
+}
+
+#[derive(Clone, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum UpdateType {
+    None,
+    Major,
+    Minor,
+    Patch,
+}
+
+impl Default for UpdateType {
+    fn default() -> Self {
+        Self::None
     }
 }
 
@@ -40,6 +54,7 @@ pub struct ImageConfig {
 pub struct Config {
     version: u8,
     pub agent: bool,
+    pub ignore_update_type: UpdateType,
     pub images: ImageConfig,
     pub refresh_interval: Option<String>,
     pub registries: FxHashMap<String, RegistryConfig>,
@@ -53,6 +68,7 @@ impl Config {
         Self {
             version: 3,
             agent: false,
+            ignore_update_type: UpdateType::default(),
             images: ImageConfig::default(),
             refresh_interval: None,
             registries: FxHashMap::default(),
