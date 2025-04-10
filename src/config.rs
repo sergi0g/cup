@@ -6,10 +6,17 @@ use serde::Deserialize;
 use crate::error;
 
 #[derive(Clone, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Pin {
+    Major,
+    Minor,
+    Patch,
+}
+
+#[derive(Clone, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum Theme {
-    #[serde(rename = "default")]
     Default,
-    #[serde(rename = "blue")]
     Blue,
 }
 
@@ -41,6 +48,7 @@ pub struct Config {
     version: u8,
     pub agent: bool,
     pub images: ImageConfig,
+    pub pin: Option<Pin>,
     pub refresh_interval: Option<String>,
     pub registries: FxHashMap<String, RegistryConfig>,
     pub servers: FxHashMap<String, String>,
@@ -54,6 +62,7 @@ impl Config {
             version: 3,
             agent: false,
             images: ImageConfig::default(),
+            pin: None,
             refresh_interval: None,
             registries: FxHashMap::default(),
             servers: FxHashMap::default(),

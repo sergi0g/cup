@@ -3,6 +3,7 @@ use std::time::SystemTime;
 use itertools::Itertools;
 
 use crate::{
+    config::Pin,
     error,
     http::Client,
     structs::{
@@ -150,6 +151,7 @@ pub async fn get_latest_tag(
             &headers,
             base,
             &image.version_info.as_ref().unwrap().format_str,
+            ctx,
             client,
         )
         .await
@@ -214,6 +216,7 @@ pub async fn get_extra_tags(
     headers: &[(&str, Option<&str>)],
     base: &Version,
     format_str: &str,
+    ctx: &Context,
     client: &Client,
 ) -> Result<(Vec<Version>, Option<String>), String> {
     let response = client.get(url, &headers, false).await;
@@ -237,7 +240,18 @@ pub async fn get_extra_tags(
                     }
                     _ => false,
                 })
-                .map(|(tag, _)| tag)
+                .filter_map(|(tag, _)| match ctx.config.pin {
+                    None => Some(tag),
+                    Some(Pin::Major) => Some(tag).filter(|tag| base.major == tag.major),
+                    Some(Pin::Minor) => {
+                        Some(tag).filter(|tag| base.major == tag.major && base.minor == tag.minor)
+                    }
+                    Some(Pin::Patch) => Some(tag).filter(|tag| {
+                        base.major == tag.major
+                            && base.minor == tag.minor
+                            && base.patch == tag.patch
+                    }),
+                })
                 .dedup()
                 .collect();
             Ok((result, next_url))
