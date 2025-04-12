@@ -14,6 +14,16 @@
             "type": "boolean",
             "description": "Whether or not to enable agent mode. When agent mode is enabled, the server only exposes the API and the web interface is unavailable."
         },
+        "ignore_update_type": {
+            "type": "string",
+            "description": "The types of updates to ignore. Ignoring an update type also implies ignoring all update types less specific than it. For example, ignoring patch updates also implies ignoring major and minor updates.",
+            "enum": [
+                "none",
+                "major",
+                "minor",
+                "patch"
+            ]
+        },
         "images": {
             "type": "object",
             "description": "Configuration options for specific images",
@@ -59,8 +69,8 @@
             }
         },
         "socket": {
-            "description": "The path to the unix socket you would like Cup to use for communication with the Docker daemon. Useful if you're trying to use Cup with Podman.",
             "type": "string",
+            "description": "The path to the unix socket you would like Cup to use for communication with the Docker daemon. Useful if you're trying to use Cup with Podman.",
             "minLength": 1
         },
         "servers": {
@@ -73,8 +83,8 @@
             "minProperties": 1
         },
         "theme": {
-            "description": "The theme used by the web UI",
             "type": "string",
+            "description": "The theme used by the web UI",
             "enum": [
                 "default",
                 "blue"

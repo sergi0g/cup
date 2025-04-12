@@ -1,0 +1,23 @@
+import { Callout } from "nextra/components";
+
+# Ignored update types
+
+To ignore certain update types, you can modify your config like this:
+
+```jsonc
+{
+  "ignore_update_type": "minor"
+}
+```
+
+Available options are:
+
+- `none`: Do not ignore any update types (default).
+- `major`: Ignore major updates.
+- `minor`: Ignore major and minor updates.
+- `patch`: Ignore major, minor and patch updates.
+
+<Callout emoji="⚠️">
+  Ignoring an update type also implies ignoring all update types less specific than it.
+  For example, ignoring patch updates also implies ignoring major and minor updates.
+</Callout>
