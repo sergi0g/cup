@@ -1,8 +1,7 @@
 import Logo from "./Logo";
 import { theme } from "../theme";
-import { LoaderCircle } from "lucide-react";
 
-export default function Loading() {
+const DataLoadingError = () => {
   return (
     <div
       className={`flex min-h-screen justify-center bg-${theme}-50 dark:bg-${theme}-950`}
@@ -19,16 +18,13 @@ export default function Loading() {
             className={`flex h-full flex-col items-center justify-center gap-1 text-${theme}-500 dark:text-${theme}-400`}
           >
             <div className="mb-8 flex gap-1">
-              Loading <LoaderCircle className="animate-spin" />
+              An error occurred, please try again.
             </div>
-            <p>
-              If this takes more than a few seconds, there was probably a
-              problem fetching the data. Please try reloading the page and
-              report a bug if the problem persists.
-            </p>
           </div>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default DataLoadingError;
