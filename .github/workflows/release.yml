@@ -30,13 +30,8 @@ jobs:
       - name: Install cross
         run: RUSTFLAGS="" cargo install cross --git https://github.com/cross-rs/cross
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
       - name: Set up Bun
-        uses: oven-sh/setup-bun@v1
+        uses: oven-sh/setup-bun@v2
 
       - name: Install deps
         run: cd web && bun install

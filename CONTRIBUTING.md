@@ -7,7 +7,7 @@ First of all, thanks for taking time to contribute to Cup! This guide will help 
 Requirements:
 - A computer running Linux
 - Rust (usually installed from https://rustup.rs/)
-- Node.js 22+ and Bun 1+
+- Bun 1+
 
 1. Fork the repository. This is where you'll be pushing your changes before you create a pull request. Make sure to _create a new branch_ for your changes.
 2. Clone your fork with `git clone https://github.com/<YOUR_USERNAME>/cup` (if you use SSH, `git clone git@github.com:<YOUR_USERNAME>/cup`) and open your editor
