@@ -3,7 +3,7 @@ FROM oven/bun:alpine AS web
 
 # Copy package.json and lockfile from web
 WORKDIR /web
-COPY ./web/package.json ./web/bun.lockb ./
+COPY ./web/package.json ./web/bun.lock ./
 
 # Install requirements
 RUN bun install
