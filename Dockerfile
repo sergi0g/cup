@@ -1,5 +1,5 @@
 ### Build UI ###
-FROM oven/bun:alpine AS web
+FROM oven/bun:1-alpine AS web
 
 # Copy package.json and lockfile from web
 WORKDIR /web
