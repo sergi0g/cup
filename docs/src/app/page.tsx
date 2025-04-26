@@ -10,7 +10,6 @@ const toc: Heading[] = [];
 export const metadata: NextraMetadata = {
   title: "Cup - The easiest way to manage your container updates",
   description: "Simple, fast, efficient Docker image update checking",
-  filePath: "",
 };
 
 export default function Page() {

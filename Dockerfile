@@ -1,18 +1,18 @@
 ### Build UI ###
-FROM node:20 AS web
+FROM oven/bun:1-alpine AS web
 
-# Install bun
-RUN curl -fsSL https://bun.sh/install | bash
-
-# Copy web folder
-COPY ./web /web
+# Copy package.json and lockfile from web
 WORKDIR /web
+COPY ./web/package.json ./web/bun.lock ./
 
 # Install requirements
-RUN ~/.bun/bin/bun install
+RUN bun install
+
+# Copy web folder
+COPY ./web .
 
 # Build frontend
-RUN ~/.bun/bin/bun run build
+RUN bun run build
 
 ### Build Cup ###
 FROM rust:1-alpine AS build
