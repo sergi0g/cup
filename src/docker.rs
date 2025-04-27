@@ -1,6 +1,4 @@
-use std::collections::HashSet;
-
-use bollard::{models::ImageInspect, ClientVersion, Docker};
+use bollard::{container::ListContainersOptions, models::ImageInspect, ClientVersion, Docker};
 
 use futures::future::join_all;
 
@@ -97,10 +95,16 @@ pub async fn get_images_from_docker_daemon(
     local_images
 }
 
-pub async fn get_in_use_images(ctx: &Context, references: &Option<Vec<String>>) -> HashSet<String> {
+pub async fn get_in_use_images(ctx: &Context, references: &Option<Vec<String>>) -> Vec<String> {
     let client: Docker = create_docker_client(ctx.config.socket.as_deref());
 
-    let containers = match client.list_containers::<String>(None).await {
+    let containers = match client
+        .list_containers::<String>(Some(ListContainersOptions {
+            all: true,
+            ..Default::default()
+        }))
+        .await
+    {
         Ok(containers) => containers,
         Err(e) => {
             error!("Failed to retrieve list of containers available!\n{}", e)
@@ -111,19 +115,25 @@ pub async fn get_in_use_images(ctx: &Context, references: &Option<Vec<String>>) 
         .iter()
         .filter_map(|container| {
             let image = match container.image.as_deref() {
-                Some(image) => image,
+                Some(image) => {
+                    if image.contains(":") {
+                        image.to_string()
+                    } else {
+                        format!("{}:latest", image)
+                    }
+                }
                 None => return None,
             };
             match references {
                 Some(refs) => {
-                    if refs.contains(&image.to_string()) {
-                        Some(image.to_string())
+                    if refs.contains(&image) {
+                        Some(image)
                     } else {
                         None
                     }
                 }
-                None => Some(image.to_string()),
+                None => Some(image),
             }
         })
-        .collect::<HashSet<String>>()
+        .collect()
 }

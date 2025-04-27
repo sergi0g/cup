@@ -204,7 +204,13 @@ pub async fn get_updates(
     let images = join_all(handles).await;
     let mut updates: Vec<Update> = images
         .iter()
-        .map(|image| image.to_update(&in_use_images))
+        .map(|image| image.to_update())
+        .map(|mut update| {
+            if in_use_images.contains(&update.reference) {
+                update.result.in_use = Some(true);
+            }
+            update
+        })
         .collect();
     updates.extend_from_slice(&remote_updates);
     updates
