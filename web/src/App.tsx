@@ -4,12 +4,12 @@ import Statistic from "./components/Statistic";
 import Image from "./components/Image";
 import { LastChecked } from "./components/LastChecked";
 import Loading from "./components/Loading";
-import { Data } from "./types";
+import { Data, Filters as FiltersType } from "./types";
 import { theme } from "./theme";
 import RefreshButton from "./components/RefreshButton";
 import Search from "./components/Search";
 import { Server } from "./components/Server";
-import { Checkbox } from "./components/Checkbox";
+import Filters from "./components/Filters";
 
 const SORT_ORDER = [
   "monitored_images",
@@ -24,8 +24,10 @@ const SORT_ORDER = [
 
 function App() {
   const [data, setData] = useState<Data | null>(null);
+  const [filters, setFilters] = useState<FiltersType>({
+    onlyInUse: false,
+  });
   const [searchQuery, setSearchQuery] = useState("");
-  const [inUseOnly, setInUseOnly] = useState(false);
 
   if (!data) return <Loading onLoad={setData} />;
   return (
@@ -64,21 +66,7 @@ function App() {
               className={`flex items-center gap-3 px-6 py-4 text-${theme}-500`}
             >
               <LastChecked datetime={data.last_updated} />
-              <div className="ml-auto flex items-center space-x-2">
-                <label
-                  htmlFor="inUse"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Show only in use images
-                </label>
-                <Checkbox
-                  id="inUse"
-                  checked={inUseOnly}
-                  onCheckedChange={(value) => {
-                    setInUseOnly(value === "indeterminate" ? false : value);
-                  }}
-                />
-              </div>
+              <Filters filters={filters} setFilters={setFilters} />
               <RefreshButton />
             </div>
             <div className="flex gap-2 px-6 text-black dark:text-white">
@@ -101,7 +89,7 @@ function App() {
                   <Server name={server} key={server}>
                     {images
                       .filter((image) =>
-                        inUseOnly ? !!image.result.in_use : true,
+                        filters.onlyInUse ? !!image.result.in_use : true,
                       )
                       .filter((image) => image.reference.includes(searchQuery))
                       .map((image) => (

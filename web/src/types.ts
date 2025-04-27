@@ -44,3 +44,7 @@ interface DigestInfo {
   local_digests: string[];
   remote_digest: string;
 }
+
+export interface Filters {
+  onlyInUse: boolean;
+}

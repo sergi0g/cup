@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { WithTooltip } from "./Tooltip";
+import { WithTooltip } from "./ui/Tooltip";
 
 export default function RefreshButton() {
   const [disabled, setDisabled] = useState(false);
