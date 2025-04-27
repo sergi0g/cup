@@ -81,6 +81,7 @@ mod tests {
             status: Status::Unknown("".to_string()),
             result: UpdateResult {
                 has_update: None,
+                in_use: None,
                 info: Default::default(),
                 error: Some("Error".to_string()),
             },

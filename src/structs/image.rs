@@ -160,6 +160,7 @@ impl Image {
             url: self.url.clone(),
             result: UpdateResult {
                 has_update: has_update.to_option_bool(),
+                in_use: Some(false),
                 info: match has_update {
                     Status::Unknown(_) => UpdateInfo::None,
                     _ => match update_type {

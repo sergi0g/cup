@@ -9,6 +9,7 @@ import { theme } from "./theme";
 import RefreshButton from "./components/RefreshButton";
 import Search from "./components/Search";
 import { Server } from "./components/Server";
+import { Checkbox } from "./components/Checkbox";
 
 const SORT_ORDER = [
   "monitored_images",
@@ -24,6 +25,7 @@ const SORT_ORDER = [
 function App() {
   const [data, setData] = useState<Data | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [inUseOnly, setInUseOnly] = useState(false);
 
   if (!data) return <Loading onLoad={setData} />;
   return (
@@ -59,9 +61,24 @@ function App() {
             className={`border shadow-sm border-${theme}-200 dark:border-${theme}-900 my-8 rounded-md`}
           >
             <div
-              className={`flex items-center justify-between px-6 py-4 text-${theme}-500`}
+              className={`flex items-center gap-3 px-6 py-4 text-${theme}-500`}
             >
               <LastChecked datetime={data.last_updated} />
+              <div className="ml-auto flex items-center space-x-2">
+                <label
+                  htmlFor="inUse"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Show only in use images
+                </label>
+                <Checkbox
+                  id="inUse"
+                  checked={inUseOnly}
+                  onCheckedChange={(value) => {
+                    setInUseOnly(value === "indeterminate" ? false : value);
+                  }}
+                />
+              </div>
               <RefreshButton />
             </div>
             <div className="flex gap-2 px-6 text-black dark:text-white">
@@ -83,6 +100,9 @@ function App() {
                 .map(([server, images]) => (
                   <Server name={server} key={server}>
                     {images
+                      .filter((image) =>
+                        inUseOnly ? !!image.result.in_use : true,
+                      )
                       .filter((image) => image.reference.includes(searchQuery))
                       .map((image) => (
                         <Image data={image} key={image.reference} />

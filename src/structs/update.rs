@@ -19,6 +19,7 @@ pub struct Update {
 #[cfg_attr(test, derive(PartialEq, Default))]
 pub struct UpdateResult {
     pub has_update: Option<bool>,
+    pub in_use: Option<bool>,
     pub info: UpdateInfo,
     pub error: Option<String>,
 }

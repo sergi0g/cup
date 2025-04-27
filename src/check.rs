@@ -3,7 +3,7 @@ use itertools::Itertools;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
-    docker::get_images_from_docker_daemon,
+    docker::{get_images_from_docker_daemon, get_in_use_images},
     http::Client,
     registry::{check_auth, get_token},
     structs::{image::Image, update::Update},
@@ -98,6 +98,7 @@ pub async fn get_updates(
 
     // Get local images
     ctx.logger.debug("Retrieving images to be checked");
+    let in_use = get_in_use_images(ctx, references).await;
     let mut images = get_images_from_docker_daemon(ctx, references).await;
 
     // Add extra images from references
@@ -201,7 +202,16 @@ pub async fn get_updates(
     }
     // Await all the futures
     let images = join_all(handles).await;
-    let mut updates: Vec<Update> = images.iter().map(|image| image.to_update()).collect();
+    let mut updates: Vec<Update> = images
+        .iter()
+        .map(|image| image.to_update())
+        .map(|mut update| {
+            if in_use.contains(&update.reference) {
+                update.result.in_use = Some(true);
+            }
+            update
+        })
+        .collect();
     updates.extend_from_slice(&remote_updates);
     updates
 }
