@@ -28,6 +28,7 @@ export interface Image {
   };
   time: number;
   server: string | null;
+  in_use: boolean | null;
 }
 
 interface VersionInfo {
@@ -42,4 +43,8 @@ interface DigestInfo {
   type: "digest";
   local_digests: string[];
   remote_digest: string;
+}
+
+export interface Filters {
+  onlyInUse: boolean;
 }

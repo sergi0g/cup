@@ -38,6 +38,7 @@ pub struct Image {
     pub url: Option<String>,
     pub digest_info: Option<DigestInfo>,
     pub version_info: Option<VersionInfo>,
+    pub in_use: bool,
     pub error: Option<String>,
     pub time_ms: u32,
 }
@@ -221,6 +222,7 @@ impl Image {
             },
             time: self.time_ms,
             server: None,
+            in_use: self.in_use,
             status: has_update,
         }
     }

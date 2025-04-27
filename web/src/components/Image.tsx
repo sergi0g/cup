@@ -5,7 +5,7 @@ import {
   DialogPanel,
   DialogTitle,
 } from "@headlessui/react";
-import { WithTooltip } from "./Tooltip";
+import { WithTooltip } from "./ui/Tooltip";
 import type { Image } from "../types";
 import { theme } from "../theme";
 import { CodeBlock } from "./CodeBlock";

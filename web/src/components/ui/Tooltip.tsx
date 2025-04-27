@@ -1,7 +1,7 @@
 import { Provider, Root, Trigger, Content } from "@radix-ui/react-tooltip";
-import { cn } from "../utils";
+import { cn } from "../../utils";
 import { forwardRef, ReactNode } from "react";
-import { theme } from "../theme";
+import { theme } from "../../theme";
 
 const TooltipContent = forwardRef<
   React.ElementRef<typeof Content>,

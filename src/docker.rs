@@ -1,4 +1,4 @@
-use bollard::{models::ImageInspect, ClientVersion, Docker};
+use bollard::{container::ListContainersOptions, models::ImageInspect, ClientVersion, Docker};
 
 use futures::future::join_all;
 
@@ -93,4 +93,35 @@ pub async fn get_images_from_docker_daemon(
     };
     local_images.append(&mut swarm_images);
     local_images
+}
+
+pub async fn get_in_use_images(ctx: &Context) -> Vec<String> {
+    let client: Docker = create_docker_client(ctx.config.socket.as_deref());
+
+    let containers = match client
+        .list_containers::<String>(Some(ListContainersOptions {
+            all: true,
+            ..Default::default()
+        }))
+        .await
+    {
+        Ok(containers) => containers,
+        Err(e) => {
+            error!("Failed to retrieve list of containers available!\n{}", e)
+        }
+    };
+
+    containers
+        .iter()
+        .filter_map(|container| match &container.image {
+            Some(image) => Some({
+                if image.contains(":") {
+                    image.clone()
+                } else {
+                    format!("{image}:latest")
+                }
+            }),
+            None => None,
+        })
+        .collect()
 }

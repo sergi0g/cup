@@ -4,12 +4,16 @@ import Statistic from "./components/Statistic";
 import Image from "./components/Image";
 import { LastChecked } from "./components/LastChecked";
 import Loading from "./components/Loading";
+import { Filters as FiltersType } from "./types";
 import { theme } from "./theme";
 import RefreshButton from "./components/RefreshButton";
 import Search from "./components/Search";
 import { Server } from "./components/Server";
 import { useData } from "./hooks/use-data";
 import DataLoadingError from "./components/DataLoadingError";
+import Filters from "./components/Filters";
+import { Filter, FilterX } from "lucide-react";
+import { WithTooltip } from "./components/ui/Tooltip";
 
 const SORT_ORDER = [
   "monitored_images",
@@ -24,10 +28,22 @@ const SORT_ORDER = [
 
 function App() {
   const { data, isLoading, isError } = useData();
+
+  const [showFilters, setShowFilters] = useState<boolean>(false);
+  const [filters, setFilters] = useState<FiltersType>({
+    onlyInUse: false,
+  });
   const [searchQuery, setSearchQuery] = useState("");
 
   if (isLoading) return <Loading />;
   if (isError || !data) return <DataLoadingError />;
+  const toggleShowFilters = () => {
+    if (showFilters) {
+      setFilters({ onlyInUse: false });
+    }
+    setShowFilters(!showFilters);
+  };
+
   return (
     <div
       className={`flex min-h-screen justify-center bg-white dark:bg-${theme}-950`}
@@ -61,14 +77,26 @@ function App() {
             className={`border shadow-sm border-${theme}-200 dark:border-${theme}-900 my-8 rounded-md`}
           >
             <div
-              className={`flex items-center justify-between px-6 py-4 text-${theme}-500`}
+              className={`flex items-center justify-between gap-3 px-6 py-4 text-${theme}-500`}
             >
               <LastChecked datetime={data.last_updated} />
-              <RefreshButton />
+              <div className="flex gap-3">
+                <WithTooltip
+                  text={showFilters ? "Clear filters" : "Show filters"}
+                >
+                  <button onClick={toggleShowFilters}>
+                    {showFilters ? <FilterX /> : <Filter />}
+                  </button>
+                </WithTooltip>
+                <RefreshButton />
+              </div>
             </div>
             <div className="flex gap-2 px-6 text-black dark:text-white">
               <Search onChange={setSearchQuery} />
             </div>
+            {showFilters && (
+              <Filters filters={filters} setFilters={setFilters} />
+            )}
             <ul>
               {Object.entries(
                 data.images.reduce<Record<string, typeof data.images>>(
@@ -85,6 +113,9 @@ function App() {
                 .map(([server, images]) => (
                   <Server name={server} key={server}>
                     {images
+                      .filter((image) =>
+                        filters.onlyInUse ? !!image.in_use : true,
+                      )
                       .filter((image) => image.reference.includes(searchQuery))
                       .map((image) => (
                         <Image data={image} key={image.reference} />
