@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::{
     error,
     http::Client,
@@ -147,7 +149,7 @@ impl Image {
     }
 
     /// Converts image data into an `Update`
-    pub fn to_update(&self) -> Update {
+    pub fn to_update(&self, in_use_images: &HashSet<String>) -> Update {
         let has_update = self.has_update();
         let update_type = match has_update {
             Status::UpToDate => "none",
@@ -160,7 +162,7 @@ impl Image {
             url: self.url.clone(),
             result: UpdateResult {
                 has_update: has_update.to_option_bool(),
-                in_use: Some(false),
+                in_use: Some(in_use_images.contains(&self.reference)),
                 info: match has_update {
                     Status::Unknown(_) => UpdateInfo::None,
                     _ => match update_type {

@@ -98,7 +98,7 @@ pub async fn get_updates(
 
     // Get local images
     ctx.logger.debug("Retrieving images to be checked");
-    let in_use = get_in_use_images(ctx, references).await;
+    let in_use_images = get_in_use_images(ctx, references).await;
     let mut images = get_images_from_docker_daemon(ctx, references).await;
 
     // Add extra images from references
@@ -204,13 +204,7 @@ pub async fn get_updates(
     let images = join_all(handles).await;
     let mut updates: Vec<Update> = images
         .iter()
-        .map(|image| image.to_update())
-        .map(|mut update| {
-            if in_use.contains(&update.reference) {
-                update.result.in_use = Some(true);
-            }
-            update
-        })
+        .map(|image| image.to_update(&in_use_images))
         .collect();
     updates.extend_from_slice(&remote_updates);
     updates
