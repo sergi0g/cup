@@ -4,11 +4,12 @@ import Statistic from "./components/Statistic";
 import Image from "./components/Image";
 import { LastChecked } from "./components/LastChecked";
 import Loading from "./components/Loading";
-import { Data } from "./types";
 import { theme } from "./theme";
 import RefreshButton from "./components/RefreshButton";
 import Search from "./components/Search";
 import { Server } from "./components/Server";
+import { useData } from "./hooks/use-data";
+import DataLoadingError from "./components/DataLoadingError";
 
 const SORT_ORDER = [
   "monitored_images",
@@ -22,10 +23,11 @@ const SORT_ORDER = [
 ];
 
 function App() {
-  const [data, setData] = useState<Data | null>(null);
+  const { data, isLoading, isError } = useData();
   const [searchQuery, setSearchQuery] = useState("");
 
-  if (!data) return <Loading onLoad={setData} />;
+  if (isLoading) return <Loading />;
+  if (isError || !data) return <DataLoadingError />;
   return (
     <div
       className={`flex min-h-screen justify-center bg-white dark:bg-${theme}-950`}
