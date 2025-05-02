@@ -10,6 +10,8 @@ import RefreshButton from "./components/RefreshButton";
 import Search from "./components/Search";
 import { Server } from "./components/Server";
 import Filters from "./components/Filters";
+import { Filter, FilterX } from "lucide-react";
+import { WithTooltip } from "./components/ui/Tooltip";
 
 const SORT_ORDER = [
   "monitored_images",
@@ -24,10 +26,18 @@ const SORT_ORDER = [
 
 function App() {
   const [data, setData] = useState<Data | null>(null);
+  const [showFilters, setShowFilters] = useState<boolean>(false);
   const [filters, setFilters] = useState<FiltersType>({
     onlyInUse: false,
   });
   const [searchQuery, setSearchQuery] = useState("");
+
+  const toggleShowFilters = () => {
+    if (showFilters) {
+      setFilters({ onlyInUse: false });
+    }
+    setShowFilters(!showFilters);
+  };
 
   if (!data) return <Loading onLoad={setData} />;
   return (
@@ -63,15 +73,26 @@ function App() {
             className={`border shadow-sm border-${theme}-200 dark:border-${theme}-900 my-8 rounded-md`}
           >
             <div
-              className={`flex items-center gap-3 px-6 py-4 text-${theme}-500`}
+              className={`flex items-center justify-between gap-3 px-6 py-4 text-${theme}-500`}
             >
               <LastChecked datetime={data.last_updated} />
-              <Filters filters={filters} setFilters={setFilters} />
-              <RefreshButton />
+              <div className="flex gap-3">
+                <WithTooltip
+                  text={showFilters ? "Clear filters" : "Show filters"}
+                >
+                  <button onClick={toggleShowFilters}>
+                    {showFilters ? <FilterX /> : <Filter />}
+                  </button>
+                </WithTooltip>
+                <RefreshButton />
+              </div>
             </div>
             <div className="flex gap-2 px-6 text-black dark:text-white">
               <Search onChange={setSearchQuery} />
             </div>
+            {showFilters && (
+              <Filters filters={filters} setFilters={setFilters} />
+            )}
             <ul>
               {Object.entries(
                 data.images.reduce<Record<string, typeof data.images>>(

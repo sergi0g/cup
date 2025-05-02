@@ -42,6 +42,10 @@ export default {
       pattern: /text-(gray|neutral)-700/,
     },
     {
+      pattern: /text-(gray|neutral)-950/,
+      variants: ["dark:group-data-[state=checked]"]
+    },
+    {
       pattern: /text-(gray|neutral)-800/,
       variants: ["group-data-[hover]"],
     },
@@ -54,10 +58,10 @@ export default {
       variants: ["dark"],
     },
     {
-      pattern: /border-(gray|neutral)-(200|300)/,
+      pattern: /border-(gray|neutral)-(600|300|400)/,
     },
     {
-      pattern: /border-(gray|neutral)-(700|800|900)/,
+      pattern: /border-(gray|neutral)-(400|700|800|900)/,
       variants: ["dark"],
     },
     {

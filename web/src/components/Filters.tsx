@@ -1,7 +1,5 @@
-import { FilterIcon } from "lucide-react";
+import { theme } from "../theme";
 import { Filters as FiltersType } from "../types";
-import { cn } from "../utils";
-import { Popover, PopoverTrigger, PopoverContent } from "./ui/Popover";
 import { Checkbox } from "./ui/Checkbox";
 
 interface Props {
@@ -11,16 +9,7 @@ interface Props {
 
 export default function Filters({ filters, setFilters }: Props) {
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button className="ml-auto">
-          <FilterIcon
-            size={24}
-            className={cn("text-current", filters.onlyInUse && "fill-current")}
-          />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="mr-3 flex w-fit flex-col gap-2 p-4">
+      <div className="flex w-fit flex-col gap-2 px-6 py-4">
         <div className="ml-auto flex items-center space-x-2">
           <Checkbox
             id="inUse"
@@ -34,12 +23,11 @@ export default function Filters({ filters, setFilters }: Props) {
           />
           <label
             htmlFor="inUse"
-            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            className={`text-sm font-medium leading-none text-${theme}-600 dark:text-${theme}-400 hover:text-black dark:hover:text-white peer-hover:text-black peer-hover:dark:text-white peer-data-[state=checked]:text-black dark:peer-data-[state=checked]:text-white transition-colors duration-200`}
           >
-            Show only images in use
+            Hide unused images
           </label>
         </div>
-      </PopoverContent>
-    </Popover>
+      </div>
   );
 }
