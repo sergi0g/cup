@@ -219,7 +219,7 @@ pub async fn get_extra_tags(
     ctx: &Context,
     client: &Client,
 ) -> Result<(Vec<Version>, Option<String>), String> {
-    let response = client.get(url, &headers, false).await;
+    let response = client.get(url, headers, false).await;
 
     match response {
         Ok(res) => {

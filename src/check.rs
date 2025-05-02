@@ -130,13 +130,7 @@ pub async fn get_updates(
         .map(|image| &image.parts.registry)
         .unique()
         .filter(|&registry| match ctx.config.registries.get(registry) {
-            Some(config) => {
-                if config.ignore {
-                    false
-                } else {
-                    true
-                }
-            }
+            Some(config) => !config.ignore,
             None => true,
         })
         .collect::<Vec<&String>>();
