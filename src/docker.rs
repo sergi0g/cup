@@ -95,7 +95,7 @@ pub async fn get_images_from_docker_daemon(
     local_images
 }
 
-pub async fn get_in_use_images(ctx: &Context, references: &Option<Vec<String>>) -> Vec<String> {
+pub async fn get_in_use_images(ctx: &Context) -> Vec<String> {
     let client: Docker = create_docker_client(ctx.config.socket.as_deref());
 
     let containers = match client
@@ -113,27 +113,15 @@ pub async fn get_in_use_images(ctx: &Context, references: &Option<Vec<String>>) 
 
     containers
         .iter()
-        .filter_map(|container| {
-            let image = match container.image.as_deref() {
-                Some(image) => {
-                    if image.contains(":") {
-                        image.to_string()
-                    } else {
-                        format!("{}:latest", image)
-                    }
+        .filter_map(|container| match &container.image {
+            Some(image) => Some({
+                if image.contains(":") {
+                    image.clone()
+                } else {
+                    format!("{image}:latest")
                 }
-                None => return None,
-            };
-            match references {
-                Some(refs) => {
-                    if refs.contains(&image) {
-                        Some(image)
-                    } else {
-                        None
-                    }
-                }
-                None => Some(image),
-            }
+            }),
+            None => None,
         })
         .collect()
 }

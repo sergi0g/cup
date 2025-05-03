@@ -110,7 +110,7 @@ function App() {
                   <Server name={server} key={server}>
                     {images
                       .filter((image) =>
-                        filters.onlyInUse ? !!image.result.in_use : true,
+                        filters.onlyInUse ? !!image.in_use : true,
                       )
                       .filter((image) => image.reference.includes(searchQuery))
                       .map((image) => (

@@ -11,6 +11,7 @@ pub struct Update {
     pub result: UpdateResult,
     pub time: u32,
     pub server: Option<String>,
+    pub in_use: bool,
     #[serde(skip_serializing, skip_deserializing)]
     pub status: Status,
 }
@@ -19,7 +20,6 @@ pub struct Update {
 #[cfg_attr(test, derive(PartialEq, Default))]
 pub struct UpdateResult {
     pub has_update: Option<bool>,
-    pub in_use: Option<bool>,
     pub info: UpdateInfo,
     pub error: Option<String>,
 }

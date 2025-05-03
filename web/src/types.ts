@@ -23,12 +23,12 @@ export interface Image {
   url: string | null;
   result: {
     has_update: boolean | null;
-    in_use: boolean | null;
     info: VersionInfo | DigestInfo | null;
     error: string | null;
   };
   time: number;
   server: string | null;
+  in_use: boolean | null;
 }
 
 interface VersionInfo {
