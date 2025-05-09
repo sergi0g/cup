@@ -14,6 +14,7 @@ import DataLoadingError from "./components/DataLoadingError";
 import Filters from "./components/Filters";
 import { Filter, FilterX } from "lucide-react";
 import { WithTooltip } from "./components/ui/Tooltip";
+import { getDescription } from "./utils";
 
 const SORT_ORDER = [
   "monitored_images",
@@ -32,6 +33,8 @@ function App() {
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [filters, setFilters] = useState<FiltersType>({
     onlyInUse: false,
+    registries: [],
+    statuses: [],
   });
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -39,7 +42,7 @@ function App() {
   if (isError || !data) return <DataLoadingError />;
   const toggleShowFilters = () => {
     if (showFilters) {
-      setFilters({ onlyInUse: false });
+      setFilters({ onlyInUse: false, registries: [], statuses: [] });
     }
     setShowFilters(!showFilters);
   };
@@ -95,7 +98,13 @@ function App() {
               <Search onChange={setSearchQuery} />
             </div>
             {showFilters && (
-              <Filters filters={filters} setFilters={setFilters} />
+              <Filters
+                filters={filters}
+                setFilters={setFilters}
+                registries={[
+                  ...new Set(data.images.map((image) => image.parts.registry)),
+                ]}
+              />
             )}
             <ul>
               {Object.entries(
@@ -115,6 +124,16 @@ function App() {
                     {images
                       .filter((image) =>
                         filters.onlyInUse ? !!image.in_use : true,
+                      )
+                      .filter((image) =>
+                        filters.registries.length == 0
+                          ? true
+                          : filters.registries.includes(image.parts.registry),
+                      )
+                      .filter((image) =>
+                        filters.statuses.length == 0
+                          ? true
+                          : filters.statuses.includes(getDescription(image)),
                       )
                       .filter((image) => image.reference.includes(searchQuery))
                       .map((image) => (

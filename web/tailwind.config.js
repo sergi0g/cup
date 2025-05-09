@@ -32,14 +32,14 @@ export default {
     },
     {
       pattern: /text-(gray|neutral)-600/,
-      variants: ["*", "dark", "hover", "placeholder"],
+      variants: ["*", "dark", "hover", "placeholder", "data-[placeholder]"],
     },
     {
       pattern: /text-(gray|neutral)-400/,
-      variants: ["*:dark", "dark", "dark:hover", "placeholder:dark"],
+      variants: ["*:dark", "dark", "dark:hover", "placeholder:dark", "data-[placeholder]:dark"],
     },
     {
-      pattern: /text-(gray|neutral)-700/,
+      pattern: /text-(gray|neutral)-(500|700)/,
     },
     {
       pattern: /text-(gray|neutral)-950/,

@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import Badge from "./Badge";
+import { getDescription } from "../utils";
 
 const clickable_registries = [
   "registry-1.docker.io",
@@ -39,7 +40,7 @@ export default function Image({ data }: { data: Image }) {
     data.result.info?.type == "version"
       ? data.reference.split(":")[0] + ":" + data.result.info.new_tag
       : data.reference;
-  const info = getInfo(data)!;
+  const info = getInfo(data);
   let url: string | null = null;
   if (data.url) {
     url = data.url;
@@ -182,54 +183,49 @@ export default function Image({ data }: { data: Image }) {
   );
 }
 
-function getInfo(data: Image):
-  | {
-      color: string;
-      icon: typeof HelpCircle;
-      description: string;
-    }
-  | undefined {
-  switch (data.result.has_update) {
-    case null:
+function getInfo(data: Image): {
+  color: string;
+  icon: typeof HelpCircle;
+  description: string;
+} {
+  const description = getDescription(data);
+  switch (description) {
+    case "Unknown":
       return {
         color: "text-gray-500",
         icon: HelpCircle,
-        description: "Unknown",
+        description,
       };
-    case false:
+    case "Up to date":
       return {
         color: "text-green-500",
         icon: CircleCheck,
-        description: "Up to date",
+        description,
       };
-    case true:
-      if (data.result.info?.type === "version") {
-        switch (data.result.info.version_update_type) {
-          case "major":
-            return {
-              color: "text-red-500",
-              icon: CircleArrowUp,
-              description: "Major update",
-            };
-          case "minor":
-            return {
-              color: "text-yellow-500",
-              icon: CircleArrowUp,
-              description: "Minor update",
-            };
-          case "patch":
-            return {
-              color: "text-blue-500",
-              icon: CircleArrowUp,
-              description: "Patch update",
-            };
-        }
-      } else if (data.result.info?.type === "digest") {
-        return {
-          color: "text-blue-500",
-          icon: CircleArrowUp,
-          description: "Update available",
-        };
-      }
+
+    case "Major update":
+      return {
+        color: "text-red-500",
+        icon: CircleArrowUp,
+        description,
+      };
+    case "Minor update":
+      return {
+        color: "text-yellow-500",
+        icon: CircleArrowUp,
+        description,
+      };
+    case "Patch update":
+      return {
+        color: "text-blue-500",
+        icon: CircleArrowUp,
+        description,
+      };
+    case "Digest update":
+      return {
+        color: "text-blue-500",
+        icon: CircleArrowUp,
+        description,
+      };
   }
 }

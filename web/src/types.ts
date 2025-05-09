@@ -47,4 +47,13 @@ interface DigestInfo {
 
 export interface Filters {
   onlyInUse: boolean;
+  registries: string[];
+  statuses: (
+    | "Major update"
+    | "Minor update"
+    | "Patch update"
+    | "Digest update"
+    | "Up to date"
+    | "Unknown"
+  )[];
 }
