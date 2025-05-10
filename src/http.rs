@@ -67,8 +67,7 @@ impl Client {
                     } else {
                         let message = format!("{} {}: Unauthorized! Please configure authentication for this registry or if you have already done so, please make sure it is correct.", method, url);
                         self.ctx.logger.warn(&message);
-                        Err(message)
-                    }
+                    Err(message)
                 } else if status == 502 {
                     let message = format!("{} {}: The registry is currently unavailabile (returned status code 502).", method, url);
                     self.ctx.logger.warn(&message);
