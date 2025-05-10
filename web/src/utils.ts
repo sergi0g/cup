@@ -28,3 +28,11 @@ export function getDescription(image: Image) {
       return "Unknown";
   }
 }
+
+export function truncateArray(arr: string[]) {
+  if (arr.length > 1) {
+    return `${arr[0]} +${(arr.length - 1).toString()} more`
+  } else if (arr.length == 1) {
+    return arr[0]
+  }
+}

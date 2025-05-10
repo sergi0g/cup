@@ -1,6 +1,7 @@
 use bollard::{container::ListContainersOptions, models::ImageInspect, ClientVersion, Docker};
 
 use futures::future::join_all;
+use rustc_hash::FxHashMap;
 
 use crate::{error, structs::image::Image, Context};
 
@@ -95,7 +96,7 @@ pub async fn get_images_from_docker_daemon(
     local_images
 }
 
-pub async fn get_in_use_images(ctx: &Context) -> Vec<String> {
+pub async fn get_in_use_images(ctx: &Context) -> FxHashMap<String, Vec<String>> {
     let client: Docker = create_docker_client(ctx.config.socket.as_deref());
 
     let containers = match client
@@ -111,17 +112,40 @@ pub async fn get_in_use_images(ctx: &Context) -> Vec<String> {
         }
     };
 
+    let mut result: FxHashMap<String, Vec<String>> = FxHashMap::default();
+
     containers
         .iter()
-        .filter_map(|container| match &container.image {
-            Some(image) => Some({
-                if image.contains(":") {
-                    image.clone()
-                } else {
-                    format!("{image}:latest")
+        .filter(|container| container.image.is_some())
+        .for_each(|container| {
+            let reference = match &container.image {
+                Some(image) => {
+                    if image.contains(":") {
+                        image.clone()
+                    } else {
+                        format!("{image}:latest")
+                    }
                 }
-            }),
-            None => None,
-        })
-        .collect()
+                None => unreachable!(),
+            };
+
+            let mut names: Vec<String> = container
+                .names
+                .as_ref()
+                .map(|names| {
+                    names
+                        .iter()
+                        .map(|name| name.trim_start_matches('/').to_owned())
+                        .collect()
+                })
+                .unwrap_or(Vec::new());
+
+            match result.get_mut(&reference) {
+                Some(containers) => containers.append(&mut names),
+                None => {
+                    let _ = result.insert(reference, names);
+                }
+            }
+        });
+    result.clone()
 }

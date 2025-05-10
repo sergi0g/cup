@@ -6,7 +6,7 @@ import {
 } from "@headlessui/react";
 import { ChevronDown, Check } from "lucide-react";
 import { theme } from "../../theme";
-import { cn } from "../../utils";
+import { cn, truncateArray } from "../../utils";
 import { Server } from "lucide-react";
 
 export default function Select({
@@ -27,7 +27,7 @@ export default function Select({
       <div className="relative">
         <ListboxButton
           className={cn(
-            `flex overflow-x-hidden w-full gap-2 rounded-md bg-${theme}-100 dark:bg-${theme}-900 border border-${theme}-200 dark:border-${theme}-700 group relative items-center py-1.5 pl-3 pr-2 text-left transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-blue-500 sm:text-sm/6`,
+            `flex w-full gap-2 overflow-x-hidden rounded-md bg-${theme}-100 dark:bg-${theme}-900 border border-${theme}-200 dark:border-${theme}-700 group relative items-center py-1.5 pl-3 pr-2 text-left transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-blue-500 sm:text-sm/6`,
             selectedItems.length == 0
               ? `text-${theme}-600 dark:text-${theme}-400 hover:text-black hover:dark:text-white`
               : "text-black dark:text-white",
@@ -44,15 +44,14 @@ export default function Select({
             />
           )}
           <span className="truncate">
-          {selectedItems.length == 0
-            ? placeholder
-            : selectedItems.length == 1
-              ? selectedItems[0]
-              : `${selectedItems[0]} +${(selectedItems.length - 1).toString()} more`}</span>
+            {selectedItems.length == 0
+              ? placeholder
+              : truncateArray(selectedItems)}
+          </span>
 
           <ChevronDown
             aria-hidden="true"
-            className={`size-5 shrink-0 ml-auto self-center text-${theme}-600 dark:text-${theme}-400 transition-colors duration-200 group-hover:text-black sm:size-4 group-hover:dark:text-white`}
+            className={`ml-auto size-5 shrink-0 self-center text-${theme}-600 dark:text-${theme}-400 transition-colors duration-200 group-hover:text-black sm:size-4 group-hover:dark:text-white`}
           />
           <div
             className="absolute -bottom-px left-1/2 h-full w-0 -translate-x-1/2 rounded-md border-b-2 border-b-blue-600 transition-all duration-200 group-data-[open]:w-[calc(100%+2px)]"

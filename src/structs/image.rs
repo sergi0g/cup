@@ -38,7 +38,7 @@ pub struct Image {
     pub url: Option<String>,
     pub digest_info: Option<DigestInfo>,
     pub version_info: Option<VersionInfo>,
-    pub in_use: bool,
+    pub used_by: Vec<String>,
     pub error: Option<String>,
     pub time_ms: u32,
 }
@@ -222,7 +222,7 @@ impl Image {
             },
             time: self.time_ms,
             server: None,
-            in_use: self.in_use,
+            used_by: self.used_by.clone(),
             status: has_update,
         }
     }

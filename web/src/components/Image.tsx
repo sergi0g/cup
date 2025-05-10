@@ -4,6 +4,9 @@ import {
   DialogBackdrop,
   DialogPanel,
   DialogTitle,
+  Disclosure,
+  DisclosureButton,
+  DisclosurePanel,
 } from "@headlessui/react";
 import { WithTooltip } from "./ui/Tooltip";
 import type { Image } from "../types";
@@ -11,15 +14,17 @@ import { theme } from "../theme";
 import { CodeBlock } from "./CodeBlock";
 import {
   Box,
+  ChevronDown,
   CircleArrowUp,
   CircleCheck,
+  Container,
   HelpCircle,
   Timer,
   TriangleAlert,
   X,
 } from "lucide-react";
 import Badge from "./Badge";
-import { getDescription } from "../utils";
+import { cn, getDescription, truncateArray } from "../utils";
 
 const clickable_registries = [
   "registry-1.docker.io",
@@ -30,12 +35,16 @@ const clickable_registries = [
 
 export default function Image({ data }: { data: Image }) {
   const [open, setOpen] = useState(false);
+  const [showUsedBy, setShowUsedBy] = useState(false);
   const handleOpen = () => {
     setOpen(true);
   };
   const handleClose = () => {
     setOpen(false);
   };
+  const toggleShowUsedBy = () => {
+    setShowUsedBy(!showUsedBy)
+  }
   const new_reference =
     data.result.info?.type == "version"
       ? data.reference.split(":")[0] + ":" + data.result.info.new_tag
@@ -140,6 +149,21 @@ export default function Image({ data }: { data: Image }) {
                     Checked in <b>{data.time}</b> ms
                   </span>
                 </div>
+                {data.used_by.length !== 0 && (
+                  <div className="flex items-start gap-3">
+                    <Container className="size-6 shrink-0 text-gray-500" />
+                    <div className="flex items-start gap-1">
+                      <span className="shrink-0">Used by</span>
+                      {data.used_by.length > 1 ? (
+                        <button onClick={toggleShowUsedBy} className={cn("flex gap-x-2 flex-wrap font-bold", !showUsedBy && "underline")}>
+                          {showUsedBy ? data.used_by.map((container) => <><pre>{container}</pre></>) : truncateArray(data.used_by)}
+                        </button>
+                      ) : (
+                        data.used_by[0]
+                      )}
+                    </div>
+                  </div>
+                )}
                 {data.result.error && (
                   <div className="break-before mt-4 flex items-center gap-3 overflow-hidden rounded-md bg-yellow-400/10 px-3 py-2">
                     <TriangleAlert className="size-6 shrink-0 text-yellow-500" />

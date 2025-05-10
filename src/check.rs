@@ -107,8 +107,9 @@ pub async fn get_updates(
 
     // Complete in_use field
     images.iter_mut().for_each(|image| {
-        if in_use_images.contains(&image.reference) {
-            image.in_use = true
+        match in_use_images.get(&image.reference) {
+            Some(images) => image.used_by = images.clone(),
+            None => {}
         }
     });
 

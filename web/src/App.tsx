@@ -123,7 +123,7 @@ function App() {
                   <Server name={server} key={server}>
                     {images
                       .filter((image) =>
-                        filters.onlyInUse ? !!image.in_use : true,
+                        filters.onlyInUse ? image.used_by.length > 0 : true,
                       )
                       .filter((image) =>
                         filters.registries.length == 0

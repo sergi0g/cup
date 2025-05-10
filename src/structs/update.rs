@@ -11,7 +11,7 @@ pub struct Update {
     pub result: UpdateResult,
     pub time: u32,
     pub server: Option<String>,
-    pub in_use: bool,
+    pub used_by: Vec<String>,
     #[serde(skip_serializing, skip_deserializing)]
     pub status: Status,
 }

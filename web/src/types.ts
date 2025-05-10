@@ -28,7 +28,7 @@ export interface Image {
   };
   time: number;
   server: string | null;
-  in_use: boolean | null;
+  used_by: string[];
 }
 
 interface VersionInfo {
