@@ -90,7 +90,9 @@ pub async fn get_updates(
     // Merge references argument with references from config
     let all_references = match &references {
         Some(refs) => {
-            refs.clone().extend_from_slice(&ctx.config.images.extra);
+            if !ctx.config.images.extra.is_empty() {
+                refs.clone().extend_from_slice(&ctx.config.images.extra);
+            }
             refs
         }
         None => &ctx.config.images.extra,
@@ -100,7 +102,8 @@ pub async fn get_updates(
     ctx.logger.debug("Retrieving images to be checked");
     let mut images = get_images_from_docker_daemon(ctx, references).await;
     let in_use_images = get_in_use_images(ctx).await;
-    ctx.logger.debug(format!("Found {} images in use", in_use_images.len()));
+    ctx.logger
+        .debug(format!("Found {} images in use", in_use_images.len()));
 
     // Complete in_use field
     images.iter_mut().for_each(|image| {
@@ -204,10 +207,7 @@ pub async fn get_updates(
     }
     // Await all the futures
     let images = join_all(handles).await;
-    let mut updates: Vec<Update> = images
-        .iter()
-        .map(|image| image.to_update())
-        .collect();
+    let mut updates: Vec<Update> = images.iter().map(|image| image.to_update()).collect();
     updates.extend_from_slice(&remote_updates);
     updates
 }
