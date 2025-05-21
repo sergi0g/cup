@@ -109,3 +109,36 @@ $ docker run -tv /var/run/docker.sock:/var/run/docker.sock -v /home/sergio/.conf
 ```
 
 </Steps>
+
+## Environment Variables
+
+Want to make a quick change without editing your `config.json`? Cup also supports some configuration options from environment variables.
+Here are the ones currently available:
+- `CUP_AGENT` - Agent mode
+- `CUP_IGNORE_UPDATE_TYPE` - Ignoring specific update types
+- `CUP_REFRESH_INTERVAL` - Automatic refresh
+- `CUP_SOCKET` - Socket
+- `CUP_THEME` - Theme
+
+Refer to the configuration page for more information on each of these.
+
+Here's an example of a Docker Compose file using them:
+```yaml
+services:
+  cup:
+    image: ghcr.io/sergi0g/cup:latest
+    command: serve
+    ports:
+      - 8000:8000
+    environment:
+      - CUP_AGENT: true
+      - CUP_IGNORE_UPDATE_TYPE: major
+      - CUP_REFRESH_INTERVAL: "0 */30 * * * *"
+      - CUP_SOCKET: tcp://localhost:2375
+      - CUP_THEME: blue
+```
+
+<Callout>
+    Heads up!
+    Any configuration option you set with environment variables **always** overrides anything in your `cup.json`.
+</Callout>
