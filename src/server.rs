@@ -1,6 +1,7 @@
-use std::sync::Arc;
+use std::{env, sync::Arc};
 
 use chrono::Local;
+use chrono_tz::Tz;
 use liquid::{object, Object, ValueView};
 use rustc_hash::FxHashMap;
 use serde_json::Value;
@@ -54,15 +55,22 @@ pub async fn serve(port: &u16, ctx: &Context) -> std::io::Result<()> {
     let scheduler = JobScheduler::new().await.unwrap();
     let data = Arc::new(Mutex::new(data));
     let data_copy = data.clone();
+    let tz = env::var("TZ")
+        .map(|tz| tz.parse().unwrap_or(Tz::UTC))
+        .unwrap_or(Tz::UTC);
     if let Some(interval) = &ctx.config.refresh_interval {
         scheduler
             .add(
-                match Job::new_async(interval, move |_uuid, _lock| {
-                    let data_copy = data_copy.clone();
-                    Box::pin(async move {
-                        data_copy.lock().await.refresh().await;
-                    })
-                }) {
+                match Job::new_async_tz(
+                    interval,
+                    tz,
+                    move |_uuid, _lock| {
+                        let data_copy = data_copy.clone();
+                        Box::pin(async move {
+                            data_copy.lock().await.refresh().await;
+                        })
+                    },
+                ) {
                     Ok(job) => job,
                     Err(e) => match e {
                         tokio_cron_scheduler::JobSchedulerError::ParseSchedule => error!(
