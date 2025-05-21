@@ -4,17 +4,14 @@ import {
   DialogBackdrop,
   DialogPanel,
   DialogTitle,
-  Disclosure,
-  DisclosureButton,
-  DisclosurePanel,
 } from "@headlessui/react";
 import { WithTooltip } from "./ui/Tooltip";
 import type { Image } from "../types";
 import { theme } from "../theme";
 import { CodeBlock } from "./CodeBlock";
 import {
+  ArrowRight,
   Box,
-  ChevronDown,
   CircleArrowUp,
   CircleCheck,
   Container,
@@ -73,11 +70,16 @@ export default function Image({ data }: { data: Image }) {
           <span className="font-mono">{data.reference}</span>
           <div className="ml-auto flex gap-2">
             {data.result.info?.type === "version" ? (
-              <Badge
-                from={data.result.info.current_version}
-                to={data.result.info.new_version}
-              />
+              <Badge className="hidden sm:inline-flex">
+                {data.result.info.current_version}
+                <ArrowRight className="size-3" />
+                {data.result.info.new_version}
+              </Badge>
             ) : null}
+            <Badge className="hidden md:inline-flex">
+              <Container className="size-4 mr-1"/>
+              {data.used_by.length}
+            </Badge>
             <WithTooltip
               text={info.description}
               className={`size-6 shrink-0 ${info.color}`}
