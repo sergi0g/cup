@@ -1,3 +1,5 @@
+import { Callout } from "nextra/components";
+
 # Automatic refresh
 
 Cup can automatically refresh the results when running in server mode. Simply add this to your config:
@@ -9,4 +11,8 @@ Cup can automatically refresh the results when running in server mode. Simply ad
 }
 ```
 
-You can use a cron expression to specify the refresh interval. Note that seconds are not optional. The reference is [here](https://github.com/Hexagon/croner-rust#pattern)
+You can use a cron expression to specify the refresh interval. Note that seconds are not optional. The reference is [here](https://github.com/Hexagon/croner-rust#pattern).
+
+<Callout>
+    If you use a schedule with absolute time (e.g. every day at 6 AM), make sure to set the `TZ` environment variable to your [timezone](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List).
+</Callout>
