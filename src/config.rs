@@ -1,5 +1,6 @@
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
+use serde::Deserializer;
 use std::env;
 use std::mem;
 use std::path::PathBuf;
@@ -64,6 +65,7 @@ pub struct Config {
     pub agent: bool,
     pub ignore_update_type: UpdateType,
     pub images: ImageConfig,
+    #[serde(deserialize_with = "empty_as_none")]
     pub refresh_interval: Option<String>,
     pub registries: FxHashMap<String, RegistryConfig>,
     pub servers: FxHashMap<String, String>,
@@ -149,5 +151,17 @@ impl Config {
 impl Default for Config {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+fn empty_as_none<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    if s.is_empty() {
+        Ok(None)
+    } else {
+        Ok(Some(s))
     }
 }
