@@ -138,7 +138,7 @@ pub async fn get_in_use_images(ctx: &Context) -> FxHashMap<String, Vec<String>> 
                         .map(|name| name.trim_start_matches('/').to_owned())
                         .collect()
                 })
-                .unwrap_or(Vec::new());
+                .unwrap_or_default();
 
             match result.get_mut(&reference) {
                 Some(containers) => containers.append(&mut names),
