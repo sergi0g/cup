@@ -24,7 +24,7 @@ use crate::{
     error,
     structs::update::Update,
     utils::{
-        json::{to_full_json, to_simple_json},
+        json::to_json,
         sort_update_vec::sort_update_vec,
         time::{elapsed, now},
     },
@@ -91,9 +91,7 @@ pub async fn serve(port: &u16, ctx: &Context) -> std::io::Result<()> {
     ctx.logger.info("Ready to start!");
     let mut app_builder = App::new()
         .with_state(data)
-        .at("/api/v2/json", get(handler_service(api_simple)))
-        .at("/api/v3/json", get(handler_service(api_full)))
-        .at("/api/v2/refresh", get(handler_service(refresh)))
+        .at("/api/v3/json", get(handler_service(json)))
         .at("/api/v3/refresh", get(handler_service(refresh)));
     if !ctx.config.agent {
         app_builder = app_builder
@@ -148,20 +146,11 @@ async fn _static(data: StateRef<'_, Arc<Mutex<ServerData>>>, path: PathRef<'_>) 
     }
 }
 
-async fn api_simple(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
+async fn json(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
     WebResponse::builder()
         .header("Content-Type", "application/json")
         .body(ResponseBody::from(
-            data.lock().await.simple_json.clone().to_string(),
-        ))
-        .unwrap()
-}
-
-async fn api_full(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
-    WebResponse::builder()
-        .header("Content-Type", "application/json")
-        .body(ResponseBody::from(
-            data.lock().await.full_json.clone().to_string(),
+            data.lock().await.json.clone().to_string(),
         ))
         .unwrap()
 }
@@ -174,8 +163,7 @@ async fn refresh(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
 struct ServerData {
     template: String,
     raw_updates: Vec<Update>,
-    simple_json: Value,
-    full_json: Value,
+    json: Value,
     ctx: Context,
     theme: &'static str,
 }
@@ -185,8 +173,7 @@ impl ServerData {
         let mut s = Self {
             ctx: ctx.clone(),
             template: String::new(),
-            simple_json: Value::Null,
-            full_json: Value::Null,
+            json: Value::Null,
             raw_updates: Vec::new(),
             theme: "neutral",
         };
@@ -210,19 +197,17 @@ impl ServerData {
             .unwrap()
             .parse(HTML)
             .unwrap();
-        self.simple_json = to_simple_json(&self.raw_updates);
-        self.full_json = to_full_json(&self.raw_updates);
+        self.json = to_json(&self.raw_updates);
         let last_updated = Local::now();
-        self.simple_json["last_updated"] = last_updated
+        self.json["last_updated"] = last_updated
             .to_rfc3339_opts(chrono::SecondsFormat::Secs, true)
             .to_string()
             .into();
-        self.full_json["last_updated"] = self.simple_json["last_updated"].clone();
         self.theme = match &self.ctx.config.theme {
             Theme::Default => "neutral",
             Theme::Blue => "gray",
         };
-        let mut metrics = self.simple_json["metrics"]
+        let mut metrics = self.json["metrics"]
             .as_object()
             .unwrap()
             .iter()

@@ -1,6 +1,6 @@
 // Functions that return JSON data, used for generating output and API responses
 
-use serde_json::{json, Map, Value};
+use serde_json::{json, Value};
 
 use crate::structs::{status::Status, update::Update};
 
@@ -47,27 +47,8 @@ pub fn get_metrics(updates: &[Update]) -> Value {
     })
 }
 
-/// Takes a slice of `Image` objects and returns a `Value` with update info. The output doesn't contain much detail
-pub fn to_simple_json(updates: &[Update]) -> Value {
-    let mut update_map = Map::new();
-    updates.iter().for_each(|update| {
-        let _ = update_map.insert(
-            update.reference.clone(),
-            match update.result.has_update {
-                Some(has_update) => Value::Bool(has_update),
-                None => Value::Null,
-            },
-        );
-    });
-    let json_data: Value = json!({
-        "metrics": get_metrics(updates),
-        "images": updates,
-    });
-    json_data
-}
-
 /// Takes a slice of `Image` objects and returns a `Value` with update info. All image data is included, useful for debugging.
-pub fn to_full_json(updates: &[Update]) -> Value {
+pub fn to_json(updates: &[Update]) -> Value {
     json!({
         "metrics": get_metrics(updates),
         "images": updates.iter().map(|update| serde_json::to_value(update).unwrap()).collect::<Vec<Value>>(),

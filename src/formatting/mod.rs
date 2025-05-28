@@ -7,7 +7,7 @@ use crate::{
         status::Status,
         update::{Update, UpdateInfo},
     },
-    utils::{json::to_simple_json, sort_update_vec::sort_update_vec},
+    utils::{json::to_json, sort_update_vec::sort_update_vec},
 };
 
 pub fn print_updates(updates: &[Update], icons: &bool) {
@@ -164,5 +164,5 @@ pub fn print_updates(updates: &[Update], icons: &bool) {
 }
 
 pub fn print_raw_updates(updates: &[Update]) {
-    println!("{}", to_simple_json(updates));
+    println!("{}", to_json(updates));
 }
