@@ -209,7 +209,9 @@ pub async fn get_updates(
     }
     // Await all the futures
     let images = join_all(handles).await;
+
     let mut updates: Vec<Update> = images.iter().map(|image| image.to_update()).collect();
+
     updates.extend_from_slice(&remote_updates);
     updates
 }

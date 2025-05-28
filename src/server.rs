@@ -1,19 +1,20 @@
-use std::{env, sync::Arc};
+use std::{env, sync::Arc, time::SystemTime};
 
 use chrono::Local;
 use chrono_tz::Tz;
 use liquid::{object, Object, ValueView};
 use rustc_hash::FxHashMap;
+use serde::Deserialize;
 use serde_json::Value;
-use tokio::sync::Mutex;
+use tokio::sync::RwLock;
 use tokio_cron_scheduler::{Job, JobScheduler};
 use xitca_web::{
     body::ResponseBody,
     bytes::Bytes,
     error::Error,
-    handler::{handler_service, path::PathRef, state::StateRef},
+    handler::{handler_service, json::LazyJson, path::PathRef, state::StateRef},
     http::{StatusCode, WebResponse},
-    route::get,
+    route::{get, post},
     service::Service,
     App, WebContext,
 };
@@ -21,6 +22,7 @@ use xitca_web::{
 use crate::{
     check::get_updates,
     config::Theme,
+    docker::upgrade_container,
     error,
     structs::update::Update,
     utils::{
@@ -38,6 +40,10 @@ const FAVICON_ICO: Bytes = Bytes::from_static(include_bytes!("static/favicon.ico
 const FAVICON_SVG: Bytes = Bytes::from_static(include_bytes!("static/favicon.svg"));
 const APPLE_TOUCH_ICON: Bytes = Bytes::from_static(include_bytes!("static/apple-touch-icon.png"));
 
+const SUCCESS_STATUS: &str = r#"{"success":true}"#; // Store this to avoid recomputation
+const UPGRADE_INTERNAL_SERVER_ERROR: &str =
+    r#"{"success":"false","message":"Internal server error. Please view logs for details"}"#;
+
 const SORT_ORDER: [&str; 8] = [
     "monitored_images",
     "updates_available",
@@ -53,7 +59,7 @@ pub async fn serve(port: &u16, ctx: &Context) -> std::io::Result<()> {
     ctx.logger.info("Starting server, please wait...");
     let data = ServerData::new(ctx).await;
     let scheduler = JobScheduler::new().await.unwrap();
-    let data = Arc::new(Mutex::new(data));
+    let data = Arc::new(RwLock::new(data));
     let data_copy = data.clone();
     let tz = env::var("TZ")
         .map(|tz| tz.parse().unwrap_or(Tz::UTC))
@@ -67,7 +73,7 @@ pub async fn serve(port: &u16, ctx: &Context) -> std::io::Result<()> {
                     move |_uuid, _lock| {
                         let data_copy = data_copy.clone();
                         Box::pin(async move {
-                            data_copy.lock().await.refresh().await;
+                            data_copy.write().await.refresh().await;
                         })
                     },
                 ) {
@@ -92,7 +98,10 @@ pub async fn serve(port: &u16, ctx: &Context) -> std::io::Result<()> {
     let mut app_builder = App::new()
         .with_state(data)
         .at("/api/v3/json", get(handler_service(json)))
-        .at("/api/v3/refresh", get(handler_service(refresh)));
+        .at("/api/v3/refresh", get(handler_service(refresh_v3)))
+        .at("/api/v4/json", get(handler_service(json)))
+        .at("/api/v4/refresh", get(handler_service(refresh_v4)))
+        .at("/api/v4/upgrade", post(handler_service(upgrade)));
     if !ctx.config.agent {
         app_builder = app_builder
             .at("/", get(handler_service(_static)))
@@ -110,17 +119,17 @@ pub async fn serve(port: &u16, ctx: &Context) -> std::io::Result<()> {
     .wait()
 }
 
-async fn _static(data: StateRef<'_, Arc<Mutex<ServerData>>>, path: PathRef<'_>) -> WebResponse {
+async fn _static(data: StateRef<'_, Arc<RwLock<ServerData>>>, path: PathRef<'_>) -> WebResponse {
     match path.0 {
         "/" => WebResponse::builder()
             .header("Content-Type", "text/html")
-            .body(ResponseBody::from(data.lock().await.template.clone()))
+            .body(ResponseBody::from(data.read().await.template.clone()))
             .unwrap(),
         "/assets/index.js" => WebResponse::builder()
             .header("Content-Type", "text/javascript")
             .body(ResponseBody::from(JS.replace(
                 "=\"neutral\"",
-                &format!("=\"{}\"", data.lock().await.theme),
+                &format!("=\"{}\"", data.read().await.theme),
             )))
             .unwrap(),
         "/assets/index.css" => WebResponse::builder()
@@ -146,18 +155,54 @@ async fn _static(data: StateRef<'_, Arc<Mutex<ServerData>>>, path: PathRef<'_>) 
     }
 }
 
-async fn json(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
+async fn json(data: StateRef<'_, Arc<RwLock<ServerData>>>) -> WebResponse {
     WebResponse::builder()
         .header("Content-Type", "application/json")
         .body(ResponseBody::from(
-            data.lock().await.json.clone().to_string(),
+            data.read().await.json.clone().to_string(),
         ))
         .unwrap()
 }
 
-async fn refresh(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
-    data.lock().await.refresh().await;
+async fn refresh_v3(data: StateRef<'_, Arc<RwLock<ServerData>>>) -> WebResponse {
+    data.write().await.refresh().await;
     WebResponse::new(ResponseBody::from("OK"))
+}
+
+async fn refresh_v4(data: StateRef<'_, Arc<RwLock<ServerData>>>) -> WebResponse {
+    data.write().await.refresh().await;
+    WebResponse::new(ResponseBody::from(SUCCESS_STATUS))
+}
+
+#[derive(Deserialize)]
+struct UpgradeRequest {
+    name: String, // Container name to be upgraded
+}
+
+async fn upgrade(
+    data: StateRef<'_, Arc<RwLock<ServerData>>>,
+    body: LazyJson<UpgradeRequest>,
+) -> WebResponse {
+    let data = data.read().await;
+    let UpgradeRequest { name } = match body.deserialize::<UpgradeRequest>() {
+        Ok(ur) => ur,
+        Err(e) => {
+            return WebResponse::builder().status(StatusCode::BAD_REQUEST).body(ResponseBody::from(serde_json::json!({"success": "false", "message": format!("Invalid JSON payload: {e}")}).to_string())).unwrap()
+        }
+    };
+    match data.raw_updates.iter().find(|update| {
+        update.used_by.contains(&name)
+            && update.status.to_option_bool().is_some_and(|status| status)
+    }) {
+        Some(update) => match upgrade_container(&data.ctx, &name, update).await {
+            Ok(()) => WebResponse::new(ResponseBody::from(SUCCESS_STATUS)),
+            Err(_) => WebResponse::builder()
+                .status(StatusCode::INTERNAL_SERVER_ERROR)
+                .body(ResponseBody::from(UPGRADE_INTERNAL_SERVER_ERROR))
+                .unwrap(),
+        },
+        None => WebResponse::builder().status(StatusCode::BAD_REQUEST).body(ResponseBody::from(serde_json::json!({"success": "false", "message": format!("Container `{name}` does not exist or has no updates")}).to_string())).unwrap(),
+    }
 }
 
 struct ServerData {
@@ -175,7 +220,10 @@ impl ServerData {
             template: String::new(),
             json: Value::Null,
             raw_updates: Vec::new(),
-            theme: "neutral",
+            theme: match ctx.config.theme {
+                Theme::Default => "neutral",
+                Theme::Blue => "gray",
+            },
         };
         s.refresh().await;
         s
@@ -203,10 +251,6 @@ impl ServerData {
             .to_rfc3339_opts(chrono::SecondsFormat::Secs, true)
             .to_string()
             .into();
-        self.theme = match &self.ctx.config.theme {
-            Theme::Default => "neutral",
-            Theme::Blue => "gray",
-        };
         let mut metrics = self.json["metrics"]
             .as_object()
             .unwrap()
@@ -257,17 +301,11 @@ where
     let method = request.method().to_string();
     let url = request.uri().to_string();
 
-    if &method != "GET" {
-        // We only allow GET requests
-
-        log(&method, &url, 405, elapsed(start));
-        Err(Error::from(StatusCode::METHOD_NOT_ALLOWED))
-    } else {
-        let res = next.call(ctx).await?;
-        let status = res.status().as_u16();
-
-        log(&method, &url, status, elapsed(start));
-        Ok(res)
+    match (method.as_str(), url.as_str()) {
+        ("POST", "/api/v4/upgrade") => continue_request(ctx, next, &method, &url, start).await,
+        ("GET", "/api/v4/upgrade") | ("POST", _) => return_405(&method, &url, start).await,
+        ("GET", _) => continue_request(ctx, next, &method, &url, start).await,
+        (_, _) => return_405(&method, &url, start).await,
     }
 }
 
@@ -283,4 +321,30 @@ fn log(method: &str, url: &str, status: u16, time: u32) {
         "\x1b[94;1m HTTP \x1b[0m\x1b[32m{}\x1b[0m {} {}{}\x1b[0m in {}ms",
         method, url, color, status, time
     )
+}
+
+async fn continue_request<S, C, B>(
+    ctx: WebContext<'_, C, B>,
+    next: &S,
+    method: &str,
+    url: &str,
+    start: SystemTime,
+) -> Result<WebResponse, Error<C>>
+where
+    S: for<'r> Service<WebContext<'r, C, B>, Response = WebResponse, Error = Error<C>>,
+{
+    let res = next.call(ctx).await?;
+    let status = res.status().as_u16();
+
+    log(&method, &url, status, elapsed(start));
+    Ok(res)
+}
+
+async fn return_405<C>(
+    method: &str,
+    url: &str,
+    start: SystemTime,
+) -> Result<WebResponse, Error<C>> {
+    log(&method, &url, 405, elapsed(start));
+    Err(Error::from(StatusCode::METHOD_NOT_ALLOWED))
 }
