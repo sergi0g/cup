@@ -21,7 +21,7 @@ import {
   X,
 } from "lucide-react";
 import Badge from "./Badge";
-import { cn, getDescription, truncateArray } from "../utils";
+import { getDescription, truncateArray } from "../utils";
 
 const clickable_registries = [
   "registry-1.docker.io",
@@ -32,16 +32,12 @@ const clickable_registries = [
 
 export default function Image({ data }: { data: Image }) {
   const [open, setOpen] = useState(false);
-  const [showUsedBy, setShowUsedBy] = useState(false);
   const handleOpen = () => {
     setOpen(true);
   };
   const handleClose = () => {
     setOpen(false);
   };
-  const toggleShowUsedBy = () => {
-    setShowUsedBy(!showUsedBy)
-  }
   const new_reference =
     data.result.info?.type == "version"
       ? data.reference.split(":")[0] + ":" + data.result.info.new_tag
@@ -154,16 +150,16 @@ export default function Image({ data }: { data: Image }) {
                 {data.used_by.length !== 0 && (
                   <div className="flex items-start gap-3">
                     <Container className="size-6 shrink-0 text-gray-500" />
-                    <div className="flex items-start gap-1">
-                      <span className="shrink-0">Used by</span>
-                      {data.used_by.length > 1 ? (
-                        <button onClick={toggleShowUsedBy} className={cn("flex gap-x-2 flex-wrap font-bold", !showUsedBy && "underline")}>
-                          {showUsedBy ? data.used_by.map((container) => <><pre>{container}</pre></>) : truncateArray(data.used_by)}
-                        </button>
-                      ) : (
-                        data.used_by[0]
-                      )}
-                    </div>
+                    <Disclosure as="div">
+                      <DisclosureButton className="inline-flex items-end group">Used by {truncateArray(data.used_by)}<ChevronDown className="shrink-0 size-5 group-data-[open]:rotate-180"/></DisclosureButton>
+                      <DisclosurePanel className="origin-top transition duration-200 ease-out data-[closed]:-translate-y-6 data-[closed]:opacity-0 mt-4 rounded-lg bg-black/50 px-3 py-2" transition>
+                        <table>
+                          <tbody className="divide-y divide-white/10">
+                            {data.used_by.map((container) => <tr className="divide divide-white/10 divide-x group"><td className="px-2 py-1 group-first:pt-2 group-last:pb-2"><pre>{container}</pre></td><td className="px-2 py-1 group-first:pt-2 group-last:pb-2"><button className="inline-flex gap-1 items-center">Update<CircleArrowUp className="size-5"/></button></td></tr>)}
+                          </tbody>
+                        </table>
+                      </DisclosurePanel>
+                    </Disclosure>
                   </div>
                 )}
                 {data.result.error && (
