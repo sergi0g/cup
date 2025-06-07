@@ -24,14 +24,14 @@ pub struct UpdateResult {
     pub error: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[cfg_attr(test, derive(PartialEq, Default))]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[cfg_attr(test, derive(PartialEq))]
 #[serde(untagged)]
 pub enum UpdateInfo {
-    #[cfg_attr(test, default)]
+    #[default]
     None,
     Version(VersionUpdateInfo),
-    Digest(DigestUpdateInfo),
+    Digest(String), // Remote digest
 }
 
 #[derive(Deserialize, Clone, Debug)]

@@ -4,3 +4,4 @@ pub mod parts;
 pub mod status;
 pub mod update;
 pub mod version;
+pub mod standard_version;

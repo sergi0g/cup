@@ -51,11 +51,21 @@ pub struct RegistryConfig {
     pub ignore: bool,
 }
 
+#[derive(Deserialize, Clone, Default, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+#[non_exhaustive]
+pub enum TagType {
+    #[default]
+    Standard,
+    Extended
+}
+
 #[derive(Clone, Deserialize, Default)]
 #[serde(default)]
 pub struct ImageConfig {
-    pub extra: Vec<String>,
-    pub exclude: Vec<String>,
+    pub include: bool, // Takes precedence over extra_images and excluded_images
+    pub tag_type: TagType,
+    pub ignore: UpdateType
 }
 
 #[derive(Clone, Deserialize)]
@@ -63,8 +73,9 @@ pub struct ImageConfig {
 pub struct Config {
     version: u8,
     pub agent: bool,
-    pub ignore_update_type: UpdateType,
-    pub images: ImageConfig,
+    pub images: FxHashMap<String, ImageConfig>,
+    pub extra_images: Vec<String>, // These two are here for convenience, using `images` for this purpose should also work.
+    pub excluded_images: Vec<String>, // Takes precedence over extra_images
     #[serde(deserialize_with = "empty_as_none")]
     pub refresh_interval: Option<String>,
     pub registries: FxHashMap<String, RegistryConfig>,
@@ -73,13 +84,15 @@ pub struct Config {
     pub theme: Theme,
 }
 
+// TODO: Add helper methods that abstact away complex logic (i.e. functions that return all excluded images, extra images, etc based on the precedence rules set)
 impl Config {
     pub fn new() -> Self {
         Self {
             version: 3,
             agent: false,
-            ignore_update_type: UpdateType::default(),
-            images: ImageConfig::default(),
+            images: FxHashMap::default(),
+            extra_images: Vec::new(),
+            excluded_images: Vec::new(),
             refresh_interval: None,
             registries: FxHashMap::default(),
             servers: FxHashMap::default(),
@@ -103,11 +116,11 @@ impl Config {
                     match key.as_str() {
                         "CUP_AGENT" => config.agent = cfg.agent,
                         #[rustfmt::skip]
-                        "CUP_IGNORE_UPDATE_TYPE" => swap!(config.ignore_update_type, cfg.ignore_update_type),
-                        #[rustfmt::skip]
                         "CUP_REFRESH_INTERVAL" => swap!(config.refresh_interval, cfg.refresh_interval),
                         "CUP_SOCKET" => swap!(config.socket, cfg.socket),
                         "CUP_THEME" => swap!(config.theme, cfg.theme),
+                        "CUP_EXTRA_IMAGES" => swap!(config.extra_images, cfg.extra_images),
+                        "CUP_EXCLUDED_IMAGES" => swap!(config.excluded_images, cfg.excluded_images),
                         // The syntax for these is slightly more complicated, not sure if they should be enabled or not. Let's stick to simple types for now.
                         // "CUP_IMAGES" => swap!(config.images, cfg.images),
                         // "CUP_REGISTRIES" => swap!(config.registries, cfg.registries),
@@ -141,8 +154,8 @@ impl Config {
             Ok(config) => config,
             Err(e) => error!("Unexpected error occured while parsing config: {}", e),
         };
-        if config.version != 3 {
-            error!("You are trying to run Cup with an incompatible config file! Please migrate your config file to the version 3, or if you have already done so, add a `version` key with the value `3`.")
+        if config.version != 4 {
+            error!("You are trying to run Cup with an incompatible config file! Please migrate your config file to the version 4, or if you have already done so, add a `version` key with the value `4`.")
         }
         config
     }

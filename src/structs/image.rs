@@ -2,7 +2,7 @@ use crate::{
     error,
     http::Client,
     registry::{get_latest_digest, get_latest_tag},
-    structs::{status::Status, version::Version},
+    structs::{standard_version::StandardVersionPart, status::Status, update::Update, version::Version},
     utils::reference::split,
     Context,
 };
@@ -10,35 +10,35 @@ use crate::{
 use super::{
     inspectdata::InspectData,
     parts::Parts,
-    update::{DigestUpdateInfo, Update, UpdateInfo, UpdateResult, VersionUpdateInfo},
+    update::{DigestUpdateInfo, UpdateResult, VersionUpdateInfo},
 };
 
-#[derive(Clone, PartialEq)]
+/// Any local information about the image
+#[derive(Clone, Default)]
 #[cfg_attr(test, derive(Debug))]
-pub struct DigestInfo {
+pub struct Info {
     pub local_digests: Vec<String>,
-    pub remote_digest: Option<String>,
+    pub version: Version,
+    pub url: Option<String>,
+    pub used_by: Vec<String>,
 }
 
-#[derive(Clone, PartialEq)]
-#[cfg_attr(test, derive(Debug))]
-pub struct VersionInfo {
-    pub current_tag: Version,
-    pub latest_remote_tag: Option<Version>,
-    pub format_str: String,
+/// Any new information obtained about the image
+#[derive(Debug, Clone, Default)]
+pub struct UpdateInfo {
+    pub remote_digest: Option<String>,
+    pub latest_version: Option<Version>
 }
 
 /// Image struct that contains all information that may be needed by a function working with an image.
 /// It's designed to be passed around between functions
-#[derive(Clone, PartialEq, Default)]
+#[derive(Clone, Default)]
 #[cfg_attr(test, derive(Debug))]
 pub struct Image {
     pub reference: String,
     pub parts: Parts,
-    pub url: Option<String>,
-    pub digest_info: Option<DigestInfo>,
-    pub version_info: Option<VersionInfo>,
-    pub used_by: Vec<String>,
+    pub info: Info,
+    pub update_info: UpdateInfo,
     pub error: Option<String>,
     pub time_ms: u32,
 }
@@ -54,7 +54,7 @@ impl Image {
                 return None; // As far as I know, references that contain @ are either manually pulled by the user or automatically created because of swarm. In the first case AFAICT we can't know what tag was originally pulled, so we'd have to make assumptions and I've decided to remove this. The other case is already handled seperately, so this also ensures images aren't displayed twice, once with and once without a digest.
             };
             let (registry, repository, tag) = split(&reference);
-            let version_tag = Version::from_tag(&tag);
+            let version_tag = Version::from(&tag, ctx.config.images.get(&reference).map(|cfg| &cfg.tag_type));
             let local_digests = digests
                 .iter()
                 .filter_map(
@@ -77,16 +77,7 @@ impl Image {
                     repository,
                     tag,
                 },
-                url: image.url(),
-                digest_info: Some(DigestInfo {
-                    local_digests,
-                    remote_digest: None,
-                }),
-                version_info: version_tag.map(|(vtag, format_str)| VersionInfo {
-                    current_tag: vtag,
-                    format_str,
-                    latest_remote_tag: None,
-                }),
+                info: Info { local_digests, version: version_tag, url: image.url(), used_by: Vec::new() },
                 ..Default::default()
             })
         } else {
@@ -95,28 +86,24 @@ impl Image {
     }
 
     /// Creates and populates the fields of an Image object based on a reference. If the tag is not recognized as a version string, exits the program with an error.
-    pub fn from_reference(reference: &str) -> Self {
+    pub fn from_reference(reference: &str, ctx: &Context) -> Self {
         let (registry, repository, tag) = split(reference);
-        let version_tag = Version::from_tag(&tag);
+        let version_tag = Version::from(&tag, ctx.config.images.get(reference).map(|cfg| &cfg.tag_type));
         match version_tag {
-            Some((version, format_str)) => Self {
+            Version::Unknown => error!(
+                "Image {} is not available locally and does not have a recognizable tag format!",
+                reference
+            ),
+            v => Self {
                 reference: reference.to_string(),
                 parts: Parts {
                     registry,
                     repository,
                     tag,
                 },
-                version_info: Some(VersionInfo {
-                    current_tag: version,
-                    format_str,
-                    latest_remote_tag: None,
-                }),
+                info: Info { local_digests: Vec::new(), version: v, url: None, used_by: Vec::new() },
                 ..Default::default()
             },
-            None => error!(
-                "Image {} is not available locally and does not have a recognizable tag format!",
-                reference
-            ),
         }
     }
 
@@ -124,25 +111,18 @@ impl Image {
         if self.error.is_some() {
             Status::Unknown(self.error.clone().unwrap())
         } else {
-            match &self.version_info {
-                Some(data) => data
-                    .latest_remote_tag
-                    .as_ref()
-                    .unwrap()
-                    .to_status(&data.current_tag),
-                None => match &self.digest_info {
-                    Some(data) => {
-                        if data
-                            .local_digests
-                            .contains(data.remote_digest.as_ref().unwrap())
-                        {
+            match self.update_info.latest_version {
+                Some(latest_version) => latest_version.to_status(self.info.version),
+                None => match self.update_info.remote_digest {
+                    Some(remote_digest) => {
+                        if self.info.local_digests.contains(&remote_digest) {
                             Status::UpToDate
                         } else {
                             Status::UpdateAvailable
                         }
-                    }
-                    None => unreachable!(), // I hope?
-                },
+                    },
+                    None => unreachable!() // I hope?
+                }
             }
         }
     }
@@ -158,20 +138,14 @@ impl Image {
         Update {
             reference: self.reference.clone(),
             parts: self.parts.clone(),
-            url: self.url.clone(),
+            url: self.info.url.clone(),
             result: UpdateResult {
                 has_update: has_update.to_option_bool(),
                 info: match has_update {
-                    Status::Unknown(_) => UpdateInfo::None,
+                    Status::Unknown(_) => crate::structs::update::UpdateInfo::None,
                     _ => match update_type {
                         "version" => {
-                            let (new_tag, format_str) = match &self.version_info {
-                                Some(data) => (
-                                    data.latest_remote_tag.clone().unwrap(),
-                                    data.format_str.clone(),
-                                ),
-                                _ => unreachable!(),
-                            };
+                            let update_info = &self.update_info.latest_version.unwrap().as_standard().unwrap();
 
                             UpdateInfo::Version(VersionUpdateInfo {
                                 version_update_type: match has_update {
@@ -181,12 +155,12 @@ impl Image {
                                     _ => unreachable!(),
                                 }
                                 .to_string(),
-                                new_tag: format_str
-                                    .replacen("{}", &new_tag.major.to_string(), 1)
-                                    .replacen("{}", &new_tag.minor.unwrap_or(0).to_string(), 1)
-                                    .replacen("{}", &new_tag.patch.unwrap_or(0).to_string(), 1),
+                                new_tag: update_info.format_str
+                                    .replacen("{}", &update_info.major.to_string(), 1)
+                                    .replacen("{}", &update_info.minor.unwrap_or_default().to_string(), 1)
+                                    .replacen("{}", &update_info.patch.unwrap_or_default().to_string(), 1),
                                 // Throwing these in, because they're useful for the CLI output, however we won't (de)serialize them
-                                current_version: self
+                                current_version: self.info.version.as_standard().unwrap().to_string()
                                     .version_info
                                     .as_ref()
                                     .unwrap()

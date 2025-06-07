@@ -80,22 +80,24 @@ async fn get_remote_updates(ctx: &Context, client: &Client, refresh: bool) -> Ve
 }
 
 /// Returns a list of updates for all images passed in.
+/// TODO: Completely rewrite this and make nothing is missed
 pub async fn get_updates(
     references: &Option<Vec<String>>, // If a user requested _specific_ references to be checked, this will have a value
     refresh: bool,
     ctx: &Context,
 ) -> Vec<Update> {
     let client = Client::new(ctx);
-
+    
     // Merge references argument with references from config
     let all_references = match &references {
         Some(refs) => {
-            if !ctx.config.images.extra.is_empty() {
-                refs.clone().extend_from_slice(&ctx.config.images.extra);
+            if !ctx.config.extra_images.is_empty() {
+                refs.clone().extend_from_slice(&ctx.config.extra_images);
             }
+            refs.clone().extend_from_slice(&ctx.config.images.iter().filter(|(_, cfg)| cfg.include).map(|(reference, _)| reference).cloned().collect::<Vec<String>>());
             refs
         }
-        None => &ctx.config.images.extra,
+        None => &ctx.config.extra_images,
     };
 
     // Get local images
