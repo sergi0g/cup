@@ -20,7 +20,7 @@ Sometimes, there may be a need to specify a custom docker socket. Cup provides t
 For example, if using Podman, you might do
 
 ```bash
-$ cup -s /run/user/1000/podman/podman.sock check
+$ cup -s unix:///run/user/1000/podman/podman.sock check
 ```
 
 This option is also available in the configuration file and it's best to put it there.
