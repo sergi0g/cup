@@ -1,0 +1,3 @@
+[workspace]
+members = ["cup", "cup_cli", "cup_server"]
+resolver = "3"
