@@ -6,4 +6,3 @@ edition = "2024"
 [lib]
 
 [dependencies]
-thiserror = "2"
