@@ -6,3 +6,5 @@ edition = "2024"
 [lib]
 
 [dependencies]
+regex = "1.11.1"
+rustc-hash = "2.1.1"
