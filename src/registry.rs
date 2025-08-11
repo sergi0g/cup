@@ -58,7 +58,7 @@ pub async fn get_latest_digest(
         protocol, &image.parts.registry, &image.parts.repository, &image.parts.tag
     );
     let authorization = to_bearer_string(&token);
-    let headers = [("Accept", Some("application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.docker.distribution.manifest.v2+json, application/vnd.oci.image.index.v1+json")), ("Authorization", authorization.as_deref())];
+    let headers = [("Accept", Some("application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.docker.distribution.manifest.v2+json, application/vnd.oci.image.index.v1+json, application/vnd.oci.image.manifest.v1+json")), ("Authorization", authorization.as_deref())];
 
     let response = client.head(&url, &headers).await;
     let time = start.elapsed().unwrap().as_millis() as u32;
