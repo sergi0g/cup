@@ -15,10 +15,10 @@ pub struct ExtendedVersion {
 }
 
 impl ExtendedVersion {
-    pub fn parse(version_string: &str, regex: &str) -> Result<Self, VersionParseError> {
-        let regex = Regex::new(regex).map_err(|e| VersionParseError {
+    pub fn parse(version_string: &str, regex: &str) -> Result<Self, ParseVersionError> {
+        let regex = Regex::new(regex).map_err(|e| ParseVersionError {
             version_string: version_string.to_string(),
-            kind: VersionParseErrorKind::InvalidRegex(e),
+            kind: ParseVersionErrorKind::InvalidRegex(e),
         })?;
 
         // Check if all capture groups are named or anonymous
@@ -29,9 +29,9 @@ impl ExtendedVersion {
                 match prev_state {
                     None => Ok(Some(name)), // First iteration
                     Some(prev_state) => match (prev_state, name) {
-                        (Some(_), None) | (None, Some(_)) => Err(VersionParseError {
+                        (Some(_), None) | (None, Some(_)) => Err(ParseVersionError {
                             version_string: version_string.to_string(),
-                            kind: VersionParseErrorKind::NonUniformCaptureGroups,
+                            kind: ParseVersionErrorKind::NonUniformCaptureGroups,
                         }),
                         _ => Ok(Some(name)),
                     },
@@ -51,22 +51,22 @@ impl ExtendedVersion {
                         .capture_names()
                         .flatten()
                         .map(|name| {
-                            let capture = captures.name(name).ok_or_else(|| VersionParseError {
+                            let capture = captures.name(name).ok_or_else(|| ParseVersionError {
                                 version_string: version_string.to_string(),
-                                kind: VersionParseErrorKind::GroupDidNotMatch(name.to_string()),
+                                kind: ParseVersionErrorKind::GroupDidNotMatch(name.to_string()),
                             })?;
                             let component =
                                 VersionComponent::from_str(capture.as_str()).map_err(|_| {
-                                    VersionParseError {
+                                    ParseVersionError {
                                         version_string: version_string.to_string(),
-                                        kind: VersionParseErrorKind::GroupDidNotMatch(
+                                        kind: ParseVersionErrorKind::GroupDidNotMatch(
                                             name.to_string(),
                                         ),
                                     }
                                 })?;
                             Ok((name.to_string(), component))
                         })
-                        .collect::<Result<FxHashMap<String, VersionComponent>, VersionParseError>>(
+                        .collect::<Result<FxHashMap<String, VersionComponent>, ParseVersionError>>(
                         )?
                 } else {
                     captures
@@ -77,20 +77,20 @@ impl ExtendedVersion {
                         .map(|(i, m)| {
                             VersionComponent::from_str(m.as_str())
                                 .map(|comp| (i, comp))
-                                .map_err(|e| VersionParseError {
+                                .map_err(|e| ParseVersionError {
                                     version_string: version_string.to_string(),
-                                    kind: VersionParseErrorKind::ParseComponent(e),
+                                    kind: ParseVersionErrorKind::ParseComponent(e),
                                 })
                         })
-                        .collect::<Result<FxHashMap<String, VersionComponent>, VersionParseError>>(
+                        .collect::<Result<FxHashMap<String, VersionComponent>, ParseVersionError>>(
                         )?
                 };
                 Self { components }
             }
             None => {
-                return Err(VersionParseError {
+                return Err(ParseVersionError {
                     version_string: version_string.to_string(),
-                    kind: VersionParseErrorKind::NoMatch,
+                    kind: ParseVersionErrorKind::NoMatch,
                 });
             }
         })
@@ -100,12 +100,12 @@ impl ExtendedVersion {
 #[derive(Debug)]
 #[cfg_attr(test, derive(PartialEq))]
 #[non_exhaustive]
-pub struct VersionParseError {
+pub struct ParseVersionError {
     version_string: String,
-    kind: VersionParseErrorKind,
+    kind: ParseVersionErrorKind,
 }
 
-impl Display for VersionParseError {
+impl Display for ParseVersionError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -115,7 +115,7 @@ impl Display for VersionParseError {
     }
 }
 
-impl Error for VersionParseError {
+impl Error for ParseVersionError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         Some(&self.kind)
     }
@@ -123,7 +123,7 @@ impl Error for VersionParseError {
 
 #[derive(Debug)]
 #[cfg_attr(test, derive(PartialEq))]
-pub enum VersionParseErrorKind {
+pub enum ParseVersionErrorKind {
     /// The regex supplied could not be compiled
     InvalidRegex(regex::Error),
     /// The regex supplied has both named and anonymous capture groups
@@ -136,7 +136,7 @@ pub enum VersionParseErrorKind {
     ParseComponent(ParseIntError),
 }
 
-impl Display for VersionParseErrorKind {
+impl Display for ParseVersionErrorKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::InvalidRegex(_) => write!(f, "invalid regex"),
@@ -152,7 +152,7 @@ impl Display for VersionParseErrorKind {
     }
 }
 
-impl Error for VersionParseErrorKind {
+impl Error for ParseVersionErrorKind {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::InvalidRegex(e) => Some(e),
@@ -172,8 +172,8 @@ mod tests {
     use crate::version::version_component::VersionComponent;
 
     use super::ExtendedVersion;
-    use super::VersionParseError;
-    use super::VersionParseErrorKind;
+    use super::ParseVersionError;
+    use super::ParseVersionErrorKind;
 
     #[test]
     fn parse_with_anonymous() {
@@ -274,9 +274,9 @@ mod tests {
                 "1.0.0-test2",
                 r"(\d+)\.(\d+))\.(\d+)-test(\d+)" // Whoops, someone left an extra ) somewhere...
             ),
-            Err(VersionParseError {
+            Err(ParseVersionError {
                 version_string: String::from("1.0.0-test2"),
-                kind: VersionParseErrorKind::InvalidRegex(
+                kind: ParseVersionErrorKind::InvalidRegex(
                     Regex::new(r"(\d+)\.(\d+))\.(\d+)-test(\d+)").unwrap_err()
                 )
             })
@@ -287,9 +287,9 @@ mod tests {
     fn invalid_component() {
         assert_eq!(
             ExtendedVersion::parse("50h+2-3_40", r"([a-z0-9]+)\+(\d+)-(\d+)_(\d+)"),
-            Err(VersionParseError {
+            Err(ParseVersionError {
                 version_string: String::from("50h+2-3_40"),
-                kind: VersionParseErrorKind::ParseComponent("50h".parse::<usize>().unwrap_err())
+                kind: ParseVersionErrorKind::ParseComponent("50h".parse::<usize>().unwrap_err())
             })
         )
     }
@@ -301,9 +301,9 @@ mod tests {
                 "4.1.2.5",
                 r"(?<Major>\d+)\.(?<Minor>\d+)\.(?<Patch>\d+)\.(\d+)"
             ),
-            Err(VersionParseError {
+            Err(ParseVersionError {
                 version_string: String::from("4.1.2.5"),
-                kind: VersionParseErrorKind::NonUniformCaptureGroups
+                kind: ParseVersionErrorKind::NonUniformCaptureGroups
             })
         )
     }
@@ -315,9 +315,9 @@ mod tests {
                 "1-sometool-0.2.5-alpine",
                 r"(?:\d+)-somet0ol-(\d+)\.(\d+)\.(\d+)-alpine"
             ),
-            Err(VersionParseError {
+            Err(ParseVersionError {
                 version_string: String::from("1-sometool-0.2.5-alpine"),
-                kind: VersionParseErrorKind::NoMatch
+                kind: ParseVersionErrorKind::NoMatch
             })
         )
     }
@@ -329,9 +329,9 @@ mod tests {
                 "2.0.5-alpine",
                 r"(?<Eenie>\d+)\.(?<Meenie>\d+)\.(?<Miney>\d+)|(?<Moe>moe)-alpine"
             ),
-            Err(VersionParseError {
+            Err(ParseVersionError {
                 version_string: String::from("2.0.5-alpine"),
-                kind: VersionParseErrorKind::GroupDidNotMatch(String::from("Moe"))
+                kind: ParseVersionErrorKind::GroupDidNotMatch(String::from("Moe"))
             })
         )
     }

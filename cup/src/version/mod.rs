@@ -1,8 +1,10 @@
 use crate::version::date::DateVersion;
+use crate::version::digest::DigestVersion;
 use crate::version::extended::ExtendedVersion;
 use crate::version::standard::StandardVersion;
 
 pub mod date;
+pub mod digest;
 pub mod extended;
 pub mod standard;
 
@@ -17,6 +19,17 @@ pub enum Version {
     Extended(ExtendedVersion),
     /// The "Date" versioning schema is for images which are versioned based on date and or time and come with their own quirky rules to compare them. Refer to `DateVersion` for more info.
     Date(DateVersion),
+    /// Version checking based on local and remote image digests
+    Digest(DigestVersion)
+}
+
+pub enum VersionType {
+    /// Tries to automatically infer the version type.
+    Auto,
+    Standard,
+    Extended,
+    Date,
+    Digest
 }
 
 mod version_component {

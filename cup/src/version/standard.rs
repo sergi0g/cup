@@ -1,5 +1,7 @@
 use std::{error::Error, fmt::Display, num::ParseIntError, str::FromStr};
 
+use rustc_hash::FxHashSet;
+
 use super::version_component::VersionComponent;
 
 /// A versioning scheme I'd call SemVer-inspired. The main difference from [SemVer](https://semver.org) is that the minor and patch versions are optional.
@@ -13,28 +15,28 @@ pub struct StandardVersion {
 }
 
 impl FromStr for StandardVersion {
-    type Err = VersionParseError;
+    type Err = ParseVersionError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let splits = s.split('.');
         if splits.clone().any(|split| split.is_empty()) {
-            return Err(VersionParseError {
+            return Err(ParseVersionError {
                 version_string: s.to_string(),
-                kind: VersionParseErrorKind::IncorrectFormat,
+                kind: ParseVersionErrorKind::IncorrectFormat,
             });
         }
         let mut component_iter = splits.map(|component| {
-            VersionComponent::from_str(component).map_err(|e| VersionParseError {
+            VersionComponent::from_str(component).map_err(|e| ParseVersionError {
                 version_string: s.to_string(),
-                kind: VersionParseErrorKind::ParseComponent(e),
+                kind: ParseVersionErrorKind::ParseComponent(e),
             })
         });
         let major = component_iter.next().transpose()?.unwrap();
         let minor = component_iter.next().transpose()?;
         let patch = component_iter.next().transpose()?;
         if component_iter.next().is_some() {
-            return Err(VersionParseError {
+            return Err(ParseVersionError {
                 version_string: s.to_string(),
-                kind: VersionParseErrorKind::TooManyComponents(4 + component_iter.count()),
+                kind: ParseVersionErrorKind::TooManyComponents(4 + component_iter.count()),
             });
         }
         Ok(Self {
@@ -45,15 +47,22 @@ impl FromStr for StandardVersion {
     }
 }
 
+#[derive(PartialEq, Eq, Hash)]
+pub enum StandardUpdateType {
+    Major,
+    Minor,
+    Patch
+}
+
 #[derive(Debug)]
 #[cfg_attr(test, derive(PartialEq))]
 #[non_exhaustive]
-pub struct VersionParseError {
+pub struct ParseVersionError {
     pub version_string: String,
-    pub kind: VersionParseErrorKind,
+    pub kind: ParseVersionErrorKind,
 }
 
-impl Display for VersionParseError {
+impl Display for ParseVersionError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -63,7 +72,7 @@ impl Display for VersionParseError {
     }
 }
 
-impl Error for VersionParseError {
+impl Error for ParseVersionError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         Some(&self.kind)
     }
@@ -71,7 +80,7 @@ impl Error for VersionParseError {
 
 #[derive(Debug)]
 #[cfg_attr(test, derive(PartialEq))]
-pub enum VersionParseErrorKind {
+pub enum ParseVersionErrorKind {
     /// A version component could not be parsed
     ParseComponent(ParseIntError),
     /// The version string is not in the format expected by `StandardVersion`
@@ -80,7 +89,7 @@ pub enum VersionParseErrorKind {
     TooManyComponents(usize),
 }
 
-impl Display for VersionParseErrorKind {
+impl Display for ParseVersionErrorKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self {
             Self::IncorrectFormat => write!(f, "version string is incorrectly formatted"),
@@ -94,7 +103,7 @@ impl Display for VersionParseErrorKind {
     }
 }
 
-impl Error for VersionParseErrorKind {
+impl Error for ParseVersionErrorKind {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match &self {
             Self::ParseComponent(e) => Some(e),
@@ -108,7 +117,7 @@ impl Error for VersionParseErrorKind {
 mod tests {
     use std::str::FromStr;
 
-    use super::{StandardVersion, VersionParseError, VersionParseErrorKind};
+    use super::{StandardVersion, ParseVersionError, ParseVersionErrorKind};
     use super::super::version_component::VersionComponent;
 
     #[test]
@@ -190,9 +199,9 @@ mod tests {
     fn parse_invalid_string() {
         assert_eq!(
             StandardVersion::from_str(".1.0"),
-            Err(VersionParseError {
+            Err(ParseVersionError {
                 version_string: String::from(".1.0"),
-                kind: VersionParseErrorKind::IncorrectFormat
+                kind: ParseVersionErrorKind::IncorrectFormat
             })
         )
     }
@@ -201,9 +210,9 @@ mod tests {
     fn parse_invalid_component() {
         assert_eq!(
             StandardVersion::from_str("0.1.O"),
-            Err(VersionParseError {
+            Err(ParseVersionError {
                 version_string: String::from("0.1.O"),
-                kind: VersionParseErrorKind::ParseComponent(
+                kind: ParseVersionErrorKind::ParseComponent(
                     "O".parse::<u32>().unwrap_err()
                 )
             })
@@ -214,9 +223,9 @@ mod tests {
     fn parse_four_components() {
         assert_eq!(
             StandardVersion::from_str("1.2.4.0"),
-            Err(VersionParseError {
+            Err(ParseVersionError {
                 version_string: String::from("1.2.4.0"),
-                kind: VersionParseErrorKind::TooManyComponents(4)
+                kind: ParseVersionErrorKind::TooManyComponents(4)
             })
         )
     }
