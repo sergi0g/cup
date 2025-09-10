@@ -8,7 +8,7 @@
 [![Discord](https://img.shields.io/discord/1337705080518086658)](https://discord.gg/jmh5ctzwNG)
 
 > [!IMPORTANT]
-> Please be aware that Cup is no longer actively developed for the time being. Read more [here](./NOTICE.md)
+> There have been some important changes regarding Cup's development. Read more [here](./NOTICE.md)
 
 Cup is the easiest way to check for container image updates.
 
