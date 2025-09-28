@@ -131,11 +131,11 @@ services:
     ports:
       - 8000:8000
     environment:
-      - CUP_AGENT: true
-      - CUP_IGNORE_UPDATE_TYPE: major
-      - CUP_REFRESH_INTERVAL: "0 */30 * * * *"
-      - CUP_SOCKET: tcp://localhost:2375
-      - CUP_THEME: blue
+      CUP_AGENT: "true"
+      CUP_IGNORE_UPDATE_TYPE: major
+      CUP_REFRESH_INTERVAL: "0 */30 * * * *"
+      CUP_SOCKET: tcp://localhost:2375
+      CUP_THEME: blue
 ```
 
 <Callout>
