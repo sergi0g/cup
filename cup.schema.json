@@ -70,7 +70,7 @@
         },
         "socket": {
             "type": "string",
-            "description": "The path to the unix socket you would like Cup to use for communication with the Docker daemon. Useful if you're trying to use Cup with Podman.",
+            "description": "The path to the unix socket you would like Cup to use for communication with the Docker daemon. Useful if you're trying to use Cup with Podman. To disable use \"none\" as value.",
             "minLength": 1
         },
         "servers": {

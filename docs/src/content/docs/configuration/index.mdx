@@ -23,13 +23,15 @@ For example, if using Podman, you might do
 $ cup -s /run/user/1000/podman/podman.sock check
 ```
 
-This option is also available in the configuration file and it's best to put it there.
+This option is also available in the configuration file and it's best to put it there. If both are defined the CLI `-s` option takes precedence.
 
 <Cards.Card
   icon={<IconPlug />}
   title="Custom Docker socket"
   href="/docs/configuration/socket"
 />
+
+To disable Docker/Podman socket use "none" as value.
 
 ## Configuration file
 

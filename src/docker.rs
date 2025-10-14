@@ -41,6 +41,9 @@ pub async fn get_images_from_docker_daemon(
     ctx: &Context,
     references: &Option<Vec<String>>,
 ) -> Vec<Image> {
+    if ctx.config.socket.as_deref() == Some("none") {
+        return vec![];
+    }
     let client: Docker = create_docker_client(ctx.config.socket.as_deref());
     let mut swarm_images = match client.list_services::<String>(None).await {
         Ok(services) => services
@@ -96,6 +99,10 @@ pub async fn get_images_from_docker_daemon(
 }
 
 pub async fn get_in_use_images(ctx: &Context) -> Vec<String> {
+    if ctx.config.socket.as_deref() == Some("none") {
+        return vec![];
+    }
+
     let client: Docker = create_docker_client(ctx.config.socket.as_deref());
 
     let containers = match client
