@@ -137,6 +137,16 @@ pub async fn get_latest_tag(
         ("Authorization", authorization.as_deref()),
     ];
 
+    let image_name = image.reference.split(':').next().unwrap();
+    let excluded_tags: &Vec<String> = match ctx.excluded_tags.get(image_name) {
+        Some(tags) => tags,
+        None => &Vec::new(),
+    };
+    ctx.logger.debug(format!(
+        "Excluded tag prefixes for {}: {:?}",
+        image_name, excluded_tags
+    ));
+
     let mut tags: Vec<Version> = Vec::new();
     let mut next_url = Some(url);
 
@@ -153,6 +163,7 @@ pub async fn get_latest_tag(
             &image.version_info.as_ref().unwrap().format_str,
             ctx,
             client,
+            excluded_tags,
         )
         .await
         {
@@ -218,6 +229,7 @@ pub async fn get_extra_tags(
     format_str: &str,
     ctx: &Context,
     client: &Client,
+    excluded_tags: &[String],
 ) -> Result<(Vec<Version>, Option<String>), String> {
     let response = client.get(url, headers, false).await;
 
@@ -232,6 +244,11 @@ pub async fn get_extra_tags(
                 .as_array()
                 .unwrap()
                 .iter()
+                .filter(|tag| {
+                    !excluded_tags
+                        .iter()
+                        .any(|excluded| tag.as_str().unwrap().starts_with(excluded))
+                })
                 .filter_map(|tag| Version::from_tag(tag.as_str().unwrap()))
                 .filter(|(tag, format_string)| match (base.minor, tag.minor) {
                     (Some(_), Some(_)) | (None, None) => {
