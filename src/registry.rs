@@ -214,7 +214,7 @@ pub async fn get_latest_tag(
 }
 
 /// Checks if a tag matches any of the excluded tag prefixes.
-fn is_ignored_tag(tag: &str, excluded_tags: &[String], ctx: &Context) -> bool {
+fn is_excluded_tag(tag: &str, excluded_tags: &[String], ctx: &Context) -> bool {
     for excluded in excluded_tags {
         if tag.starts_with(excluded) {
             ctx.logger.debug(format!(
@@ -249,7 +249,7 @@ pub async fn get_extra_tags(
                 .as_array()
                 .unwrap()
                 .iter()
-                .filter(|tag| !is_ignored_tag(tag.as_str().unwrap(), excluded_tags, ctx))
+                .filter(|tag| !is_excluded_tag(tag.as_str().unwrap(), excluded_tags, ctx))
                 .filter_map(|tag| Version::from_tag(tag.as_str().unwrap()))
                 .filter(|(tag, format_string)| match (base.minor, tag.minor) {
                     (Some(_), Some(_)) | (None, None) => {
