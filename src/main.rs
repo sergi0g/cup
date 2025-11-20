@@ -5,7 +5,6 @@ use formatting::spinner::Spinner;
 #[cfg(feature = "cli")]
 use formatting::{print_raw_updates, print_updates};
 use logging::Logger;
-use rustc_hash::FxHashMap;
 #[cfg(feature = "server")]
 use server::serve;
 use std::path::PathBuf;
@@ -71,9 +70,6 @@ enum Commands {
 pub struct Context {
     pub config: Config,
     pub logger: Logger,
-
-    // Excluded tag prefixes per image reference.
-    pub excluded_tags: FxHashMap<String, Vec<String>>,
 }
 
 #[tokio::main]
@@ -90,23 +86,7 @@ async fn main() {
     let mut ctx = Context {
         config,
         logger: Logger::new(cli.debug, false),
-        excluded_tags: FxHashMap::default(),
     };
-
-    // Precompute excluded tag prefixes per image reference. Excluded images
-    // that don't specify a tag prefix are ignored here.
-    for excluded_image in &ctx.config.images.exclude {
-        let splits: Vec<&str> = excluded_image.splitn(2, ':').collect();
-        let (image_name, tag_prefix) = match splits.len() {
-            2 => (splits[0], splits[1]),
-            _ => continue,
-        };
-        ctx.excluded_tags
-            .entry(image_name.to_string())
-            .or_default()
-            .push(tag_prefix.to_string());
-    }
-
     match &cli.command {
         #[cfg(feature = "cli")]
         Some(Commands::Check {

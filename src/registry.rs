@@ -122,6 +122,7 @@ pub async fn get_latest_tag(
     token: Option<&str>,
     ctx: &Context,
     client: &Client,
+    excluded_tags: Vec<String>,
 ) -> Image {
     ctx.logger
         .debug(format!("Checking for tag update to {}", image.reference));
@@ -136,16 +137,6 @@ pub async fn get_latest_tag(
         ("Accept", Some("application/json")),
         ("Authorization", authorization.as_deref()),
     ];
-
-    let image_name = image.reference.split(':').next().unwrap();
-    let excluded_tags: &Vec<String> = match ctx.excluded_tags.get(image_name) {
-        Some(tags) => tags,
-        None => &Vec::new(),
-    };
-    ctx.logger.debug(format!(
-        "Excluded tag prefixes for {}: {:?}",
-        image_name, excluded_tags
-    ));
 
     let mut tags: Vec<Version> = Vec::new();
     let mut next_url = Some(url);
@@ -163,7 +154,7 @@ pub async fn get_latest_tag(
             &image.version_info.as_ref().unwrap().format_str,
             ctx,
             client,
-            excluded_tags,
+            &excluded_tags,
         )
         .await
         {
@@ -222,6 +213,20 @@ pub async fn get_latest_tag(
     }
 }
 
+/// Checks if a tag matches any of the excluded tag prefixes.
+fn is_ignored_tag(tag: &str, excluded_tags: &[String], ctx: &Context) -> bool {
+    for excluded in excluded_tags {
+        if tag.starts_with(excluded) {
+            ctx.logger.debug(format!(
+                "Ignoring tag \"{}\" as it matches excluded prefix \"{}\"",
+                tag, excluded
+            ));
+            return true;
+        }
+    }
+    false
+}
+
 pub async fn get_extra_tags(
     url: &str,
     headers: &[(&str, Option<&str>)],
@@ -244,11 +249,7 @@ pub async fn get_extra_tags(
                 .as_array()
                 .unwrap()
                 .iter()
-                .filter(|tag| {
-                    !excluded_tags
-                        .iter()
-                        .any(|excluded| tag.as_str().unwrap().starts_with(excluded))
-                })
+                .filter(|tag| !is_ignored_tag(tag.as_str().unwrap(), excluded_tags, ctx))
                 .filter_map(|tag| Version::from_tag(tag.as_str().unwrap()))
                 .filter(|(tag, format_string)| match (base.minor, tag.minor) {
                     (Some(_), Some(_)) | (None, None) => {

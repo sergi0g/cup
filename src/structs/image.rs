@@ -228,9 +228,17 @@ impl Image {
     }
 
     /// Checks if the image has an update
-    pub async fn check(&self, token: Option<&str>, ctx: &Context, client: &Client) -> Self {
+    pub async fn check(
+        &self,
+        token: Option<&str>,
+        ctx: &Context,
+        client: &Client,
+        excluded_tags: Vec<String>,
+    ) -> Self {
         match &self.version_info {
-            Some(data) => get_latest_tag(self, &data.current_tag, token, ctx, client).await,
+            Some(data) => {
+                get_latest_tag(self, &data.current_tag, token, ctx, client, excluded_tags).await
+            }
             None => match self.digest_info {
                 Some(_) => get_latest_digest(self, token, ctx, client).await,
                 None => unreachable!(),
