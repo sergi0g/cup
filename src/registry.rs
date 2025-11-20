@@ -122,6 +122,7 @@ pub async fn get_latest_tag(
     token: Option<&str>,
     ctx: &Context,
     client: &Client,
+    excluded_tags: Vec<String>,
 ) -> Image {
     ctx.logger
         .debug(format!("Checking for tag update to {}", image.reference));
@@ -153,6 +154,7 @@ pub async fn get_latest_tag(
             &image.version_info.as_ref().unwrap().format_str,
             ctx,
             client,
+            &excluded_tags,
         )
         .await
         {
@@ -211,6 +213,20 @@ pub async fn get_latest_tag(
     }
 }
 
+/// Checks if a tag matches any of the excluded tag prefixes.
+fn is_excluded_tag(tag: &str, excluded_tags: &[String], ctx: &Context) -> bool {
+    for excluded in excluded_tags {
+        if tag.starts_with(excluded) {
+            ctx.logger.debug(format!(
+                "Ignoring tag \"{}\" as it matches excluded prefix \"{}\"",
+                tag, excluded
+            ));
+            return true;
+        }
+    }
+    false
+}
+
 pub async fn get_extra_tags(
     url: &str,
     headers: &[(&str, Option<&str>)],
@@ -218,6 +234,7 @@ pub async fn get_extra_tags(
     format_str: &str,
     ctx: &Context,
     client: &Client,
+    excluded_tags: &[String],
 ) -> Result<(Vec<Version>, Option<String>), String> {
     let response = client.get(url, headers, false).await;
 
@@ -232,6 +249,7 @@ pub async fn get_extra_tags(
                 .as_array()
                 .unwrap()
                 .iter()
+                .filter(|tag| !is_excluded_tag(tag.as_str().unwrap(), excluded_tags, ctx))
                 .filter_map(|tag| Version::from_tag(tag.as_str().unwrap()))
                 .filter(|(tag, format_string)| match (base.minor, tag.minor) {
                     (Some(_), Some(_)) | (None, None) => {

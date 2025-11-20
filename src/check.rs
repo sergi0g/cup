@@ -7,7 +7,10 @@ use crate::{
     http::Client,
     registry::{check_auth, get_token},
     structs::{image::Image, update::Update},
-    utils::request::{get_response_body, parse_json},
+    utils::{
+        reference::split,
+        request::{get_response_body, parse_json},
+    },
     Context,
 };
 
@@ -77,6 +80,21 @@ async fn get_remote_updates(ctx: &Context, client: &Client, refresh: bool) -> Ve
     }
 
     remote_images
+}
+
+/// Returns a list of excluded tag prefixes for the given image.
+fn get_excluded_tags(image: &Image, ctx: &Context) -> Vec<String> {
+    let image_name = image.reference.split(':').next().unwrap();
+    ctx.config
+        .images
+        .exclude
+        .iter()
+        .filter(|item| item.starts_with(image_name))
+        .filter_map(|excluded| {
+            let tag = split(excluded).2;
+            (tag != "latest").then_some(tag)
+        })
+        .collect()
 }
 
 /// Returns a list of updates for all images passed in.
@@ -200,8 +218,9 @@ pub async fn get_updates(
                 .iter()
                 .any(|item| image.reference.starts_with(item));
         if !is_ignored {
+            let excluded_tags = get_excluded_tags(image, ctx);
             let token = tokens.get(image.parts.registry.as_str()).unwrap();
-            let future = image.check(token.as_deref(), ctx, &client);
+            let future = image.check(token.as_deref(), ctx, &client, excluded_tags);
             handles.push(future);
         }
     }
