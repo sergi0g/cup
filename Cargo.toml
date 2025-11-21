@@ -1,6 +1,6 @@
 [package]
 name = "cup"
-version = "3.5.0"
+version = "3.5.1"
 edition = "2021"
 
 [dependencies]
