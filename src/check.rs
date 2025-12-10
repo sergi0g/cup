@@ -108,6 +108,7 @@ pub async fn get_updates(
         .debug(format!("Found {} images in use", in_use_images.len()));
 
     // Complete in_use field
+    // Potentially buggy, see https://discord.com/channels/1337705080518086658/1337705081159684118/1448359074432553143
     images.iter_mut().for_each(|image| {
         if let Some(images) = in_use_images.get(&image.reference) {
             image.used_by = images.clone()
