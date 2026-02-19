@@ -51,9 +51,13 @@ const SORT_ORDER: [&str; 8] = [
 
 pub async fn serve(port: &u16, ctx: &Context) -> std::io::Result<()> {
     ctx.logger.info("Starting server, please wait...");
-    let data = ServerData::new(ctx).await;
-    let scheduler = JobScheduler::new().await.unwrap();
+    let data = ServerData::new(ctx);
     let data = Arc::new(Mutex::new(data));
+
+    // Blocking initial refresh — populates data before we start serving
+    background_refresh(data.clone()).await;
+
+    let scheduler = JobScheduler::new().await.unwrap();
     let data_copy = data.clone();
     let tz = env::var("TZ")
         .map(|tz| tz.parse().unwrap_or(Tz::UTC))
@@ -61,16 +65,12 @@ pub async fn serve(port: &u16, ctx: &Context) -> std::io::Result<()> {
     if let Some(interval) = &ctx.config.refresh_interval {
         scheduler
             .add(
-                match Job::new_async_tz(
-                    interval,
-                    tz,
-                    move |_uuid, _lock| {
-                        let data_copy = data_copy.clone();
-                        Box::pin(async move {
-                            data_copy.lock().await.refresh().await;
-                        })
-                    },
-                ) {
+                match Job::new_async_tz(interval, tz, move |_uuid, _lock| {
+                    let data_copy = data_copy.clone();
+                    Box::pin(async move {
+                        background_refresh(data_copy).await;
+                    })
+                }) {
                     Ok(job) => job,
                     Err(e) => match e {
                         tokio_cron_scheduler::JobSchedulerError::ParseSchedule => error!(
@@ -167,7 +167,10 @@ async fn api_full(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
 }
 
 async fn refresh(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
-    data.lock().await.refresh().await;
+    let data = data.clone();
+    tokio::spawn(async move {
+        background_refresh(data).await;
+    });
     WebResponse::new(ResponseBody::from("OK"))
 }
 
@@ -181,86 +184,111 @@ struct ServerData {
 }
 
 impl ServerData {
-    async fn new(ctx: &Context) -> Self {
-        let mut s = Self {
-            ctx: ctx.clone(),
-            template: String::new(),
-            simple_json: Value::Null,
-            full_json: Value::Null,
-            raw_updates: Vec::new(),
-            theme: "neutral",
-        };
-        s.refresh().await;
-        s
-    }
-    async fn refresh(&mut self) {
-        let start = now();
-        if !self.raw_updates.is_empty() {
-            self.ctx.logger.info("Refreshing data");
-        }
-        let updates = sort_update_vec(&get_updates(&None, true, &self.ctx).await);
-        self.ctx.logger.info(format!(
-            "✨ Checked {} images in {}ms",
-            updates.len(),
-            elapsed(start)
-        ));
-        self.raw_updates = updates;
-        let template = liquid::ParserBuilder::with_stdlib()
-            .build()
-            .unwrap()
-            .parse(HTML)
-            .unwrap();
-        self.simple_json = to_simple_json(&self.raw_updates);
-        self.full_json = to_full_json(&self.raw_updates);
-        let last_updated = Local::now();
-        self.simple_json["last_updated"] = last_updated
-            .to_rfc3339_opts(chrono::SecondsFormat::Secs, true)
-            .to_string()
-            .into();
-        self.full_json["last_updated"] = self.simple_json["last_updated"].clone();
-        self.theme = match &self.ctx.config.theme {
+    fn new(ctx: &Context) -> Self {
+        let theme = match &ctx.config.theme {
             Theme::Default => "neutral",
             Theme::Blue => "gray",
         };
-        let mut metrics = self.simple_json["metrics"]
-            .as_object()
+        // Pre-render the template with empty data so the fallback HTML is valid
+        // (prevents Liquid tag leaks if the lock can't be acquired during a refresh)
+        let fallback_template = liquid::ParserBuilder::with_stdlib()
+            .build()
             .unwrap()
-            .iter()
-            .map(|(key, value)| liquid::object!({ "name": key, "value": value }))
-            .collect::<Vec<_>>();
-        metrics.sort_unstable_by(|a, b| {
-            SORT_ORDER
-                .iter()
-                .position(|i| i == &a["name"].to_kstr().as_str())
-                .unwrap()
-                .cmp(
-                    &SORT_ORDER
-                        .iter()
-                        .position(|i| i == &b["name"].to_kstr().as_str())
-                        .unwrap(),
-                )
-        });
-        let mut servers: FxHashMap<&str, Vec<Object>> = FxHashMap::default();
-        self.raw_updates.iter().for_each(|update| {
-            let key = update.server.as_deref().unwrap_or("");
-            match servers.get_mut(&key) {
-                Some(server) => server.push(
-                    object!({"name": update.reference, "status": update.get_status().to_string()}),
-                ),
-                None => {
-                    let _ = servers.insert(key, vec![object!({"name": update.reference, "status": update.get_status().to_string()})]);
-                }
-            }
-        });
-        let globals = object!({
-            "metrics": metrics,
-            "servers": servers,
-            "server_ids": servers.into_keys().collect::<Vec<&str>>(),
-            "last_updated": last_updated.format("%Y-%m-%d %H:%M:%S").to_string(),
-            "theme": &self.theme
-        });
-        self.template = template.render(&globals).unwrap();
+            .parse(HTML)
+            .unwrap()
+            .render(&object!({
+                "metrics": [],
+                "servers": liquid::object!({}),
+                "server_ids": Vec::<&str>::new(),
+                "last_updated": "",
+                "theme": theme
+            }))
+            .unwrap();
+        Self {
+            ctx: ctx.clone(),
+            template: fallback_template,
+            simple_json: Value::Null,
+            full_json: Value::Null,
+            raw_updates: Vec::new(),
+            theme,
+        }
     }
+}
+
+/// Refresh all data without blocking the API. Fetches everything outside the lock,
+/// then briefly locks to swap in the new data.
+async fn background_refresh(data: Arc<Mutex<ServerData>>) {
+    let (ctx, is_refresh) = {
+        let d = data.lock().await;
+        (d.ctx.clone(), !d.raw_updates.is_empty())
+    };
+    let start = now();
+    if is_refresh {
+        ctx.logger.info("Refreshing data");
+    }
+    let updates = sort_update_vec(&get_updates(&None, true, &ctx).await);
+    ctx.logger.info(format!(
+        "✨ Checked {} images in {}ms",
+        updates.len(),
+        elapsed(start)
+    ));
+    let mut d = data.lock().await;
+    d.raw_updates = updates;
+    let template = liquid::ParserBuilder::with_stdlib()
+        .build()
+        .unwrap()
+        .parse(HTML)
+        .unwrap();
+    d.simple_json = to_simple_json(&d.raw_updates);
+    d.full_json = to_full_json(&d.raw_updates);
+    let last_updated = Local::now();
+    d.simple_json["last_updated"] = last_updated
+        .to_rfc3339_opts(chrono::SecondsFormat::Secs, true)
+        .to_string()
+        .into();
+    d.full_json["last_updated"] = d.simple_json["last_updated"].clone();
+    d.theme = match &d.ctx.config.theme {
+        Theme::Default => "neutral",
+        Theme::Blue => "gray",
+    };
+    let mut metrics = d.simple_json["metrics"]
+        .as_object()
+        .unwrap()
+        .iter()
+        .map(|(key, value)| liquid::object!({ "name": key, "value": value }))
+        .collect::<Vec<_>>();
+    metrics.sort_unstable_by(|a, b| {
+        SORT_ORDER
+            .iter()
+            .position(|i| i == &a["name"].to_kstr().as_str())
+            .unwrap()
+            .cmp(
+                &SORT_ORDER
+                    .iter()
+                    .position(|i| i == &b["name"].to_kstr().as_str())
+                    .unwrap(),
+            )
+    });
+    let mut servers: FxHashMap<&str, Vec<Object>> = FxHashMap::default();
+    d.raw_updates.iter().for_each(|update| {
+        let key = update.server.as_deref().unwrap_or("");
+        match servers.get_mut(&key) {
+            Some(server) => server.push(
+                object!({"name": update.reference, "status": update.get_status().to_string()}),
+            ),
+            None => {
+                let _ = servers.insert(key, vec![object!({"name": update.reference, "status": update.get_status().to_string()})]);
+            }
+        }
+    });
+    let globals = object!({
+        "metrics": metrics,
+        "servers": servers,
+        "server_ids": servers.into_keys().collect::<Vec<&str>>(),
+        "last_updated": last_updated.format("%Y-%m-%d %H:%M:%S").to_string(),
+        "theme": &d.theme
+    });
+    d.template = template.render(&globals).unwrap();
 }
 
 async fn logger<S, C, B>(next: &S, ctx: WebContext<'_, C, B>) -> Result<WebResponse, Error<C>>
