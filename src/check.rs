@@ -14,64 +14,87 @@ use crate::{
     Context,
 };
 
+/// Fetches image data from a single remote Cup instance
+pub async fn get_single_server_updates(
+    name: &str,
+    url: &str,
+    refresh: bool,
+    ctx: &Context,
+) -> Vec<Update> {
+    let client = Client::new(ctx);
+    let base_url = if url.starts_with("http://") || url.starts_with("https://") {
+        format!("{}/api/v3/", url.trim_end_matches('/'))
+    } else {
+        format!("https://{}/api/v3/", url.trim_end_matches('/'))
+    };
+    let json_url = base_url.clone() + "json";
+    if refresh {
+        let refresh_url = base_url + "refresh";
+        match client.get(&refresh_url, &[], false).await {
+            Ok(response) => {
+                if response.status() != 200 {
+                    ctx.logger.warn(format!("GET {}: Failed to refresh server. Server returned invalid response code: {}", refresh_url, response.status()));
+                    return Vec::new();
+                }
+            }
+            Err(e) => {
+                ctx.logger.warn(format!(
+                    "GET {}: Failed to refresh server. {}",
+                    refresh_url, e
+                ));
+                return Vec::new();
+            }
+        }
+    }
+    match client.get(&json_url, &[], false).await {
+        Ok(response) => {
+            if response.status() != 200 {
+                ctx.logger.warn(format!("GET {}: Failed to fetch updates from server. Server returned invalid response code: {}", json_url, response.status()));
+                return Vec::new();
+            }
+            let json = parse_json(&get_response_body(response).await);
+            ctx.logger
+                .debug(format!("JSON response for {}: {}", name, json));
+            if let Some(updates) = json["images"].as_array() {
+                let mut server_updates: Vec<Update> = updates
+                    .iter()
+                    .filter_map(|img| serde_json::from_value(img.clone()).ok())
+                    .collect();
+                // Add server origin to each image
+                for update in &mut server_updates {
+                    update.server = Some(name.to_string());
+                    update.status = update.get_status();
+                }
+                ctx.logger
+                    .debug(format!("Updates for {}: {:#?}", name, server_updates));
+                return server_updates;
+            }
+
+            Vec::new()
+        }
+        Err(e) => {
+            ctx.logger.warn(format!(
+                "GET {}: Failed to fetch updates from server. {}",
+                json_url, e
+            ));
+            Vec::new()
+        }
+    }
+}
+
 /// Fetches image data from other Cup instances
-async fn get_remote_updates(ctx: &Context, client: &Client, refresh: bool) -> Vec<Update> {
+async fn get_remote_updates(ctx: &Context, refresh: bool) -> Vec<Update> {
     let mut remote_images = Vec::new();
 
-    let handles: Vec<_> = ctx.config.servers
+    let handles: Vec<_> = ctx
+        .config
+        .servers
         .iter()
-        .map(|(name, url)| async move {
-            let base_url = if url.starts_with("http://") || url.starts_with("https://") {
-                format!("{}/api/v3/", url.trim_end_matches('/'))
-            } else {
-                format!("https://{}/api/v3/", url.trim_end_matches('/'))
-            };
-            let json_url = base_url.clone() + "json";
-            if refresh {
-                let refresh_url = base_url + "refresh";
-                match client.get(&refresh_url, &[], false).await {
-                    Ok(response) => {
-                        if response.status() != 200 {
-                            ctx.logger.warn(format!("GET {}: Failed to refresh server. Server returned invalid response code: {}", refresh_url, response.status()));
-                            return Vec::new();
-                        }
-                    },
-                    Err(e) => {
-                        ctx.logger.warn(format!("GET {}: Failed to refresh server. {}", refresh_url, e));
-                        return Vec::new();
-                    },
-                }
-
-            }
-            match client.get(&json_url, &[], false).await {
-                Ok(response) => {
-                    if response.status() != 200 {
-                        ctx.logger.warn(format!("GET {}: Failed to fetch updates from server. Server returned invalid response code: {}", json_url, response.status()));
-                        return Vec::new();
-                    }
-                    let json = parse_json(&get_response_body(response).await);
-                    ctx.logger.debug(format!("JSON response for {}: {}", name, json));
-                    if let Some(updates) = json["images"].as_array() {
-                        let mut server_updates: Vec<Update> = updates
-                            .iter()
-                            .filter_map(|img| serde_json::from_value(img.clone()).ok())
-                            .collect();
-                        // Add server origin to each image
-                        for update in &mut server_updates {
-                            update.server = Some(name.clone());
-                            update.status = update.get_status();
-                        }
-                        ctx.logger.debug(format!("Updates for {}: {:#?}", name, server_updates));
-                        return server_updates;
-                    }
-
-                    Vec::new()
-                }
-                Err(e) => {
-                    ctx.logger.warn(format!("GET {}: Failed to fetch updates from server. {}", json_url, e));
-                    Vec::new()
-                },
-            }
+        .map(|(name, url)| {
+            let name = name.clone();
+            let url = url.clone();
+            let ctx = ctx.clone();
+            async move { get_single_server_updates(&name, &url, refresh, &ctx).await }
         })
         .collect();
 
@@ -97,12 +120,8 @@ fn get_excluded_tags(image: &Image, ctx: &Context) -> Vec<String> {
         .collect()
 }
 
-/// Returns a list of updates for all images passed in.
-pub async fn get_updates(
-    references: &Option<Vec<String>>, // If a user requested _specific_ references to be checked, this will have a value
-    refresh: bool,
-    ctx: &Context,
-) -> Vec<Update> {
+/// Returns a list of updates for local images only (no remote servers).
+pub async fn get_local_updates(references: &Option<Vec<String>>, ctx: &Context) -> Vec<Update> {
     let client = Client::new(ctx);
 
     // Merge references argument with references from config
@@ -141,14 +160,6 @@ pub async fn get_updates(
         images.extend(extra);
     }
 
-    // Get remote images from other servers
-    let remote_updates = if !ctx.config.servers.is_empty() {
-        ctx.logger.debug("Fetching updates from remote servers");
-        get_remote_updates(ctx, &client, refresh).await
-    } else {
-        Vec::new()
-    };
-
     ctx.logger.debug(format!(
         "Checking {:?}",
         images.iter().map(|image| &image.reference).collect_vec()
@@ -164,10 +175,6 @@ pub async fn get_updates(
             None => true,
         })
         .collect::<Vec<&String>>();
-
-    // Create request client. All network requests share the same client for better performance.
-    // This client is also configured to retry a failed request up to 3 times with exponential backoff in between.
-    let client = Client::new(ctx);
 
     // Create a map of images indexed by registry. This solution seems quite inefficient, since each iteration causes a key to be looked up. I can't find anything better at the moment.
     let mut image_map: FxHashMap<&String, Vec<&Image>> = FxHashMap::default();
@@ -226,7 +233,23 @@ pub async fn get_updates(
     }
     // Await all the futures
     let images = join_all(handles).await;
-    let mut updates: Vec<Update> = images.iter().map(|image| image.to_update()).collect();
-    updates.extend_from_slice(&remote_updates);
+    images.iter().map(|image| image.to_update()).collect()
+}
+
+/// Returns a list of updates for all images passed in.
+pub async fn get_updates(
+    references: &Option<Vec<String>>,
+    refresh: bool,
+    ctx: &Context,
+) -> Vec<Update> {
+    let mut updates = get_local_updates(references, ctx).await;
+
+    // Get remote images from other servers
+    if !ctx.config.servers.is_empty() {
+        ctx.logger.debug("Fetching updates from remote servers");
+        let remote_updates = get_remote_updates(ctx, refresh).await;
+        updates.extend(remote_updates);
+    }
+
     updates
 }
