@@ -120,14 +120,8 @@ pub async fn get_in_use_images(ctx: &Context) -> Vec<String> {
 
     containers
         .iter()
-        .filter_map(|container| match &container.image {
-            Some(image) => Some({
-                if image.contains(":") {
-                    image.clone()
-                } else {
-                    format!("{image}:latest")
-                }
-            }),
+        .filter_map(|container| match &container.image_id {
+            Some(image_id) => Some(image_id.clone()),
             None => None,
         })
         .collect()
