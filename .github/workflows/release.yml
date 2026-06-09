@@ -67,6 +67,7 @@ jobs:
           tags: |
             ${{ needs.get-tag.outputs.tag }}
             latest
+            nightly
           gh-token: ${{ secrets.GITHUB_TOKEN }}
 
   release:
