@@ -2,19 +2,11 @@ use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use serde::Deserializer;
 use std::env;
-use std::mem;
 use std::path::PathBuf;
 
 use crate::error;
 
-// We can't assign `a` to `b` in the loop in `Config::load`, so we'll have to use swap. It looks ugly so now we have a macro for it.
-macro_rules! swap {
-    ($a:expr, $b:expr) => {
-        mem::swap(&mut $a, &mut $b)
-    };
-}
-
-#[derive(Clone, Deserialize)]
+#[derive(Clone, Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
 pub enum Theme {
     Default,
@@ -27,7 +19,18 @@ impl Default for Theme {
     }
 }
 
-#[derive(Clone, Deserialize)]
+impl std::str::FromStr for Theme {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "default" => Ok(Self::Default),
+            "blue" => Ok(Self::Blue),
+            _ => Err(format!("Invalid theme: {}", s)),
+        }
+    }
+}
+
+#[derive(Clone, Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
 pub enum UpdateType {
     None,
@@ -42,7 +45,20 @@ impl Default for UpdateType {
     }
 }
 
-#[derive(Clone, Deserialize, Default)]
+impl std::str::FromStr for UpdateType {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "none" => Ok(Self::None),
+            "major" => Ok(Self::Major),
+            "minor" => Ok(Self::Minor),
+            "patch" => Ok(Self::Patch),
+            _ => Err(format!("Invalid update type: {}", s)),
+        }
+    }
+}
+
+#[derive(Clone, Deserialize, Default, Debug)]
 #[serde(deny_unknown_fields)]
 #[serde(default)]
 pub struct RegistryConfig {
@@ -51,14 +67,14 @@ pub struct RegistryConfig {
     pub ignore: bool,
 }
 
-#[derive(Clone, Deserialize, Default)]
+#[derive(Clone, Deserialize, Default, Debug)]
 #[serde(default)]
 pub struct ImageConfig {
     pub extra: Vec<String>,
     pub exclude: Vec<String>,
 }
 
-#[derive(Clone, Deserialize)]
+#[derive(Clone, Deserialize, Debug)]
 #[serde(default)]
 pub struct Config {
     version: u8,
@@ -89,40 +105,12 @@ impl Config {
     }
 
     /// Loads file and env config and merges them
-    pub fn load(&mut self, path: Option<PathBuf>) -> Self {
-        let mut config = self.load_file(path);
-
-        // Get environment variables with CUP_ prefix
-        let env_vars: FxHashMap<String, String> =
-            env::vars().filter(|(k, _)| k.starts_with("CUP_")).collect();
-
-        if !env_vars.is_empty() {
-            if let Ok(mut cfg) = envy::prefixed("CUP_").from_env::<Config>() {
-                // If we have environment variables, override config.json options
-                for (key, _) in env_vars {
-                    match key.as_str() {
-                        "CUP_AGENT" => config.agent = cfg.agent,
-                        #[rustfmt::skip]
-                        "CUP_IGNORE_UPDATE_TYPE" => swap!(config.ignore_update_type, cfg.ignore_update_type),
-                        #[rustfmt::skip]
-                        "CUP_REFRESH_INTERVAL" => swap!(config.refresh_interval, cfg.refresh_interval),
-                        "CUP_SOCKET" => swap!(config.socket, cfg.socket),
-                        "CUP_THEME" => swap!(config.theme, cfg.theme),
-                        // The syntax for these is slightly more complicated, not sure if they should be enabled or not. Let's stick to simple types for now.
-                        // "CUP_IMAGES" => swap!(config.images, cfg.images),
-                        // "CUP_REGISTRIES" => swap!(config.registries, cfg.registries),
-                        // "CUP_SERVERS" => swap!(config.servers, cfg.servers),
-                        _ => (), // Maybe print a warning if other CUP_ variables are detected
-                    }
-                }
-            }
-        }
-
-        config
+    pub fn load(path: Option<PathBuf>) -> Self {
+        Config::load_file(path).load_env()
     }
 
     /// Reads the config from the file path provided and returns the parsed result.
-    fn load_file(&self, path: Option<PathBuf>) -> Self {
+    fn load_file(path: Option<PathBuf>) -> Self {
         let raw_config = match &path {
             Some(path) => std::fs::read_to_string(path),
             None => return Self::new(), // Empty config
@@ -133,10 +121,10 @@ impl Config {
                 &path.unwrap().to_str().unwrap()
             )
         };
-        self.parse(&raw_config.unwrap()) // We can safely unwrap here
+        Config::parse(&raw_config.unwrap()) // We can safely unwrap here
     }
     /// Parses and validates the config.
-    fn parse(&self, raw_config: &str) -> Self {
+    fn parse(raw_config: &str) -> Self {
         let config: Self = match serde_json::from_str(raw_config) {
             Ok(config) => config,
             Err(e) => error!("Unexpected error occured while parsing config: {}", e),
@@ -145,6 +133,37 @@ impl Config {
             error!("You are trying to run Cup with an incompatible config file! Please migrate your config file to the version 3, or if you have already done so, add a `version` key with the value `3`.")
         }
         config
+    }
+
+    /// Read and parse environment variables into the config object and return it.
+    fn load_env(mut self) -> Self {
+        env::vars()
+            .filter(|(k, _)| k.starts_with("CUP_"))
+            .for_each(|(key, value)| match key.as_str() {
+                "CUP_AGENT" => self.agent = value.parse().unwrap(),
+                "CUP_IGNORE_UPDATE_TYPE" => self.ignore_update_type = value.parse().unwrap(),
+                "CUP_REFRESH_INTERVAL" => self.refresh_interval = Some(value),
+                "CUP_SOCKET" => self.socket = Some(value),
+                "CUP_THEME" => self.theme = value.parse().unwrap(),
+                "CUP_IMAGES_EXCLUDE" => {
+                    self.images.exclude = value
+                        .split(' ')
+                        .map(|s| s.trim().to_string())
+                        .filter(|s| !s.is_empty())
+                        .collect()
+                }
+                "CUP_IMAGES_EXTRA" => {
+                    self.images.extra = value
+                        .split(' ')
+                        .map(|s| s.trim().to_string())
+                        .filter(|s| !s.is_empty())
+                        .collect()
+                }
+                // "CUP_REGISTRIES" => ...
+                // "CUP_SERVERS" => ...
+                _ => println!("Warning: Skip unknown CUP_ variable '{}'.", key),
+            });
+        self
     }
 }
 
