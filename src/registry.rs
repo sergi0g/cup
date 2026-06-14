@@ -129,7 +129,7 @@ pub async fn get_latest_tag(
     let start = now();
     let protocol = get_protocol(&image.parts.registry, &ctx.config.registries);
     let url = format!(
-        "{}://{}/v2/{}/tags/list",
+        "{}://{}/v2/{}/tags/list?n=10000",
         protocol, &image.parts.registry, &image.parts.repository,
     );
     let authorization = to_bearer_string(&token);
