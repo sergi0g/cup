@@ -79,7 +79,7 @@ async fn main() {
         "" => None,
         path => Some(PathBuf::from(path)),
     };
-    let mut config = Config::new().load(cfg_path);
+    let mut config = Config::load(cfg_path);
     if let Some(socket) = cli.socket {
         config.socket = Some(socket)
     }
@@ -87,6 +87,7 @@ async fn main() {
         config,
         logger: Logger::new(cli.debug, false),
     };
+    ctx.logger.debug(format!("Config: {:?}", &ctx.config));
     match &cli.command {
         #[cfg(feature = "cli")]
         Some(Commands::Check {
