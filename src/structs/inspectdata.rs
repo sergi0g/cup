@@ -4,6 +4,7 @@ pub trait InspectData {
     fn tags(&self) -> Option<Vec<String>>;
     fn digests(&self) -> Option<Vec<String>>;
     fn url(&self) -> Option<String>;
+    fn image_id(&self) -> Option<String>;
 }
 
 impl InspectData for ImageInspect {
@@ -24,6 +25,10 @@ impl InspectData for ImageInspect {
             None => None,
         }
     }
+
+    fn image_id(&self) -> Option<String> {
+        self.id.clone()
+    }
 }
 
 impl InspectData for ImageSummary {
@@ -37,6 +42,10 @@ impl InspectData for ImageSummary {
 
     fn url(&self) -> Option<String> {
         self.labels.get("org.opencontainers.image.url").cloned()
+    }
+
+    fn image_id(&self) -> Option<String> {
+        Some(self.id.clone())
     }
 }
 
@@ -57,6 +66,10 @@ impl InspectData for &String {
     }
 
     fn url(&self) -> Option<String> {
+        None
+    }
+
+    fn image_id(&self) -> Option<String> {
         None
     }
 }
