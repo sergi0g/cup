@@ -61,16 +61,12 @@ pub async fn serve(port: &u16, ctx: &Context) -> std::io::Result<()> {
     if let Some(interval) = &ctx.config.refresh_interval {
         scheduler
             .add(
-                match Job::new_async_tz(
-                    interval,
-                    tz,
-                    move |_uuid, _lock| {
-                        let data_copy = data_copy.clone();
-                        Box::pin(async move {
-                            data_copy.lock().await.refresh().await;
-                        })
-                    },
-                ) {
+                match Job::new_async_tz(interval, tz, move |_uuid, _lock| {
+                    let data_copy = data_copy.clone();
+                    Box::pin(async move {
+                        data_copy.lock().await.refresh().await;
+                    })
+                }) {
                     Ok(job) => job,
                     Err(e) => match e {
                         tokio_cron_scheduler::JobSchedulerError::ParseSchedule => error!(
