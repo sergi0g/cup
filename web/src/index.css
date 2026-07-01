@@ -29,8 +29,16 @@
 }
 
 @supports (scrollbar-color: auto) {
-  html {
+  * {
     scrollbar-color: #707070 #343840;
+    scrollbar-gutter: auto;
+    scrollbar-width: thin;
+  }
+}
+
+@-moz-document url-prefix() {
+  * {
+    scrollbar-width: auto; /* We only want to apply this to Chromium-like browsers because it looks pretty bad on Firefox */
   }
 }
 

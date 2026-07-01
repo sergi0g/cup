@@ -27,7 +27,7 @@ export function CodeBlock({
     <div
       className={`group relative flex w-full items-center rounded-lg bg-${theme}-100 px-3 py-2 font-mono text-${theme}-700 dark:bg-${theme}-950 dark:text-${theme}-300`}
     >
-      <p className="overflow-scroll">{children}</p>
+      <p className="overflow-x-auto w-full">{children}</p>
       {enableCopy &&
         navigator.clipboard &&
         (copySuccess ? (
