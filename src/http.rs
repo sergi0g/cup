@@ -4,7 +4,7 @@ use reqwest::Response;
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
 
-use crate::{error, Context};
+use crate::Context;
 
 pub enum RequestMethod {
     GET,
@@ -83,18 +83,20 @@ impl Client {
                 } else if status.as_u16() <= 400 {
                     Ok(response)
                 } else {
-                    match method {
-                        RequestMethod::GET => error!(
+                    let message = match method {
+                        RequestMethod::GET => format!(
                             "{} {}: Unexpected error: {}",
                             method,
                             url,
                             response.text().await.unwrap()
                         ),
-                        RequestMethod::HEAD => error!(
+                        RequestMethod::HEAD => format!(
                             "{} {}: Unexpected error: Recieved status code {}",
                             method, url, status
                         ),
-                    }
+                    };
+                    self.ctx.logger.warn(&message);
+                    Err(message)
                 }
             }
             Err(error) => {
@@ -111,12 +113,14 @@ impl Client {
                     self.ctx.logger.warn(&message);
                     Err(message)
                 } else {
-                    error!(
+                    let message = format!(
                         "{} {}: Unexpected error: {}",
                         method,
                         url,
                         error.to_string()
-                    )
+                    );
+                    self.ctx.logger.warn(&message);
+                    Err(message)
                 }
             }
         }
