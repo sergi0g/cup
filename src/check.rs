@@ -125,8 +125,10 @@ pub async fn get_updates(
 
     // Complete in_use field
     images.iter_mut().for_each(|image| {
-        if in_use_images.contains(&image.reference) {
-            image.in_use = true
+        if let Some(id) = &image.id {
+            if in_use_images.contains(id) {
+                image.in_use = true
+            }
         }
     });
 

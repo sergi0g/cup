@@ -33,6 +33,7 @@ pub struct VersionInfo {
 #[derive(Clone, PartialEq, Default)]
 #[cfg_attr(test, derive(Debug))]
 pub struct Image {
+    pub id: Option<String>,
     pub reference: String,
     pub parts: Parts,
     pub url: Option<String>,
@@ -71,6 +72,7 @@ impl Image {
                 )
                 .collect();
             Some(Self {
+                id: image.image_id(),
                 reference,
                 parts: Parts {
                     registry,
