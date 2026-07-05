@@ -7,9 +7,6 @@
 ![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/sergi0g/cup)
 [![Discord](https://img.shields.io/discord/1337705080518086658)](https://discord.gg/jmh5ctzwNG)
 
-> [!IMPORTANT]
-> There have been some important changes regarding Cup's development. Read more [here](./NOTICE.md).
-
 Cup is the easiest way to check for container image updates.
 
 ![Cup web in dark mode](screenshots/web_dark.png)
