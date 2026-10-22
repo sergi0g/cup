@@ -41,6 +41,20 @@
                         "type": "string",
                         "minLength": 1
                     }
+                },
+                "ignore_update_type": {
+                    "type": "object",
+                    "description": "The types of updates to ignore for specific images, overriding the global `ignore_update_type`",
+                    "additionalProperties": {
+                        "type": "string",
+                        "enum": [
+                            "none",
+                            "major",
+                            "minor",
+                            "patch"
+                        ]
+                    },
+                    "minProperties": 1
                 }
             }
         },

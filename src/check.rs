@@ -3,6 +3,7 @@ use itertools::Itertools;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
+    config::UpdateType,
     docker::{get_images_from_docker_daemon, get_in_use_images},
     http::Client,
     registry::{check_auth, get_token},
@@ -95,6 +96,19 @@ fn get_excluded_tags(image: &Image, ctx: &Context) -> Vec<String> {
             (tag != "latest").then_some(tag)
         })
         .collect()
+}
+
+/// Returns the update type to ignore for the given image.
+fn get_ignored_update_type(image: &Image, ctx: &Context) -> UpdateType {
+    ctx.config
+        .images
+        .ignore_update_type
+        .iter()
+        .filter(|(prefix, _)| image.reference.starts_with(prefix.as_str()))
+        .max_by_key(|(prefix, _)| prefix.len())
+        .map_or(ctx.config.ignore_update_type, |(_, update_type)| {
+            *update_type
+        })
 }
 
 /// Returns a list of updates for all images passed in.
@@ -219,8 +233,15 @@ pub async fn get_updates(
                 .any(|item| image.reference.starts_with(item));
         if !is_ignored {
             let excluded_tags = get_excluded_tags(image, ctx);
+            let ignored_update_type = get_ignored_update_type(image, ctx);
             let token = tokens.get(image.parts.registry.as_str()).unwrap();
-            let future = image.check(token.as_deref(), ctx, &client, excluded_tags);
+            let future = image.check(
+                token.as_deref(),
+                ctx,
+                &client,
+                excluded_tags,
+                ignored_update_type,
+            );
             handles.push(future);
         }
     }

@@ -1,4 +1,5 @@
 use crate::{
+    config::UpdateType,
     error,
     http::Client,
     registry::{get_latest_digest, get_latest_tag},
@@ -234,10 +235,20 @@ impl Image {
         ctx: &Context,
         client: &Client,
         excluded_tags: Vec<String>,
+        ignored_update_type: UpdateType,
     ) -> Self {
         match &self.version_info {
             Some(data) => {
-                get_latest_tag(self, &data.current_tag, token, ctx, client, excluded_tags).await
+                get_latest_tag(
+                    self,
+                    &data.current_tag,
+                    token,
+                    ctx,
+                    client,
+                    excluded_tags,
+                    ignored_update_type,
+                )
+                .await
             }
             None => match self.digest_info {
                 Some(_) => get_latest_digest(self, token, ctx, client).await,

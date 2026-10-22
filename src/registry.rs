@@ -123,6 +123,7 @@ pub async fn get_latest_tag(
     ctx: &Context,
     client: &Client,
     excluded_tags: Vec<String>,
+    ignored_update_type: UpdateType,
 ) -> Image {
     ctx.logger
         .debug(format!("Checking for tag update to {}", image.reference));
@@ -155,6 +156,7 @@ pub async fn get_latest_tag(
             ctx,
             client,
             &excluded_tags,
+            ignored_update_type,
         )
         .await
         {
@@ -235,6 +237,7 @@ pub async fn get_extra_tags(
     ctx: &Context,
     client: &Client,
     excluded_tags: &[String],
+    ignored_update_type: UpdateType,
 ) -> Result<(Vec<Version>, Option<String>), String> {
     let response = client.get(url, headers, false).await;
 
@@ -258,7 +261,7 @@ pub async fn get_extra_tags(
                     }
                     _ => false,
                 })
-                .filter_map(|(tag, _)| match ctx.config.ignore_update_type {
+                .filter_map(|(tag, _)| match ignored_update_type {
                     UpdateType::None => Some(tag),
                     UpdateType::Major => Some(tag).filter(|tag| base.major == tag.major),
                     UpdateType::Minor => {
