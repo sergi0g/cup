@@ -27,7 +27,7 @@ impl Default for Theme {
     }
 }
 
-#[derive(Clone, Deserialize)]
+#[derive(Clone, Copy, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum UpdateType {
     None,
@@ -56,6 +56,7 @@ pub struct RegistryConfig {
 pub struct ImageConfig {
     pub extra: Vec<String>,
     pub exclude: Vec<String>,
+    pub ignore_update_type: FxHashMap<String, UpdateType>,
 }
 
 #[derive(Clone, Deserialize)]

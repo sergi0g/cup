@@ -21,3 +21,23 @@ Available options are:
   Ignoring an update type also implies ignoring all update types less specific than it.
   For example, ignoring patch updates also implies ignoring major and minor updates.
 </Callout>
+
+## Per-image configuration
+
+You can also ignore update types for specific images, which overrides the global option above:
+
+```jsonc
+{
+  "ignore_update_type": "minor",
+  "images": {
+    "ignore_update_type": {
+      "postgres": "major",
+      "ghcr.io/immich-app": "none"
+    }
+    // ...
+  }
+  // Other options
+}
+```
+
+Just like [excluded images](/docs/configuration/include-exclude-images), the keys are matched against the start of each image reference. If more than one key matches an image, the longest (most specific) one is used. Images that don't match any key use the global `ignore_update_type`.
