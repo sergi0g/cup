@@ -154,7 +154,8 @@ async fn api_simple(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
 }
 
 async fn api_full(data: StateRef<'_, Arc<Mutex<ServerData>>>) -> WebResponse {
-    if cfg!(debug_assertions) { // Sliiiightly hacky way to add a CORS allow all header in dev mode because the frontend complains. If I put in some more thought perhaps it can be reduced to only that extra header line instead of duplicating, but the code getting build is the same.
+    if cfg!(debug_assertions) {
+        // Sliiiightly hacky way to add a CORS allow all header in dev mode because the frontend complains. If I put in some more thought perhaps it can be reduced to only that extra header line instead of duplicating, but the code getting build is the same.
         WebResponse::builder()
             .header("Content-Type", "application/json")
             .header("Access-Control-Allow-Origin", "*")

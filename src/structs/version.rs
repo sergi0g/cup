@@ -44,15 +44,13 @@ impl Version {
         match best_match {
             Some(c) => {
                 let mut positions = Vec::new();
-                let major: u32 = match c.name("major") {
-                    Some(major) => {
-                        positions.push((major.start(), major.end()));
-                        match major.as_str().parse() {
-                            Ok(m) => m,
-                            Err(_) => return None,
-                        }
+                let major: u32 = {
+                    let major = c.name("major")?;
+                    positions.push((major.start(), major.end()));
+                    match major.as_str().parse() {
+                        Ok(m) => m,
+                        Err(_) => return None,
                     }
-                    None => return None,
                 };
                 let minor: Option<u32> = c.name("minor").map(|minor| {
                     positions.push((minor.start(), minor.end()));
