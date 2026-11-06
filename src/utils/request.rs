@@ -36,14 +36,8 @@ pub fn get_protocol(
     registry_config: &FxHashMap<String, RegistryConfig>,
 ) -> &'static str {
     match registry_config.get(registry) {
-        Some(config) => {
-            if config.insecure {
-                "http"
-            } else {
-                "https"
-            }
-        }
-        None => "https",
+        Some(config) if config.insecure => "http",
+        _ => "https",
     }
 }
 

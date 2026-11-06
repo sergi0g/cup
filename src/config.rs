@@ -14,32 +14,22 @@ macro_rules! swap {
     };
 }
 
-#[derive(Clone, Deserialize)]
+#[derive(Clone, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum Theme {
+    #[default]
     Default,
     Blue,
 }
 
-impl Default for Theme {
-    fn default() -> Self {
-        Self::Default
-    }
-}
-
-#[derive(Clone, Copy, Deserialize)]
+#[derive(Clone, Copy, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum UpdateType {
+    #[default]
     None,
     Major,
     Minor,
     Patch,
-}
-
-impl Default for UpdateType {
-    fn default() -> Self {
-        Self::None
-    }
 }
 
 #[derive(Clone, Deserialize, Default)]

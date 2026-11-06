@@ -23,6 +23,12 @@ jobs:
       - name: Build
         run: ./build.sh cargo build --verbose
 
+      - name: Check formatting
+        run: cargo fmt --check
+
+      - name: Lint
+        run: cargo clippy --all-targets -- -D warnings
+
       - name: Test
         run: cargo test
 

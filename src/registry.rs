@@ -55,7 +55,7 @@ pub async fn get_latest_digest(
     let protocol = get_protocol(&image.parts.registry, &ctx.config.registries);
     let url = format!(
         "{}://{}/v2/{}/manifests/{}",
-        protocol, &image.parts.registry, &image.parts.repository, &image.parts.tag
+        protocol, image.parts.registry, image.parts.repository, image.parts.tag
     );
     let authorization = to_bearer_string(&token);
     let headers = [("Accept", Some("application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.docker.distribution.manifest.v2+json, application/vnd.oci.image.index.v1+json, application/vnd.oci.image.manifest.v1+json")), ("Authorization", authorization.as_deref())];
@@ -131,7 +131,7 @@ pub async fn get_latest_tag(
     let protocol = get_protocol(&image.parts.registry, &ctx.config.registries);
     let url = format!(
         "{}://{}/v2/{}/tags/list",
-        protocol, &image.parts.registry, &image.parts.repository,
+        protocol, image.parts.registry, image.parts.repository,
     );
     let authorization = to_bearer_string(&token);
     let headers = [
@@ -229,6 +229,7 @@ fn is_excluded_tag(tag: &str, excluded_tags: &[String], ctx: &Context) -> bool {
     false
 }
 
+#[allow(clippy::too_many_arguments)]
 pub async fn get_extra_tags(
     url: &str,
     headers: &[(&str, Option<&str>)],
