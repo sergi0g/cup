@@ -1,0 +1,41 @@
+{
+  "name": "Cup",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "features": {
+    // Isolated Docker daemon so Cup has something to check without touching the host's images
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    // Node.js is required by the docs (Next.js)
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22"
+    }
+  },
+  // Keep build artifacts and dependencies in named volumes: faster than bind mounts on macOS/Windows
+  // and keeps them out of the host checkout
+  "mounts": [
+    "source=cup-target-${devcontainerId},target=${containerWorkspaceFolder}/target,type=volume",
+    "source=cup-web-node-modules-${devcontainerId},target=${containerWorkspaceFolder}/web/node_modules,type=volume",
+    "source=cup-docs-node-modules-${devcontainerId},target=${containerWorkspaceFolder}/docs/node_modules,type=volume",
+    "source=cup-cargo-registry-${devcontainerId},target=/usr/local/cargo/registry,type=volume"
+  ],
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "forwardPorts": [8000, 5173, 3000],
+  "portsAttributes": {
+    "8000": { "label": "cup serve" },
+    "5173": { "label": "web (vite)" },
+    "3000": { "label": "docs (next)" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "rust-lang.rust-analyzer",
+        "tamasfe.even-better-toml",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss"
+      ]
+    }
+  },
+  "remoteUser": "vscode"
+}

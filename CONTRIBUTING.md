@@ -16,6 +16,14 @@ Requirements:
 
 You're ready to go!
 
+### Using the devcontainer
+
+If you would rather not install the toolchain on your machine (or you are not running Linux), the repository includes a [devcontainer](https://containers.dev) with Rust, Bun, Node.js and an isolated Docker daemon. All you need is Docker and an editor that supports devcontainers (e.g. VS Code with the Dev Containers extension) or GitHub Codespaces.
+
+Open the repository in your editor and choose "Reopen in Container". On first start, the frontend and docs dependencies are installed and the frontend is built, so `cargo build` works right away.
+
+The Docker daemon inside the container starts empty, so pull a few images to test Cup against (e.g. `docker pull nginx:1.25 alpine:3.18`) before running `cargo run -- check`. Ports 8000 (`cup serve`), 5173 (`bun dev` in `web/`) and 3000 (`bun dev` in `docs/`) are forwarded to your machine.
+
 ## Project architecture
 
 Cup can be run in 2 modes: CLI and server.
