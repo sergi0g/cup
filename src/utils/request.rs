@@ -17,7 +17,7 @@ pub fn parse_www_authenticate(www_auth: &str) -> String {
                 .fold(String::new(), |acc, (key, value)| {
                     if *key == "realm" {
                         acc.to_owned() + value.as_escaped() + "?"
-                    } else if value.unescaped_len() != 0 {
+                    } else if value.unescaped_len() != 0 && *key != "scope" { // Avoid copying scope because ghcr sends a dummy value which Cup unknowingly returns and isn't accepted
                         format!("{}&{}={}", acc, key, value.as_escaped())
                     } else {
                         acc
