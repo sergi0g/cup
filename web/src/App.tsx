@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Logo from "./components/Logo";
 import Statistic from "./components/Statistic";
 import Image from "./components/Image";
@@ -12,6 +12,7 @@ import { Server } from "./components/Server";
 import { useData } from "./hooks/use-data";
 import DataLoadingError from "./components/DataLoadingError";
 import Filters from "./components/Filters";
+import { STATUSES } from "./filter-options";
 import { Filter, FilterX } from "lucide-react";
 import { WithTooltip } from "./components/ui/Tooltip";
 import { getDescription } from "./utils";
@@ -27,22 +28,96 @@ const SORT_ORDER = [
   "unknown",
 ];
 
+const FILTERS_STORAGE_KEY = "cup-filters";
+const DEFAULT_FILTERS: FiltersType = {
+  onlyInUse: false,
+  registries: [],
+  statuses: [],
+};
+
+function loadFilters(): FiltersType {
+  try {
+    const savedFilters = localStorage.getItem(FILTERS_STORAGE_KEY);
+    if (!savedFilters) return DEFAULT_FILTERS;
+
+    const parsed: unknown = JSON.parse(savedFilters);
+    if (
+      typeof parsed !== "object" ||
+      parsed === null ||
+      !("onlyInUse" in parsed) ||
+      typeof parsed.onlyInUse !== "boolean" ||
+      !("registries" in parsed) ||
+      !Array.isArray(parsed.registries) ||
+      !parsed.registries.every((registry) => typeof registry === "string") ||
+      !("statuses" in parsed) ||
+      !Array.isArray(parsed.statuses) ||
+      !parsed.statuses.every((status) => typeof status === "string")
+    ) {
+      return DEFAULT_FILTERS;
+    }
+
+    return {
+      onlyInUse: parsed.onlyInUse,
+      registries: parsed.registries,
+      statuses: parsed.statuses as FiltersType["statuses"],
+    };
+  } catch {
+    return DEFAULT_FILTERS;
+  }
+}
+
+function hasActiveFilters(filters: FiltersType): boolean {
+  return (
+    filters.onlyInUse ||
+    filters.registries.length > 0 ||
+    filters.statuses.length > 0
+  );
+}
+
 function App() {
   const { data, isLoading, isError } = useData();
 
-  const [showFilters, setShowFilters] = useState<boolean>(false);
-  const [filters, setFilters] = useState<FiltersType>({
-    onlyInUse: false,
-    registries: [],
-    statuses: [],
-  });
+  const [filters, setFilters] = useState<FiltersType>(loadFilters);
+  const [showFilters, setShowFilters] = useState<boolean>(() =>
+    hasActiveFilters(filters),
+  );
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filters));
+    } catch {
+      // Keep filtering usable when browser storage is unavailable.
+    }
+  }, [filters]);
+
+  useEffect(() => {
+    if (!data) return;
+
+    const availableRegistries = new Set(
+      data.images.map((image) => image.parts.registry),
+    );
+    const validStatuses = new Set<string>(STATUSES);
+    const registries = filters.registries.filter((registry) =>
+      availableRegistries.has(registry),
+    );
+    const statuses = filters.statuses.filter((status) =>
+      validStatuses.has(status),
+    );
+
+    if (
+      registries.length !== filters.registries.length ||
+      statuses.length !== filters.statuses.length
+    ) {
+      setFilters({ ...filters, registries, statuses });
+    }
+  }, [data, filters]);
 
   if (isLoading) return <Loading />;
   if (isError || !data) return <DataLoadingError />;
   const toggleShowFilters = () => {
     if (showFilters) {
-      setFilters({ onlyInUse: false, registries: [], statuses: [] });
+      setFilters(DEFAULT_FILTERS);
     }
     setShowFilters(!showFilters);
   };

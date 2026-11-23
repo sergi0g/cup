@@ -1,6 +1,6 @@
-import { useState } from "react";
 import { theme } from "../theme";
 import { Filters as FiltersType } from "../types";
+import { STATUSES } from "../filter-options";
 import { Checkbox } from "./ui/Checkbox";
 import Select from "./ui/Select";
 import { Server } from "lucide-react";
@@ -11,24 +11,8 @@ interface Props {
   registries: string[];
 }
 
-const STATUSES = [
-  "Major update",
-  "Minor update",
-  "Patch update",
-  "Digest update",
-  "Up to date",
-  "Unknown",
-];
-
 export default function Filters({ filters, setFilters, registries }: Props) {
-  const [selectedRegistries, setSelectedRegistries] = useState<
-    FiltersType["registries"]
-  >([]);
-  const [selectedStatuses, setSelectedStatuses] = useState<
-    FiltersType["statuses"]
-  >([]);
   const handleSelectRegistries = (registries: string[]) => {
-    setSelectedRegistries(registries);
     setFilters({
       ...filters,
       registries,
@@ -36,7 +20,6 @@ export default function Filters({ filters, setFilters, registries }: Props) {
   };
   const handleSelectStatuses = (statuses: string[]) => {
     if (statuses.every((status) => STATUSES.includes(status))) {
-      setSelectedStatuses(statuses as FiltersType["statuses"]);
       setFilters({
         ...filters,
         statuses: statuses as FiltersType["statuses"],
@@ -67,13 +50,13 @@ export default function Filters({ filters, setFilters, registries }: Props) {
         Icon={Server}
         items={registries}
         placeholder="Registry"
-        selectedItems={selectedRegistries}
+        selectedItems={filters.registries}
         setSelectedItems={handleSelectRegistries}
       />
       <Select
         items={STATUSES}
         placeholder="Update type"
-        selectedItems={selectedStatuses}
+        selectedItems={filters.statuses}
         setSelectedItems={handleSelectStatuses}
       />
     </div>
