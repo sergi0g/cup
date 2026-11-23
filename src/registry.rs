@@ -116,6 +116,13 @@ pub async fn get_token(
     response_json["token"].as_str().unwrap().to_string()
 }
 
+/// The number of tags to request per page when listing tags. Registries clamp
+/// this to whatever they support (e.g. ghcr.io serves at most 1000 tags per
+/// page) and echo the effective page size back in the Link header used for
+/// pagination, so requesting a large page is safe even for registries that
+/// don't support it.
+pub const TAGS_PAGE_SIZE: u32 = 1000;
+
 pub async fn get_latest_tag(
     image: &Image,
     base: &Version,
@@ -129,9 +136,15 @@ pub async fn get_latest_tag(
         .debug(format!("Checking for tag update to {}", image.reference));
     let start = now();
     let protocol = get_protocol(&image.parts.registry, &ctx.config.registries);
+    // Request as many tags per page as the registry allows. Without this,
+    // ghcr.io falls back to serving just 100 tags per page. Since tags are not
+    // returned in any useful order and the remote has to be consulted until the
+    // list is exhausted, images with many tags (e.g. ones that publish a tag
+    // for every commit) previously required hundreds of sequential requests,
+    // making checks take minutes and sometimes fail with rate limit errors.
     let url = format!(
-        "{}://{}/v2/{}/tags/list",
-        protocol, image.parts.registry, image.parts.repository,
+        "{}://{}/v2/{}/tags/list?n={}",
+        protocol, image.parts.registry, image.parts.repository, TAGS_PAGE_SIZE
     );
     let authorization = to_bearer_string(&token);
     let headers = [
