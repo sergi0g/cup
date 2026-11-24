@@ -11,7 +11,7 @@ Some registries (or specific images) may require you to be authenticated. For th
       "authentication": "<YOUR_TOKEN_1>"
       // Other options
     },
-    "<YOUR_REGISTRY_DOMAIN_2>" {
+    "<YOUR_REGISTRY_DOMAIN_2>": {
       "authentication": "<YOUR_TOKEN_2>"
       // Other options
     },
@@ -24,3 +24,35 @@ Some registries (or specific images) may require you to be authenticated. For th
 You can use any registry, like `ghcr.io`, `quay.io`, `gcr.io`, etc.
 
 <Callout emoji="⚠️">For Docker Hub, use `registry-1.docker.io`</Callout>
+
+## Token format
+
+Cup sends the value of `authentication` to the registry's token endpoint as HTTP Basic credentials (`Authorization: Basic <value>`), without encoding it. This means the value must be the **base64 encoding of `username:token`**, not the raw token.
+
+For example, for `ghcr.io` with a GitHub personal access token (classic) that has the `read:packages` scope:
+
+```bash
+$ printf '%s' 'your-github-username:ghp_yourtoken' | base64 | tr -d '\n'
+```
+
+Use the output as the value of `authentication`:
+
+```json
+{
+  "registries": {
+    "ghcr.io": {
+      "authentication": "eW91ci1naXRodWItdXNlcm5hbWU6Z2hwX3lvdXJ0b2tlbg=="
+    }
+  }
+}
+```
+
+You can check that the credentials work before adding them to Cup:
+
+```bash
+$ curl -s -o /dev/null -w '%{http_code}\n' \
+    -H "Authorization: Basic <value>" \
+    "https://ghcr.io/token?service=ghcr.io&scope=repository:<owner>/<image>:pull"
+```
+
+A `200` response means the credentials are valid.
