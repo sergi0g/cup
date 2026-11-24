@@ -68,7 +68,7 @@
             "description": "Configuration options for specific registries",
             "additionalProperties": {
                 "authentication": {
-                    "description": "An authentication token provided by the registry",
+                    "description": "Base64 encoding of `username:token`, sent to the registry as HTTP Basic credentials",
                     "type": "string",
                     "minLength": 1
                 },
