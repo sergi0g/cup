@@ -53,3 +53,14 @@ becomes:
 ```bash
 $ docker run -tv /var/run/docker.sock:/var/run/docker.sock -p 9000:9000 ghcr.io/sergi0g/cup serve -p 9000
 ```
+
+
+<Callout emoji="⚠️">
+If you're on Fedora or another distribution using SELinux, you may need to disable it in order for the container to access the socket:
+
+```bash
+$ docker run -tv /var/run/docker.sock:/var/run/docker.sock --security-opt label=disable ghcr.io/sergi0g/cup serve
+```
+
+You can also check out https://github.com/dpw/selinux-dockersock for a solution more aligned with SELinux's goals.
+</Callout>
