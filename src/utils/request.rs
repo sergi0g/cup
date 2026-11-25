@@ -6,12 +6,13 @@ use serde_json::Value;
 use crate::{config::RegistryConfig, error};
 
 /// Parses the www-authenticate header the registry sends into a challenge URL
-pub fn parse_www_authenticate(www_auth: &str) -> String {
-    let challenges = parse_challenges(www_auth).unwrap();
+pub fn parse_www_authenticate(www_auth: &str) -> Result<String, String> {
+    let challenges = parse_challenges(www_auth)
+        .map_err(|e| format!("Failed to parse www-authenticate header: {}", e))?;
     if !challenges.is_empty() {
         let challenge = &challenges[0];
         if challenge.scheme == "Bearer" {
-            challenge
+            Ok(challenge
                 .params
                 .iter()
                 .fold(String::new(), |acc, (key, value)| {
@@ -22,12 +23,12 @@ pub fn parse_www_authenticate(www_auth: &str) -> String {
                     } else {
                         acc
                     }
-                })
+                }))
         } else {
-            error!("Unsupported scheme {}", &challenge.scheme)
+            Err(format!("Unsupported scheme {}", challenge.scheme))
         }
     } else {
-        error!("No challenge provided by the server");
+        Err("No challenge provided by the server".to_string())
     }
 }
 

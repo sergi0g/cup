@@ -20,7 +20,12 @@ use crate::{
     Context,
 };
 
-pub async fn check_auth(registry: &str, ctx: &Context, client: &Client) -> Option<String> {
+/// Checks whether the registry requires authentication. Returns the URL to fetch a token from if it does, `None` if it doesn't, or an error message if the check failed in a way that prevents checking images from this registry.
+pub async fn check_auth(
+    registry: &str,
+    ctx: &Context,
+    client: &Client,
+) -> Result<Option<String>, String> {
     let protocol = get_protocol(registry, &ctx.config.registries);
     let url = format!("{}://{}/v2/", protocol, registry);
     let response = client.get(&url, &[], true).await;
@@ -28,18 +33,24 @@ pub async fn check_auth(registry: &str, ctx: &Context, client: &Client) -> Optio
         Ok(response) => {
             let status = response.status();
             if status == 401 {
-                match response.headers().get("www-authenticate") {
-                        Some(challenge) => Some(parse_www_authenticate(challenge.to_str().unwrap())),
-                        None => error!(
-                            "Unauthorized to access registry {} and no way to authenticate was provided",
-                            registry
-                        ),
-                    }
+                match response
+                    .headers()
+                    .get("www-authenticate")
+                    .and_then(|challenge| challenge.to_str().ok())
+                {
+                    Some(challenge) => parse_www_authenticate(challenge)
+                        .map(Some)
+                        .map_err(|e| format!("GET {}: {}", url, e)),
+                    None => Err(format!(
+                        "Unauthorized to access registry {} and no way to authenticate was provided",
+                        registry
+                    )),
+                }
             } else {
-                None
+                Ok(None)
             }
         }
-        Err(_) => None,
+        Err(_) => Ok(None),
     }
 }
 
@@ -82,10 +93,18 @@ pub async fn get_latest_digest(
                     ..image.clone()
                 }
             }
-            None => error!(
-                "Server returned invalid response! No docker-content-digest!\n{:#?}",
-                res
-            ),
+            None => {
+                let message = format!(
+                    "HEAD {}: Server returned invalid response! No docker-content-digest!",
+                    url
+                );
+                ctx.logger.warn(&message);
+                Image {
+                    error: Some(message),
+                    time_ms: image.time_ms + time,
+                    ..image.clone()
+                }
+            }
         },
         Err(error) => Image {
             error: Some(error),
@@ -100,7 +119,7 @@ pub async fn get_token(
     auth_url: &str,
     credentials: &Option<String>,
     client: &Client,
-) -> String {
+) -> Result<String, String> {
     let mut url = auth_url.to_owned();
     for image in images {
         url = format!("{}&scope=repository:{}:pull", url, image.parts.repository);
@@ -108,12 +127,17 @@ pub async fn get_token(
     let authorization = credentials.as_ref().map(|creds| format!("Basic {}", creds));
     let headers = [("Authorization", authorization.as_deref())];
 
-    let response = client.get(&url, &headers, false).await;
-    let response_json = match response {
-        Ok(response) => parse_json(&get_response_body(response).await),
-        Err(_) => error!("GET {}: Request failed!", url),
-    };
-    response_json["token"].as_str().unwrap().to_string()
+    let response = client.get(&url, &headers, false).await?;
+    let body = response
+        .text()
+        .await
+        .map_err(|e| format!("GET {}: Failed to read token response: {}", url, e))?;
+    let response_json: serde_json::Value = serde_json::from_str(&body)
+        .map_err(|e| format!("GET {}: Failed to parse token response: {}", url, e))?;
+    response_json["token"]
+        .as_str()
+        .map(|token| token.to_string())
+        .ok_or_else(|| format!("GET {}: Token response did not contain a token", url))
 }
 
 pub async fn get_latest_tag(

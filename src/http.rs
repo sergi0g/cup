@@ -4,7 +4,7 @@ use reqwest::Response;
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
 
-use crate::{error, Context};
+use crate::Context;
 
 pub enum RequestMethod {
     GET,
@@ -80,21 +80,28 @@ impl Client {
                     );
                     self.ctx.logger.warn(&message);
                     Err(message)
-                } else if status.as_u16() <= 400 {
+                } else if status == 429 {
+                    let retry_after = response
+                        .headers()
+                        .get("retry-after")
+                        .and_then(|value| value.to_str().ok())
+                        .map(|value| format!(" Retry after: {}.", value))
+                        .unwrap_or_default();
+                    let message = format!(
+                        "{} {}: Rate limited by the registry (status code 429).{} Consider scheduling checks at a less busy time.",
+                        method, url, retry_after
+                    );
+                    self.ctx.logger.warn(&message);
+                    Err(message)
+                } else if status.as_u16() < 400 {
                     Ok(response)
                 } else {
-                    match method {
-                        RequestMethod::GET => error!(
-                            "{} {}: Unexpected error: {}",
-                            method,
-                            url,
-                            response.text().await.unwrap()
-                        ),
-                        RequestMethod::HEAD => error!(
-                            "{} {}: Unexpected error: Recieved status code {}",
-                            method, url, status
-                        ),
-                    }
+                    let message = format!(
+                        "{} {}: Unexpected error: Received status code {}",
+                        method, url, status
+                    );
+                    self.ctx.logger.warn(&message);
+                    Err(message)
                 }
             }
             Err(error) => {
@@ -111,12 +118,9 @@ impl Client {
                     self.ctx.logger.warn(&message);
                     Err(message)
                 } else {
-                    error!(
-                        "{} {}: Unexpected error: {}",
-                        method,
-                        url,
-                        error.to_string()
-                    )
+                    let message = format!("{} {}: Unexpected error: {}", method, url, error);
+                    self.ctx.logger.warn(&message);
+                    Err(message)
                 }
             }
         }

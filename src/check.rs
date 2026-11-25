@@ -194,33 +194,39 @@ pub async fn get_updates(
     }
 
     // Retrieve an authentication token (if required) for each registry.
-    let mut tokens: FxHashMap<&str, Option<String>> = FxHashMap::default();
+    // If authenticating with a registry fails (e.g. because it is rate limiting us), the error is stored and all of its images are reported with that error instead of being checked.
+    let mut tokens: FxHashMap<&str, Result<Option<String>, String>> = FxHashMap::default();
     for registry in registries.clone() {
         let credentials = if let Some(registry_config) = ctx.config.registries.get(registry) {
             &registry_config.authentication
         } else {
             &None
         };
-        match check_auth(registry, ctx, &client).await {
-            Some(auth_url) => {
-                let token = get_token(
-                    image_map.get(registry).unwrap(),
-                    &auth_url,
-                    credentials,
-                    &client,
-                )
-                .await;
-                tokens.insert(registry, Some(token));
-            }
-            None => {
-                tokens.insert(registry, None);
-            }
+        let token = match check_auth(registry, ctx, &client).await {
+            Ok(Some(auth_url)) => get_token(
+                image_map.get(registry).unwrap(),
+                &auth_url,
+                credentials,
+                &client,
+            )
+            .await
+            .map(Some),
+            Ok(None) => Ok(None),
+            Err(error) => Err(error),
+        };
+        if let Err(error) = &token {
+            ctx.logger.warn(format!(
+                "Failed to authenticate with registry {}: {}",
+                registry, error
+            ));
         }
+        tokens.insert(registry, token);
     }
 
     ctx.logger.debug(format!("Tokens: {:?}", tokens));
 
     let mut handles = Vec::with_capacity(images.len());
+    let mut failed_images: Vec<Image> = Vec::new();
 
     // Loop through images check for updates
     for image in &images {
@@ -234,20 +240,31 @@ pub async fn get_updates(
         if !is_ignored {
             let excluded_tags = get_excluded_tags(image, ctx);
             let ignored_update_type = get_ignored_update_type(image, ctx);
-            let token = tokens.get(image.parts.registry.as_str()).unwrap();
-            let future = image.check(
-                token.as_deref(),
-                ctx,
-                &client,
-                excluded_tags,
-                ignored_update_type,
-            );
-            handles.push(future);
+            match tokens.get(image.parts.registry.as_str()).unwrap() {
+                Ok(token) => {
+                    let future = image.check(
+                        token.as_deref(),
+                        ctx,
+                        &client,
+                        excluded_tags,
+                        ignored_update_type,
+                    );
+                    handles.push(future);
+                }
+                Err(error) => failed_images.push(Image {
+                    error: Some(error.clone()),
+                    ..(*image).clone()
+                }),
+            }
         }
     }
     // Await all the futures
     let images = join_all(handles).await;
-    let mut updates: Vec<Update> = images.iter().map(|image| image.to_update()).collect();
+    let mut updates: Vec<Update> = images
+        .iter()
+        .chain(failed_images.iter())
+        .map(|image| image.to_update())
+        .collect();
     updates.extend_from_slice(&remote_updates);
     updates
 }
